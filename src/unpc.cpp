@@ -8,7 +8,7 @@ int32_t unpc::signature = -1374920153;
 int16_t unpc::version::year  = 2025;
 int16_t unpc::version::month = 10;
 int16_t unpc::version::day   = 20;
-int16_t unpc::version::build = 1;
+int16_t unpc::version::build = 2;
 
 HANDLE      unpc::hMutex{};
 HMODULE     unpc::hModule{};
