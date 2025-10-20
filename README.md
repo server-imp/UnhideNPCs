@@ -6,9 +6,11 @@ UnhideNPCs keeps them visible.
 Using this, you could even put `Character Model Limit` to `Lowest` and still see all enemies/bosses/NPCs!
 
 ## Notes
+By default it won't unhide NPCs that are owned by other players (e.g. pets, minis, summons). You can change this in the config file.
+
 UnhideNPCs works as expected in my testing, but it hasn’t been widely used yet. Use with caution, as unforeseen issues may appear.
 
-There’s no visible in-game UI, but you can confirm the plugin is active by checking the log file at `<game folder>/addons/UnhideNPCs/log.txt`.
+There’s no visible in-game UI (unless you are using Nexus), but you can confirm the plugin is active by checking the log file at `<game folder>/addons/UnhideNPCs/log.txt`.
 
 Tested on Windows 11 25H2 and Fedora Linux 42 (GE-Proton10-20).
 
@@ -21,6 +23,7 @@ There are four different ways to use UnhideNPCs; you only need to follow one of 
 
 ### 2) Nexus
 1. It's available in-game in the Nexus Library
+   - When you are using Nexus, a configuration menu is available in-game
 
 ### 3) DLL Proxy
 1. Download `UnhideNPCs.dll` from [Releases](https://github.com/server-imp/UnhideNPCs/releases).
@@ -40,6 +43,13 @@ There is a config file at `<game folder>/addons/UnhideNPCs/config.cfg` with the 
   - Forces the creation of a console window when set to true.
   - Note: If the console window is exited, then the game will exit as well.
   - Default: false
+
+
+- `UnhidePlayerOwnedNPCs`: < true/false >
+    - When enabled, it will also unhide player pets, clones, minis etc
+    - Default: false
+
+
 - `MaximumDistance`: < number >
   - The maximum distance (in meters) at which NPCs will be unhidden.
   - Set to 0 or below for no distance check.
