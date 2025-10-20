@@ -28,6 +28,7 @@ There are four different ways to use UnhideNPCs; you only need to follow one of 
 ### 3) DLL Proxy
 1. Download `UnhideNPCs.dll` from [Releases](https://github.com/server-imp/UnhideNPCs/releases).
 2. Rename it to one of the following: `dxgi.dll`/`midimap.dll`/`d3d9.dll`.
+   - Note: `midimap.dll` does not appear to work on Linux/Proton in my tests
 3. Place it in your game folder.
 4. The game will load it automatically on next launch.
 
