@@ -1,0 +1,105 @@
+#ifndef UNHIDENPCS_LOGGER_HPP
+#define UNHIDENPCS_LOGGER_HPP
+#pragma once
+#include "../pch.hpp"
+#include "util.hpp"
+
+namespace logging
+{
+    enum class LogLevel
+    {
+        Debug,
+        Info,
+        Warning,
+        Error
+    };
+
+    const char* logLevelToString(LogLevel level);
+
+    using LogCallback = std::function<void(LogLevel level, const std::string& message)>;
+
+    class Logger
+    {
+    private:
+        static Logger* _instance;
+
+        std::string           _name{};
+        std::filesystem::path _path{};
+        std::ofstream         _file{};
+        LogLevel              _level = LogLevel::Debug;
+
+        HANDLE _hConsole{};
+        bool   _consoleCreated{};
+
+        struct LogEntry
+        {
+            std::string timestamp{};
+            LogLevel    level{};
+            std::string message{};
+        };
+
+        std::deque<LogEntry>     _recentEntries{};
+        std::vector<LogCallback> _callbacks{};
+
+    public:
+        static Logger* instance();
+
+        explicit Logger
+        (
+            const std::string&           name,
+            const std::filesystem::path& path,
+            LogLevel                     level   = LogLevel::Debug,
+            bool                         console = false
+        );
+
+        ~Logger();
+
+        void setLevel(LogLevel level);
+
+        LogLevel level() const;
+
+        void registerCallback(const LogCallback& callback);
+
+        template<typename... Args>
+        void log(LogLevel level, const std::string& format, Args&&... args);
+
+        bool setConsole(bool value);
+
+    private:
+        void runCallbacks(LogLevel level, const std::string& message) const;
+
+        void printLogEntry(const LogEntry& entry, bool toFile = true);
+    };
+
+    template<typename... Args>
+    void Logger::log(const LogLevel level, const std::string& format, Args&&... args)
+    {
+        if (level < _level)
+            return;
+
+        const auto now  = std::chrono::system_clock::now();
+        const auto time = std::chrono::system_clock::to_time_t(now);
+        const auto ms   = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+
+        std::tm tm_time{};
+        localtime_s(&tm_time, &time);
+
+        const std::string timestamp = fmt::format
+            ("[{:02}:{:02}:{:02}:{:03}]", tm_time.tm_hour, tm_time.tm_min, tm_time.tm_sec, ms.count());
+        const std::string message = fmt::format(format, std::forward<Args>(args)...);
+
+        if (_recentEntries.size() >= 250)
+            _recentEntries.pop_front();
+        _recentEntries.push_back({timestamp, level, message});
+        printLogEntry(_recentEntries.back());
+
+        runCallbacks(level, message);
+    }
+}
+
+#define LOG_DBG(fmt, ...) if (logging::Logger::instance()) logging::Logger::instance()->log(logging::LogLevel::Debug, "[{}:{}\t{}()]\t" fmt, util::getFileName(__FILE__), __LINE__, __func__, ##__VA_ARGS__)
+#define LOG_INFO(fmt, ...) if (logging::Logger::instance()) logging::Logger::instance()->log(logging::LogLevel::Info, " " fmt, ##__VA_ARGS__)
+#define LOG_WARN(fmt, ...) if (logging::Logger::instance()) logging::Logger::instance()->log(logging::LogLevel::Warning, " " fmt, ##__VA_ARGS__)
+#define LOG_ERR(fmt, ...)  if (logging::Logger::instance()) logging::Logger::instance()->log(logging::LogLevel::Error, " " fmt, ##__VA_ARGS__)
+
+#endif //UNHIDENPCS_LOGGER_HPP

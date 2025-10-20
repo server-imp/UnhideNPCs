@@ -1,0 +1,42 @@
+# Build directories
+cmake-build-*/
+build/
+out/
+bin/
+lib/
+
+# CLion
+.idea/
+cmake-build-debug/
+cmake-build-release/
+cmake-build-relwithdebinfo/
+cmake-build-minsizerel/
+
+# CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+install_manifest.txt
+compile_commands.json
+
+# System/Editor
+*.swp
+*.swo
+*.bak
+*.tmp
+*~
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Generated files
+*.obj
+*.o
+*.a
+*.so
+*.dll
+*.exe
+*.out

@@ -1,0 +1,40 @@
+#include "pch.hpp"
+#include "unpc.hpp"
+#include "fw/proxy.hpp"
+#include "dxgi.hpp"
+#include "midimap.hpp"
+#include "d3d9.hpp"
+
+#include "arcdps.hpp"
+#include "nexus.hpp"
+
+BOOL APIENTRY DllMain(const HMODULE hModule, const DWORD ul_reason_for_call, PVOID)
+{
+    if (ul_reason_for_call == DLL_PROCESS_ATTACH)
+    {
+        DisableThreadLibraryCalls(hModule);
+        unpc::hModule = hModule;
+
+        // make sure we are the only instance of UnhideNPCs that is loaded
+        if (!util::checkMutex("UnhideNPCsMutex", unpc::hMutex))
+        {
+            return TRUE;
+        }
+
+        // just return if we are loaded by nexus
+        unpc::loadedByNexus = nexus::isNexus();
+        if (unpc::loadedByNexus) return TRUE;
+
+        // attempts to determine if we are performing as a proxy dll
+        // if we are, then we call LoadLibrary for our own module to
+        // increase refcount, otherwise we might get unloaded prematurely
+        if (proxy::check({"dxgi.dll", "midimap.dll", "d3d9.dll"}, unpc::proxyModuleName))
+        {
+            unpc::hProxyModule = LoadLibraryA(unpc::proxyModuleName.c_str());
+        }
+
+        unpc::entrypoint();
+    }
+
+    return TRUE;
+}
