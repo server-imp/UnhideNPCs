@@ -13,6 +13,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Configure git for private fetch
+        run: |
+          git config --global url."https://${{ secrets.GH_PAT }}:@github.com/".insteadOf "https://github.com/"
+          
       - name: Configure CMake
         run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_CXX_STANDARD=17
 
