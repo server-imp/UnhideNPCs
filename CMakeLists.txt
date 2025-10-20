@@ -77,8 +77,8 @@ add_executable(Injector src/injector.cpp)
 #        "C:/Program Files/Guild Wars 2/dxgi.dll"
 #)
 
-#add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-#        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-#        $<TARGET_FILE:${PROJECT_NAME}>
-#        "C:/Program Files/Guild Wars 2/addons/UnhideNPCs.dll"
-#)
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        $<TARGET_FILE:${PROJECT_NAME}>
+        "C:/Program Files/Guild Wars 2/addons/UnhideNPCs.dll"
+)
