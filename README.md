@@ -20,10 +20,7 @@ There are four different ways to use UnhideNPCs; you only need to follow one of 
 3. ArcDPS will load the plugin automatically on next launch.
 
 ### 2) Nexus
-1. Download `UnhideNPCs.dll` from [Releases](https://github.com/server-imp/UnhideNPCs/releases).
-2. Place it in `<game folder>/addons`
-3. It should show up in Nexus and be loadable on next launch.
-4. In the future, updates can be done through Nexus as well.
+1. It's available in-game in the Nexus Library
 
 ### 3) DLL Proxy
 1. Download `UnhideNPCs.dll` from [Releases](https://github.com/server-imp/UnhideNPCs/releases).
