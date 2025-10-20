@@ -45,6 +45,13 @@ namespace nexus
             "Note: If the console window is exited, then the game will exit as well."
         );
 
+        bool unhidePlayerOwned = unpc::settings->getUnhidePlayerOwned();
+        if (ImGui::Checkbox("Unhide Player Owned", &unhidePlayerOwned))
+        {
+            unpc::settings->setUnhidePlayerOwned(unhidePlayerOwned);
+        }
+        tooltip("When enabled, it will also unhide player pets, clones, minis etc");
+
         auto maxDistance = static_cast<int32_t>(unpc::settings->getMaximumDistance());
         ImGui::Text("Max Distance");
         ImGui::SameLine();

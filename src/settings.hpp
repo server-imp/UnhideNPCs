@@ -17,11 +17,18 @@ private:
 
     CONFIG_PROPERTY
     (
+        bool,
+        UnhidePlayerOwned,
+        false,
+        "When enabled, it will also unhide player pets, clones, minis etc"
+    )
+
+    CONFIG_PROPERTY
+    (
         float,
         MaximumDistance,
         0,
-        "The maximum distance (in meters) at which NPCs will be unhidden.\n"
-        "Set to 0 or below for no distance check."
+        "The maximum distance (in meters) at which NPCs will be unhidden.\n" "Set to 0 or below for no distance check."
     )
 
 public:
