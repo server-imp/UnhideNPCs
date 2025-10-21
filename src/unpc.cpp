@@ -3,13 +3,6 @@
 using namespace std::chrono_literals;
 using namespace memory;
 
-int32_t unpc::signature = 1817724315;
-
-int16_t unpc::version::year  = 2025;
-int16_t unpc::version::month = 10;
-int16_t unpc::version::day   = 21;
-int16_t unpc::version::build = 1;
-
 HANDLE      unpc::hMutex{};
 HMODULE     unpc::hModule{};
 HANDLE      unpc::hThread{};
@@ -17,6 +10,7 @@ std::string unpc::proxyModuleName{};
 HMODULE     unpc::hProxyModule{};
 
 bool unpc::loadedByNexus{};
+bool unpc::loadedByArcDPS{};
 bool unpc::exit{};
 bool unpc::injected{};
 
@@ -44,7 +38,7 @@ bool initialize()
     if (attitudeMode < 0 || attitudeMode > 2)
         unpc::settings->setAttackable(0);
 
-        const auto maximumDistance = unpc::settings->getMaximumDistance();
+    const auto maximumDistance = unpc::settings->getMaximumDistance();
     if (maximumDistance < 0.0f || maximumDistance > 1000.0f)
         unpc::settings->setMaximumDistance(0.0f);
 
@@ -90,34 +84,36 @@ bool initialize()
 
 void unpc::start()
 {
-        if (settings && logger && npcHook)
+    if (settings && logger && npcHook)
         return;
 
     logger.emplace
-            (
-                "UnhideNPCs",
-                std::filesystem::current_path() / "addons" / "UnhideNPCs" / "log.txt",
-                logging::LogLevel::Debug
-            );
+        ("UnhideNPCs", std::filesystem::current_path() / "addons" / "UnhideNPCs" / "log.txt", logging::LogLevel::Debug);
 
-    LOG_DBG("Version {}.{}.{}.{}", version::year, version::month, version::day, version::build);
+    LOG_DBG("Version {}", version::string);
     LOG_DBG("Built on {} at {}", __DATE__, __TIME__);
 
-    if (hProxyModule)
+    if (loadedByNexus)
     {
-        LOG_DBG("Proxy mode: {}", proxyModuleName);
+        LOG_DBG("Mode: Nexus");
     }
-
-    // if we aren't in the game folder we are most likely injected by a dll injector
-    if (!isInGameFolder(hModule))
+    else if (loadedByArcDPS)
+    {
+        LOG_DBG("Mode: ArcDPS");
+    }
+    else if (hProxyModule)
+    {
+        LOG_DBG("Mode: Proxy({})", proxyModuleName);
+    }
+    else if (!isInGameFolder(hModule))
     {
         injected = true;
         logger->setConsole(true);
-        LOG_DBG("Injected = true");
+        LOG_DBG("Mode: Injected");
     }
     else
     {
-        LOG_DBG("Injected = false");
+        LOG_DBG("Mode: Unknown??");
     }
 
     if (!initialize())
@@ -144,7 +140,7 @@ void unpc::stop()
 
 void unpc::entrypoint()
 {
-    if (loadedByNexus)
+    if (loadedByNexus || loadedByArcDPS)
     {
         return;
     }
