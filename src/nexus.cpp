@@ -43,7 +43,7 @@ namespace nexus
             return ImGui::Checkbox(id, &value);
         }
 
-                bool labeled_combo
+        bool labeled_combo
         (const char* label, const char* id, int& value, const char* const* items, const int count, const char* tip)
         {
             const float initialCursorX = ImGui::GetCursorPosX();
@@ -79,7 +79,6 @@ namespace nexus
     {
         if (unpc::exit)
             return;
-
         if (!unpc::settings || !unpc::settings->loaded())
             return;
         if (!unpc::logger)
