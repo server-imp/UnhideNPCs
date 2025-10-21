@@ -3,6 +3,13 @@ set(PROJECT_NAME "UnhideNPCs")
 project(${PROJECT_NAME})
 set(CMAKE_CXX_STANDARD 17)
 
+if (DEFINED ENV{GITHUB_ACTIONS} AND "$ENV{GITHUB_ACTIONS}" STREQUAL "true")
+    set(BUILDING_ON_GITHUB TRUE)
+else ()
+    set(BUILDING_ON_GITHUB FALSE)
+endif ()
+message(STATUS "Building on GitHub Actions: ${BUILDING_ON_GITHUB}")
+
 include(FetchContent)
 
 FetchContent_Declare(
@@ -23,13 +30,16 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(minhook)
 
-FetchContent_Declare(
-        UnhideNPCs_RE
-        GIT_REPOSITORY "https://github.com/server-imp/UnhideNPCs-RE.git"
-        GIT_TAG "main"
-        GIT_SHALLOW TRUE
-)
-FetchContent_MakeAvailable(UnhideNPCs_RE)
+# If compiled on GitHub Actions, fetch UnhideNPCs-RE
+if (BUILDING_ON_GITHUB)
+    FetchContent_Declare(
+            UnhideNPCs_RE
+            GIT_REPOSITORY "https://github.com/server-imp/UnhideNPCs-RE.git"
+            GIT_TAG "main"
+            GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(UnhideNPCs_RE)
+endif ()
 
 FetchContent_Declare(
         imgui
@@ -65,8 +75,14 @@ target_include_directories(${PROJECT_NAME} PRIVATE
         "${fmt_SOURCE_DIR}"
         "${minhook_SOURCE_DIR}"
         "${nexus_SOURCE_DIR}"
-        "${UnhideNPCs_RE_SOURCE_DIR}"
 )
+
+if (BUILDING_ON_GITHUB)
+    target_include_directories(${PROJECT_NAME} PRIVATE "${UnhideNPCs_RE_SOURCE_DIR}")
+else ()
+    target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../UnhideNPCs-RE")
+endif ()
+
 target_link_libraries(${PROJECT_NAME} PRIVATE minhook fmt imgui)
 
 add_executable(Injector src/injector.cpp)
