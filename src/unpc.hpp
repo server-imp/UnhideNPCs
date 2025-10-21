@@ -32,6 +32,8 @@ namespace unpc
     extern std::string proxyModuleName;
     extern HMODULE     hProxyModule;
 
+    void start();
+    void stop();
     void entrypoint();
 }
 

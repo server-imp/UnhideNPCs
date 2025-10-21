@@ -7,8 +7,8 @@ int32_t unpc::signature = 1817724315;
 
 int16_t unpc::version::year  = 2025;
 int16_t unpc::version::month = 10;
-int16_t unpc::version::day   = 20;
-int16_t unpc::version::build = 3;
+int16_t unpc::version::day   = 21;
+int16_t unpc::version::build = 1;
 
 HANDLE      unpc::hMutex{};
 HMODULE     unpc::hModule{};
@@ -36,6 +36,18 @@ bool initialize()
     if (!unpc::settings || !unpc::settings->loaded())
         return false;
 
+    const auto minRank = unpc::settings->getMinimumRank();
+    if (minRank < 0 || minRank >= static_cast<int32_t>(re::gw2::eCharacterRank::MAX))
+        unpc::settings->setMinimumRank(0);
+
+    const auto attitudeMode = unpc::settings->getAttackable();
+    if (attitudeMode < 0 || attitudeMode > 2)
+        unpc::settings->setAttackable(0);
+
+        const auto maximumDistance = unpc::settings->getMaximumDistance();
+    if (maximumDistance < 0.0f || maximumDistance > 1000.0f)
+        unpc::settings->setMaximumDistance(0.0f);
+
     if (unpc::settings->getForceConsole())
         unpc::logger->setConsole(true);
 
@@ -45,21 +57,26 @@ bool initialize()
         return false;
     }
 
-    handle pointer{};
     unpc::logger->setLevel(logging::LogLevel::Info);
-    if (!game.find_pattern(re::pattern, pointer))
+    handle pointer{};
+    if (!game.find_pattern(re::pattern1, pointer))
     {
-
         unpc::logger->setLevel(logging::LogLevel::Debug);
-        LOG_DBG("Unable to find pattern");
+        LOG_DBG("Unable to find pattern 1");
         return false;
     }
+    re::vtableIndex = pointer.add(2).deref<uint32_t>() / 8;
 
+    if (!game.find_pattern(re::pattern2, pointer))
+    {
+        unpc::logger->setLevel(logging::LogLevel::Debug);
+        LOG_DBG("Unable to find pattern 2");
+        return false;
+    }
     pointer = pointer.add(10).resolve_relative_call();
     LOG_DBG("Resolved call to {}+{:X}", game.name(), pointer.sub(game.start()).raw());
 
     npcHook.emplace("Hook", pointer.to_ptr<void*>(), re::Hook);
-
     unpc::logger->setLevel(logging::LogLevel::Debug);
     if (!npcHook->enable())
     {
@@ -71,10 +88,66 @@ bool initialize()
     return true;
 }
 
+void unpc::start()
+{
+        if (settings && logger && npcHook)
+        return;
+
+    logger.emplace
+            (
+                "UnhideNPCs",
+                std::filesystem::current_path() / "addons" / "UnhideNPCs" / "log.txt",
+                logging::LogLevel::Debug
+            );
+
+    LOG_DBG("Version {}.{}.{}.{}", version::year, version::month, version::day, version::build);
+    LOG_DBG("Built on {} at {}", __DATE__, __TIME__);
+
+    if (hProxyModule)
+    {
+        LOG_DBG("Proxy mode: {}", proxyModuleName);
+    }
+
+    // if we aren't in the game folder we are most likely injected by a dll injector
+    if (!isInGameFolder(hModule))
+    {
+        injected = true;
+        logger->setConsole(true);
+        LOG_DBG("Injected = true");
+    }
+    else
+    {
+        LOG_DBG("Injected = false");
+    }
+
+    if (!initialize())
+    {
+        exit = true;
+    }
+}
+
+void unpc::stop()
+{
+    LOG_DBG("Exiting");
+
+    if (npcHook)
+    {
+        npcHook->disable(true);
+        npcHook.reset();
+    }
+
+    settings.reset();
+    logger.reset();
+
+    util::closeHandle(hMutex);
+}
+
 void unpc::entrypoint()
 {
-    if (hThread)
+    if (loadedByNexus)
+    {
         return;
+    }
 
     // need to use CreateThread because for some reason std::thread doesn't allow the dll to unload cleanly
     hThread = CreateThread
@@ -83,37 +156,7 @@ void unpc::entrypoint()
         0,
         [](PVOID) -> DWORD
         {
-            logger.emplace
-            (
-                "UnhideNPCs",
-                std::filesystem::current_path() / "addons" / "UnhideNPCs" / "log.txt",
-                logging::LogLevel::Debug
-            );
-
-            LOG_DBG("Version {}.{}.{}.{}", version::year, version::month, version::day, version::build);
-            LOG_DBG("Built on {} at {}", __DATE__, __TIME__);
-
-            if (hProxyModule)
-            {
-                LOG_DBG("Proxy mode: {}", proxyModuleName);
-            }
-
-            // if we aren't in the game folder we are most likely injected by a dll injector
-            if (!isInGameFolder(hModule))
-            {
-                injected = true;
-                logger->setConsole(true);
-                LOG_DBG("Injected = true");
-            }
-            else
-            {
-                LOG_DBG("Injected = false");
-            }
-
-            if (!initialize())
-            {
-                exit = true;
-            }
+            start();
 
             while (!exit)
             {
@@ -123,23 +166,13 @@ void unpc::entrypoint()
                     break;
                 }
 
-                Sleep(25);
+                Sleep(250);
             }
 
-            LOG_DBG("Exiting");
+            stop();
 
-            if (npcHook)
-                npcHook->disable(true);
-
-            npcHook.reset();
-            settings.reset();
-            logger.reset();
-
-            util::closeHandle(hMutex);
             util::closeHandle(hThread);
-
-            // if we are not a proxy module and not loaded by nexus, free our own module and exit the thread
-            if (!hProxyModule && !loadedByNexus)
+            if (!hProxyModule)
                 FreeLibraryAndExitThread(hModule, 0);
 
             // otherwise just free the proxy module(decrease refcount) if we have one and exit the thread
