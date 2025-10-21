@@ -41,6 +41,10 @@ namespace util
 
     bool shmExists(const std::string& name);
 
+    void fmt_msgbox(HWND hWnd, const char* caption, UINT uType, const char* fmt, ...);
+
+    void dbgbox(const char* fmt, ...);
+
     constexpr const char* getFileName(const char* path)
     {
         const char* last_slash = path;

@@ -225,3 +225,25 @@ bool util::shmExists(const std::string& name)
 
     return false;
 }
+
+void util::fmt_msgbox(HWND hWnd, const char* caption, const UINT uType, const char* fmt, ...)
+{
+    char    buffer[4096];
+    va_list args;
+    va_start(args, fmt);
+    vsprintf_s(buffer, sizeof(buffer), fmt, args);
+    va_end(args);
+
+    MessageBoxA(hWnd, buffer, caption, uType);
+}
+
+void util::dbgbox(const char* fmt, ...)
+{
+    char    buffer[4096];
+    va_list args;
+    va_start(args, fmt);
+    vsprintf_s(buffer, sizeof(buffer), fmt, args);
+    va_end(args);
+
+    MessageBoxA(nullptr, buffer, "Dbg", MB_OK);
+}
