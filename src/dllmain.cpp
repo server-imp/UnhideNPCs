@@ -15,15 +15,19 @@ BOOL APIENTRY DllMain(const HMODULE hModule, const DWORD ul_reason_for_call, PVO
         DisableThreadLibraryCalls(hModule);
         unpc::hModule = hModule;
 
+        unpc::loadedByNexus  = nexus::isNexus();
+        unpc::loadedByArcDPS = !unpc::loadedByNexus && isArcDPS();
+
         // make sure we are the only instance of UnhideNPCs that is loaded
         if (!util::checkMutex("UnhideNPCsMutex", unpc::hMutex))
         {
             return TRUE;
         }
 
-        // just return if we are loaded by nexus
-        unpc::loadedByNexus = nexus::isNexus();
-        if (unpc::loadedByNexus) return TRUE;
+        if (unpc::loadedByNexus || unpc::loadedByArcDPS)
+        {
+            return TRUE;
+        }
 
         // attempts to determine if we are performing as a proxy dll
         // if we are, then we call LoadLibrary for our own module to
