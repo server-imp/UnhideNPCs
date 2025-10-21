@@ -15,12 +15,22 @@ private:
         "Note: If the console window is exited, then the game will exit as well."
     )
 
+        CONFIG_PROPERTY(bool, PlayerOwned, false, "NPCs that are owned by players (pets, clones, minis etc) will also be unhidden.")
+
     CONFIG_PROPERTY
     (
-        bool,
-        UnhidePlayerOwned,
-        false,
-        "When enabled, it will also unhide player pets, clones, minis etc"
+        int32_t,
+        MinimumRank,
+        0,
+                "Only NPCs that have at least this rank get unhidden."
+    )
+
+    CONFIG_PROPERTY
+    (
+        int32_t,
+        Attackable,
+        0,
+        "Only NPCs that match this get unhidden.\n0: Both\n1: Only Attackable\n2: Only Non-Attackable"
     )
 
     CONFIG_PROPERTY
@@ -28,7 +38,7 @@ private:
         float,
         MaximumDistance,
         0,
-        "The maximum distance (in meters) at which NPCs will be unhidden.\n" "Set to 0 or below for no distance check."
+        "NPCs within this distance will be unhidden. (0=no distance check)"
     )
 
 public:

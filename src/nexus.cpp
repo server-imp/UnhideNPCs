@@ -18,20 +18,81 @@ namespace nexus
         return false;
     }
 
-    void tooltip(const char* text)
+    namespace ui
     {
-        if (!ImGui::IsItemHovered())
-            return;
+        constexpr float LABEL_OFFSET = 200.0f;
+        constexpr float FIELD_WIDTH  = 256.0f;
 
-        ImGui::BeginTooltip();
-        ImGui::TextUnformatted(text);
-        ImGui::EndTooltip();
+        void tooltip(const char* text)
+        {
+            if (!ImGui::IsItemHovered())
+                return;
+
+            ImGui::BeginTooltip();
+            ImGui::TextUnformatted(text);
+            ImGui::EndTooltip();
+        }
+
+        bool labeled_checkbox(const char* label, const char* id, bool& value, const char* tip)
+        {
+            const float initialCursorX = ImGui::GetCursorPosX();
+            ImGui::Text("%s", label);
+            tooltip(tip);
+            ImGui::SameLine();
+            ImGui::SetCursorPosX(initialCursorX + LABEL_OFFSET);
+            return ImGui::Checkbox(id, &value);
+        }
+
+                bool labeled_combo
+        (const char* label, const char* id, int& value, const char* const* items, const int count, const char* tip)
+        {
+            const float initialCursorX = ImGui::GetCursorPosX();
+            ImGui::Text("%s", label);
+            tooltip(tip);
+            ImGui::SameLine();
+            ImGui::SetCursorPosX(initialCursorX + LABEL_OFFSET);
+            ImGui::PushItemWidth(FIELD_WIDTH);
+            const bool result = ImGui::Combo(id, &value, items, count);
+            ImGui::PopItemWidth();
+            return result;
+        }
+
+        bool labeled_slider_int
+        (const char* label, const char* id, int& value, const int min, const int max, const char* fmt, const char* tip)
+        {
+            const float initialCursorX = ImGui::GetCursorPosX();
+            ImGui::Text("%s", label);
+            tooltip(tip);
+            ImGui::SameLine();
+            ImGui::SetCursorPosX(initialCursorX + LABEL_OFFSET);
+            ImGui::PushItemWidth(FIELD_WIDTH);
+            const bool result = ImGui::SliderInt(id, &value, min, max, fmt);
+            ImGui::PopItemWidth();
+            return result;
+        }
     }
+
+    const char* ranks[] = {"Normal", "Veteran", "Elite", "Champion", "Legendary"};
+    const char* modes[] = {"Both", "Attackable", "Non-Attackable"};
 
     void options()
     {
-        bool forceConsole = unpc::settings->getForceConsole();
-        if (ImGui::Checkbox("Force Console", &forceConsole))
+        if (unpc::exit)
+            return;
+
+        if (!unpc::settings || !unpc::settings->loaded())
+            return;
+        if (!unpc::logger)
+            return;
+
+        if (auto forceConsole = unpc::settings->getForceConsole(); ui::labeled_checkbox
+            (
+                "Force Console",
+                "##ForceConsole",
+                forceConsole,
+                "Forces the creation of a console window when set to true.\n"
+                "Note: If the console window is exited, then the game will exit as well."
+            ))
         {
             unpc::settings->setForceConsole(forceConsole);
             if (!unpc::injected)
@@ -39,33 +100,57 @@ namespace nexus
                 unpc::logger->setConsole(forceConsole);
             }
         }
-        tooltip
-        (
-            "Forces the creation of a console window when set to true.\n"
-            "Note: If the console window is exited, then the game will exit as well."
-        );
 
-        bool unhidePlayerOwned = unpc::settings->getUnhidePlayerOwned();
-        if (ImGui::Checkbox("Unhide Player Owned", &unhidePlayerOwned))
+        if (auto playerOwned = unpc::settings->getPlayerOwned(); ui::labeled_checkbox
+            (
+                "Player Owned",
+                "##PlayerOwned",
+                playerOwned,
+                "NPCs that are owned by players (pets, clones, minis etc) will also be unhidden."
+            ))
         {
-            unpc::settings->setUnhidePlayerOwned(unhidePlayerOwned);
+            unpc::settings->setPlayerOwned(playerOwned);
         }
-        tooltip("When enabled, it will also unhide player pets, clones, minis etc");
 
-        auto maxDistance = static_cast<int32_t>(unpc::settings->getMaximumDistance());
-        ImGui::Text("Max Distance");
-        ImGui::SameLine();
-        ImGui::PushItemWidth(256);
-        if (ImGui::SliderInt("##maxDistance", &maxDistance, 0, 1000, "%d meters"))
+        if (auto minRank = unpc::settings->getMinimumRank(); ui::labeled_combo
+            (
+                "Minimum Rank",
+                "##minRank",
+                minRank,
+                ranks,
+                IM_ARRAYSIZE(ranks),
+                "Only NPCs that have at least this rank gets unhidden."
+            ))
+        {
+            unpc::settings->setMinimumRank(minRank);
+        }
+
+        if (auto attackable = unpc::settings->getAttackable(); ui::labeled_combo
+            (
+                "Attackable",
+                "##attackable",
+                attackable,
+                modes,
+                IM_ARRAYSIZE(modes),
+                "Only NPCs that match this gets unhidden."
+            ))
+        {
+            unpc::settings->setAttackable(attackable);
+        }
+
+        if (auto maxDistance = static_cast<int32_t>(unpc::settings->getMaximumDistance()); ui::labeled_slider_int
+            (
+                "Max Distance",
+                "##maxDistance",
+                maxDistance,
+                0,
+                1000,
+                "%d meters",
+                "NPCs within this distance will be unhidden. (0=no distance check)"
+            ))
         {
             unpc::settings->setMaximumDistance(static_cast<float>(maxDistance));
         }
-        ImGui::PopItemWidth();
-        tooltip
-        (
-            "The maximum distance (in meters) at which NPCs will be unhidden.\n"
-            "Set to 0 or below for no distance check."
-        );
     }
 
     void onLoad(AddonAPI* aApi)
@@ -77,14 +162,17 @@ namespace nexus
             ((void* (*)(size_t, void*))APIDefs->ImguiMalloc, (void(*)(void*, void*))APIDefs->ImguiFree);
 
         APIDefs->Renderer.Register(ERenderType_OptionsRender, options);
-        unpc::entrypoint();
+
+        unpc::start();
     }
 
     void onUnload()
     {
         APIDefs->Renderer.Deregister(options);
-        unpc::exit = true;
-        Sleep(100);
+
+        unpc::stop();
+
+        FreeLibrary(unpc::hModule);
     }
 }
 

@@ -6,8 +6,6 @@ UnhideNPCs keeps them visible.
 Using this, you could even put `Character Model Limit` to `Lowest` and still see all enemies/bosses/NPCs!
 
 ## Notes
-By default it won't unhide NPCs that are owned by other players (e.g. pets, minis, summons). You can change this in the config file.
-
 UnhideNPCs works as expected in my testing, but it hasn’t been widely used yet. Use with caution, as unforeseen issues may appear.
 
 There’s no visible in-game UI (unless you are using Nexus), but you can confirm the plugin is active by checking the log file at `<game folder>/addons/UnhideNPCs/log.txt`.
@@ -46,9 +44,27 @@ There is a config file at `<game folder>/addons/UnhideNPCs/config.cfg` with the 
   - Default: false
 
 
-- `UnhidePlayerOwnedNPCs`: < true/false >
+- `PlayerOwned`: < true/false >
     - When enabled, it will also unhide player pets, clones, minis etc
     - Default: false
+
+
+- `MinimumRank`: < number >
+  - NPCs below this rank will not be unhidden.
+    - `0`: Normal
+    - `1`: Veteran
+    - `2`: Elite
+    - `3`: Champion
+    - `4`: Legendary
+  - Default: 0
+  
+
+- `Attackable`: < number >
+  - defines which NPCs to unhide based on their attackable status:
+    - `0`: Unhide all NPCs
+    - `1`: Unhide only attackable NPCs
+    - `2`: Unhide only non-attackable NPCs
+  - Default: 0
 
 
 - `MaximumDistance`: < number >
