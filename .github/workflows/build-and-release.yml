@@ -18,10 +18,10 @@ jobs:
           git config --global url."https://${{ secrets.GH_PAT }}:@github.com/".insteadOf "https://github.com/"
           
       - name: Configure CMake
-        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_CXX_STANDARD=17
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_CXX_STANDARD=17
 
       - name: Build
-        run: cmake --build build --config Release
+        run: cmake --build build --config RelWithDebInfo
 
       - name: Create GitHub Release
         id: create_release
@@ -38,8 +38,18 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./build/Release/UnhideNPCs.dll
+          asset_path: ./build/RelWithDebInfo/UnhideNPCs.dll
           asset_name: UnhideNPCs.dll
+          asset_content_type: application/octet-stream
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload PDB to Release
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./build/RelWithDebInfo/UnhideNPCs.pdb
+          asset_name: UnhideNPCs.pdb
           asset_content_type: application/octet-stream
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
