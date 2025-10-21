@@ -4,6 +4,18 @@
 #include "pch.hpp"
 #include "unpc.hpp"
 
+inline bool isArcDPS()
+{
+    const HMODULE hModule = LoadLibraryA("d3d11.dll");
+    if (!hModule)
+        return false;
+
+    const auto check = GetProcAddress(hModule, "arcdps_identifier_export");
+    FreeLibrary(hModule);
+
+    return check != nullptr;
+}
+
 typedef struct arcdps_exports
 {
     uint64_t    size;      // [required]
@@ -29,14 +41,19 @@ inline arcdps_exports* mod_init()
     arc_exports.imguivers = 18000; // placeholder, ImGui not used
     arc_exports.size      = sizeof(arcdps_exports);
     arc_exports.out_name  = "UnhideNPCs";
-    arc_exports.out_build = "0.1";
+    arc_exports.out_build = unpc::version::string;
 
+    if (unpc::loadedByNexus)
+        return &arc_exports;
+
+    unpc::start();
     return &arc_exports;
 }
 
 inline uintptr_t mod_release()
 {
-    unpc::exit = true;
+    if (!unpc::loadedByNexus)
+        unpc::stop();
     return 0;
 }
 
