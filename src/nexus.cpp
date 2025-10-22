@@ -72,8 +72,8 @@ namespace nexus
         }
     }
 
-    const char* ranks[]          = {"Normal", "Veteran", "Elite", "Champion", "Legendary"};
-    const char* modes[]          = {"Both", "Attackable", "Non-Attackable"};
+    const char* ranks[] = {"Normal", "Veteran", "Elite", "Champion", "Legendary"};
+    const char* modes[] = {"Both", "Attackable", "Non-Attackable"};
 
     void options()
     {
@@ -83,6 +83,13 @@ namespace nexus
             return;
         if (!unpc::logger)
             return;
+
+        if (!unpc::mumbleLink || unpc::mumbleLink->getContext().IsCompetitiveMode())
+        {
+            ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 100, 100, 255));
+            ImGui::Text("Disabled in Competitive");
+            ImGui::PopStyleColor();
+        }
 
         if (auto forceConsole = unpc::settings->getForceConsole(); ui::labeled_checkbox
             (
