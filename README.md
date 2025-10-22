@@ -8,9 +8,9 @@ Using this, you could even put `Character Model Limit` to `Lowest` and still see
 ## Notes
 UnhideNPCs works as expected in my testing, but it hasn’t been widely used yet. Use with caution, as unforeseen issues may appear.
 
-There’s no visible in-game UI (unless you are using Nexus), but you can confirm the plugin is active by checking the log file at `<game folder>/addons/UnhideNPCs/log.txt`.
+UnhideNPCs does nothing while in PvP or WvW.
 
-Does nothing in competetive modes (WvW, PvP).
+There’s no visible in-game UI (unless you are using Nexus), but you can confirm the plugin is active by checking the log file at `<game folder>/addons/UnhideNPCs/log.txt`.
 
 Tested on Windows 11 25H2 and Fedora Linux 42 (GE-Proton10-20).
 
