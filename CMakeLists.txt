@@ -88,14 +88,14 @@ target_link_libraries(${PROJECT_NAME} PRIVATE minhook fmt imgui)
 
 add_executable(Injector src/injector.cpp)
 
-#add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-#        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-#        $<TARGET_FILE:${PROJECT_NAME}>
-#        "C:/Program Files/Guild Wars 2/dxgi.dll"
-#)
-
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
         $<TARGET_FILE:${PROJECT_NAME}>
+        "C:/Users/user/Nextcloud/user files/Guild Wars 2/UnhideNPCs.dll"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        $<TARGET_FILE:${PROJECT_NAME}>
         "C:/Program Files/Guild Wars 2/addons/UnhideNPCs.dll"
+#        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+#        $<TARGET_FILE:${PROJECT_NAME}>
+#        "C:/Program Files/Guild Wars 2/dxgi.dll"
 )
