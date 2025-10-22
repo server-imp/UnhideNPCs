@@ -10,6 +10,8 @@ UnhideNPCs works as expected in my testing, but it hasn’t been widely used yet
 
 There’s no visible in-game UI (unless you are using Nexus), but you can confirm the plugin is active by checking the log file at `<game folder>/addons/UnhideNPCs/log.txt`.
 
+Does nothing in competetive modes (WvW, PvP).
+
 Tested on Windows 11 25H2 and Fedora Linux 42 (GE-Proton10-20).
 
 ## Installation
@@ -65,6 +67,12 @@ There is a config file at `<game folder>/addons/UnhideNPCs/config.cfg` with the 
     - `1`: Unhide only attackable NPCs
     - `2`: Unhide only non-attackable NPCs
   - Default: 0
+
+
+- `HidePlayers`: < true/false >
+  - Players will be hidden when this is ticked, useful for boosting performance.
+  - Their names are still visible, and you can still target them
+  - Default: false
 
 
 - `MaximumDistance`: < number >
