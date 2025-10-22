@@ -15,15 +15,10 @@ private:
         "Note: If the console window is exited, then the game will exit as well."
     )
 
-        CONFIG_PROPERTY(bool, PlayerOwned, false, "NPCs that are owned by players (pets, clones, minis etc) will also be unhidden.")
-
     CONFIG_PROPERTY
-    (
-        int32_t,
-        MinimumRank,
-        0,
-                "Only NPCs that have at least this rank get unhidden."
-    )
+    (bool, PlayerOwned, false, "NPCs that are owned by players (pets, clones, minis etc) will also be unhidden.")
+
+    CONFIG_PROPERTY(int32_t, MinimumRank, 0, "Only NPCs that have at least this rank get unhidden.")
 
     CONFIG_PROPERTY
     (
@@ -35,11 +30,14 @@ private:
 
     CONFIG_PROPERTY
     (
-        float,
-        MaximumDistance,
-        0,
-        "NPCs within this distance will be unhidden. (0=no distance check)"
+        bool,
+        HidePlayers,
+        false,
+        "Players will be hidden when this is ticked, useful for boosting performance.\n"
+        "Their names are still visible, and you can still target them"
     )
+
+    CONFIG_PROPERTY(float, MaximumDistance, 0, "NPCs within this distance will be unhidden. (0=no distance check)")
 
 public:
     explicit Settings(const std::filesystem::path& filePath)
