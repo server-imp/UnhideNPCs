@@ -97,5 +97,5 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         "C:/Program Files/Guild Wars 2/addons/UnhideNPCs.dll"
 #        COMMAND ${CMAKE_COMMAND} -E copy_if_different
 #        $<TARGET_FILE:${PROJECT_NAME}>
-#        "C:/Program Files/Guild Wars 2/dxgi.dll"
+#        "C:/Program Files/Guild Wars 2/UnhideNPCs.dll"
 )
