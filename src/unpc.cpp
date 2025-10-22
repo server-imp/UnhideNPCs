@@ -9,6 +9,7 @@ HANDLE      unpc::hThread{};
 std::string unpc::proxyModuleName{};
 HMODULE     unpc::hProxyModule{};
 MumbleLink* unpc::mumbleLink{};
+int32_t*    unpc::loadingScreenActive{};
 
 bool unpc::loadedByNexus{};
 bool unpc::loadedByArcDPS{};
@@ -30,6 +31,11 @@ bool initialize()
     if (!unpc::mumbleLink)
     {
         unpc::mumbleLink = getMumbleLink();
+        if (!unpc::mumbleLink)
+        {
+            LOG_DBG("Failed to get MumbleLink");
+            return false;
+        }
     }
 
     unpc::settings.emplace(std::filesystem::current_path() / "addons" / "UnhideNPCs" / "config.cfg");
@@ -79,8 +85,16 @@ bool initialize()
     }
     pointer = pointer.add(10).resolve_relative_call();
     LOG_DBG("Resolved call to {}+{:X}", game.name(), pointer.sub(game.start()).raw());
-
     npcHook.emplace("Hook", pointer.to_ptr<void*>(), re::Hook);
+
+    if (!game.find_pattern(re::pattern3, pointer))
+    {
+        unpc::logger->setLevel(logging::LogLevel::Debug);
+        LOG_DBG("Unable to find pattern 3");
+        return false;
+    }
+    unpc::loadingScreenActive = pointer.add(6).add(pointer.add(2).deref<int32_t>()).to_ptr<int32_t*>();
+    LOG_DBG("Loading screen active: {:08X}", reinterpret_cast<uintptr_t>(unpc::loadingScreenActive));
 
 #ifdef BUILDING_ON_GITHUB
     unpc::logger->setLevel(logging::LogLevel::Debug);

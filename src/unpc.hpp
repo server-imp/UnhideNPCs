@@ -52,6 +52,7 @@ namespace unpc
     extern HMODULE     hProxyModule;
 
     extern MumbleLink* mumbleLink;
+    extern int32_t* loadingScreenActive;
 
     void start();
 
