@@ -1,6 +1,7 @@
 #ifndef UNHIDENPCS_MUMBLELINK_HPP
 #define UNHIDENPCS_MUMBLELINK_HPP
 #pragma once
+#include "pch.hpp"
 
 struct MumbleContext
 {
@@ -82,13 +83,42 @@ struct MumbleLink
 
 inline MumbleLink* getMumbleLink()
 {
-    auto hMap = OpenFileMappingA(FILE_MAP_READ, FALSE, "MumbleLink");
+    std::wstring mappingName = util::getStartupArgValue(L"-mumble");
+    if (mappingName.empty())
+        mappingName = L"MumbleLink";
+
+    LOG_DBG("mappingName={}", util::wstringToString(mappingName));
+
+    auto hMap = OpenFileMappingW(FILE_MAP_ALL_ACCESS, FALSE, mappingName.c_str());
+    bool created{};
     if (!hMap)
+    {
+        LOG_DBG("OpenFileMappingW failed: {}", GetLastError());
+        hMap = CreateFileMappingW
+            (INVALID_HANDLE_VALUE, nullptr, PAGE_READWRITE, 0, sizeof(MumbleLink), mappingName.c_str());
+
+        if (!hMap)
+        {
+            LOG_DBG("CreateFileMappingW failed: {}", GetLastError());
+            return nullptr;
+        }
+
+        created = true;
+        LOG_DBG("CreateFileMappingW succeeded");
+    }
+
+    const auto ptr = MapViewOfFile(hMap, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(MumbleLink));
+    if (!ptr)
+    {
+        LOG_DBG("MapViewOfFile failed: {}", GetLastError());
+        CloseHandle(hMap);
         return nullptr;
-    const auto ptr = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0);
-    CloseHandle(hMap);
+    }
+
+    if (!created)
+        CloseHandle(hMap);
+
     return static_cast<MumbleLink*>(ptr);
 }
-
 
 #endif //UNHIDENPCS_MUMBLELINK_HPP
