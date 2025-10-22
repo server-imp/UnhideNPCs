@@ -5,8 +5,31 @@
 #include "proxy/midimap.hpp"
 #include "proxy/d3d9.hpp"
 
-#include "arcdps.hpp"
-#include "nexus.hpp"
+#include "integration/arcdps.hpp"
+#include "integration/nexus.hpp"
+
+bool isInGameFolder(const HMODULE hModule)
+{
+    std::filesystem::path exePath, dllPath;
+    if (!util::getModuleFilePath(nullptr, exePath) || !util::getModuleFilePath(hModule, dllPath))
+        return false;
+
+    exePath = exePath.parent_path();
+    dllPath = dllPath.parent_path();
+
+    // allowed folders relative to exe
+    const std::filesystem::path allowed[] = {exePath, exePath / "addons", exePath / "bin64"};
+
+    return std::any_of
+    (
+        std::begin(allowed),
+        std::end(allowed),
+        [&](const std::filesystem::path& p)
+        {
+            return dllPath == p;
+        }
+    );
+}
 
 BOOL APIENTRY DllMain(const HMODULE hModule, const DWORD ul_reason_for_call, PVOID)
 {
@@ -15,17 +38,14 @@ BOOL APIENTRY DllMain(const HMODULE hModule, const DWORD ul_reason_for_call, PVO
         DisableThreadLibraryCalls(hModule);
         unpc::hModule = hModule;
 
-        unpc::loadedByNexus  = nexus::isNexus();
-        unpc::loadedByArcDPS = !unpc::loadedByNexus && isArcDPS();
+        unpc::nexusPresent  = nexus::isNexus();
+        unpc::arcDpsPresent = !unpc::nexusPresent && isArcDPS();
+        unpc::injected      = !isInGameFolder(hModule);
 
         // make sure we are the only instance of UnhideNPCs that is loaded
         if (!util::checkMutex("UnhideNPCsMutex", unpc::hMutex))
         {
-            return TRUE;
-        }
-
-        if (unpc::loadedByNexus || unpc::loadedByArcDPS)
-        {
+            util::closeHandle(unpc::hMutex);
             return TRUE;
         }
 
@@ -35,6 +55,13 @@ BOOL APIENTRY DllMain(const HMODULE hModule, const DWORD ul_reason_for_call, PVO
         if (proxy::check({"dxgi.dll", "midimap.dll", "d3d9.dll"}, unpc::proxyModuleName))
         {
             unpc::hProxyModule = LoadLibraryA(unpc::proxyModuleName.c_str());
+            unpc::entrypoint();
+            return TRUE;
+        }
+
+        if (!unpc::injected && (unpc::nexusPresent || unpc::arcDpsPresent))
+        {
+            return TRUE;
         }
 
         unpc::entrypoint();
