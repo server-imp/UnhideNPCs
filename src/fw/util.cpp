@@ -298,3 +298,21 @@ std::wstring util::getStartupArgValue(const std::wstring& argName)
 
     return {};
 }
+
+bool util::isModuleInAnyDirsRelativeToExe(const HMODULE hModule, const std::initializer_list<std::string>& relativeDirs)
+{
+    std::filesystem::path path;
+    if (!getModuleFilePath(nullptr, path))
+        return false;
+    path = path.parent_path();
+
+    return std::any_of
+    (
+        relativeDirs.begin(),
+        relativeDirs.end(),
+        [&](const std::string& dir)
+        {
+            return isModuleInDir(hModule, dir.empty() ? path : path / dir);
+        }
+    );
+}

@@ -48,7 +48,10 @@ namespace util
     void dbgbox(const char* fmt, ...);
 
     std::vector<std::wstring> getStartupArgs();
+
     std::wstring getStartupArgValue(const std::wstring& argName);
+
+    bool isModuleInAnyDirsRelativeToExe(HMODULE hModule, const std::initializer_list<std::string>& relativeDirs);
 
     constexpr const char* getFileName(const char* path)
     {
