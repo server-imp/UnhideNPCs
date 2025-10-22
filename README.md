@@ -10,7 +10,7 @@ UnhideNPCs works as expected in my testing, but it hasn’t been widely used yet
 
 UnhideNPCs does nothing while in PvP or WvW.
 
-There’s no visible in-game UI (unless you are using Nexus), but you can confirm the plugin is active by checking the log file at `<game folder>/addons/UnhideNPCs/log.txt`.
+When using the Nexus or ArcDPS there is in-game configuration available, in proxy or injected modes you need to manually edit the config file)
 
 Tested on Windows 11 25H2 and Fedora Linux 42 (GE-Proton10-20).
 
