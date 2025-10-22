@@ -17,7 +17,7 @@ namespace unpc
 #define YEAR  2025
 #define MONTH 10
 #define DAY   22
-#define BUILD 1
+#define BUILD 2
 
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
@@ -37,10 +37,10 @@ namespace unpc
 #undef STR_HELPER
     }
 
-    extern bool loadedByNexus;
-    extern bool loadedByArcDPS;
-    extern bool exit;
+    extern bool nexusPresent;
+    extern bool arcDpsPresent;
     extern bool injected;
+    extern bool exit;
 
     extern std::optional<logging::Logger> logger;
     extern std::optional<Settings>        settings;

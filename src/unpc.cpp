@@ -1,5 +1,7 @@
 #include "unpc.hpp"
 
+#include "ui.hpp"
+
 using namespace std::chrono_literals;
 using namespace memory;
 
@@ -11,18 +13,16 @@ HMODULE     unpc::hProxyModule{};
 MumbleLink* unpc::mumbleLink{};
 int32_t*    unpc::loadingScreenActive{};
 
-bool unpc::loadedByNexus{};
-bool unpc::loadedByArcDPS{};
-bool unpc::exit{};
+bool unpc::nexusPresent{};
+bool unpc::arcDpsPresent{};
 bool unpc::injected{};
+bool unpc::exit{};
 
 std::optional<logging::Logger> unpc::logger;
 std::optional<Settings>        unpc::settings;
 std::optional<detour>          npcHook{};
 
 #include "re.hpp"
-
-bool isInGameFolder(HMODULE hModule);
 
 bool initialize()
 {
@@ -121,27 +121,26 @@ void unpc::start()
     LOG_DBG("Version {}", version::string);
     LOG_DBG("Built on {} at {}", __DATE__, __TIME__);
 
-    if (loadedByNexus)
+    if (injected)
     {
-        LOG_DBG("Mode: Nexus");
-    }
-    else if (loadedByArcDPS)
-    {
-        LOG_DBG("Mode: ArcDPS");
+        logger->setConsole(true);
+        LOG_DBG("Mode: Injected");
     }
     else if (hProxyModule)
     {
         LOG_DBG("Mode: Proxy({})", proxyModuleName);
     }
-    else if (!isInGameFolder(hModule))
+    else if (nexusPresent && util::isModuleInAnyDirsRelativeToExe(hModule, {"addons"}))
     {
-        injected = true;
-        logger->setConsole(true);
-        LOG_DBG("Mode: Injected");
+        LOG_DBG("Mode: Nexus");
+    }
+    else if (arcDpsPresent && util::isModuleInAnyDirsRelativeToExe(hModule, {"", "bin64"}))
+    {
+        LOG_DBG("Mode: ArcDPS");
     }
     else
     {
-        LOG_DBG("Mode: Unknown??");
+        LOG_DBG("Mode: Unknown");
     }
 
     if (!initialize())
@@ -168,11 +167,6 @@ void unpc::stop()
 
 void unpc::entrypoint()
 {
-    if (loadedByNexus || loadedByArcDPS)
-    {
-        return;
-    }
-
     // need to use CreateThread because for some reason std::thread doesn't allow the dll to unload cleanly
     hThread = CreateThread
     (
@@ -184,7 +178,7 @@ void unpc::entrypoint()
 
             while (!exit)
             {
-                if (injected && GetAsyncKeyState(VK_END))
+                if (injected && ui::wasKeyPressed(VK_END))
                 {
                     exit = true;
                     break;
@@ -206,28 +200,5 @@ void unpc::entrypoint()
         nullptr,
         0,
         nullptr
-    );
-}
-
-bool isInGameFolder(const HMODULE hModule)
-{
-    std::filesystem::path exePath, dllPath;
-    if (!util::getModuleFilePath(nullptr, exePath) || !util::getModuleFilePath(hModule, dllPath))
-        return false;
-
-    exePath = exePath.parent_path();
-    dllPath = dllPath.parent_path();
-
-    // allowed folders relative to exe
-    const std::filesystem::path allowed[] = {exePath, exePath / "addons", exePath / "bin64"};
-
-    return std::any_of
-    (
-        std::begin(allowed),
-        std::end(allowed),
-        [&](const std::filesystem::path& p)
-        {
-            return dllPath == p;
-        }
     );
 }
