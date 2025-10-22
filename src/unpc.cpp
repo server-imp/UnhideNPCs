@@ -8,6 +8,7 @@ HMODULE     unpc::hModule{};
 HANDLE      unpc::hThread{};
 std::string unpc::proxyModuleName{};
 HMODULE     unpc::hProxyModule{};
+MumbleLink* unpc::mumbleLink{};
 
 bool unpc::loadedByNexus{};
 bool unpc::loadedByArcDPS{};
@@ -26,12 +27,17 @@ bool initialize()
 {
     LOG_DBG("Beginning initialization");
 
+    if (!unpc::mumbleLink)
+    {
+        unpc::mumbleLink = getMumbleLink();
+    }
+
     unpc::settings.emplace(std::filesystem::current_path() / "addons" / "UnhideNPCs" / "config.cfg");
     if (!unpc::settings || !unpc::settings->loaded())
         return false;
 
     const auto minRank = unpc::settings->getMinimumRank();
-    if (minRank < 0 || minRank >= static_cast<int32_t>(re::gw2::eCharacterRank::MAX))
+    if (minRank < 0 || minRank >= static_cast<int32_t>(re::gw2::eCharacterRank_MAX))
         unpc::settings->setMinimumRank(0);
 
     const auto attitudeMode = unpc::settings->getAttackable();
@@ -51,7 +57,10 @@ bool initialize()
         return false;
     }
 
+#ifdef BUILDING_ON_GITHUB
     unpc::logger->setLevel(logging::LogLevel::Info);
+#endif
+
     handle pointer{};
     if (!game.find_pattern(re::pattern1, pointer))
     {
@@ -60,6 +69,7 @@ bool initialize()
         return false;
     }
     re::vtableIndex = pointer.add(2).deref<uint32_t>() / 8;
+    LOG_DBG("VTable Index: {}", re::vtableIndex);
 
     if (!game.find_pattern(re::pattern2, pointer))
     {
@@ -71,7 +81,11 @@ bool initialize()
     LOG_DBG("Resolved call to {}+{:X}", game.name(), pointer.sub(game.start()).raw());
 
     npcHook.emplace("Hook", pointer.to_ptr<void*>(), re::Hook);
+
+#ifdef BUILDING_ON_GITHUB
     unpc::logger->setLevel(logging::LogLevel::Debug);
+#endif
+
     if (!npcHook->enable())
     {
         LOG_DBG("Hook enable failed");

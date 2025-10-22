@@ -5,6 +5,7 @@
 #include "fw/util.hpp"
 #include "fw/memory/memory.hpp"
 #include "gw2.hpp"
+#include "MumbleLink.hpp"
 #include "settings.hpp"
 
 namespace unpc
@@ -15,8 +16,8 @@ namespace unpc
     {
 #define YEAR  2025
 #define MONTH 10
-#define DAY   21
-#define BUILD 2
+#define DAY   22
+#define BUILD 1
 
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
@@ -49,6 +50,8 @@ namespace unpc
     extern HANDLE      hThread;
     extern std::string proxyModuleName;
     extern HMODULE     hProxyModule;
+
+    extern MumbleLink* mumbleLink;
 
     void start();
 
