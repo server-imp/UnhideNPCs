@@ -1,5 +1,9 @@
 #include "util.hpp"
+
+#include <cwctype>
+
 #include "logger.hpp"
+#include <shellapi.h>
 
 void util::ltrim(std::string& s)
 {
@@ -162,6 +166,23 @@ bool util::equalsIgnoreCase(const std::string& a, const std::string& b)
     );
 }
 
+bool util::equalsIgnoreCase(const std::wstring& a, const std::wstring& b)
+{
+    if (a.size() != b.size())
+        return false;
+
+    return std::equal
+    (
+        a.begin(),
+        a.end(),
+        b.begin(),
+        [](const wchar_t c1, const wchar_t c2)
+        {
+            return std::tolower(c1) == std::towlower(c2);
+        }
+    );
+}
+
 bool util::closeHandle(HANDLE& hObject)
 {
     if (!hObject)
@@ -246,4 +267,34 @@ void util::dbgbox(const char* fmt, ...)
     va_end(args);
 
     MessageBoxA(nullptr, buffer, "Dbg", MB_OK);
+}
+
+std::vector<std::wstring> util::getStartupArgs()
+{
+    int                       argc = 0;
+    LPWSTR*                   argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+    std::vector<std::wstring> args;
+    if (argv && argc > 1)
+    {
+        for (int i = 1; i < argc; ++i)
+            args.emplace_back(argv[i]);
+        LocalFree(argv);
+    }
+    return args;
+}
+
+std::wstring util::getStartupArgValue(const std::wstring& argName)
+{
+    static auto args = getStartupArgs();
+
+    // iterate over the args until we find the argName, then check if we have a value after it and return it
+    for (size_t i = 0; i < args.size(); ++i)
+    {
+        if (equalsIgnoreCase(args[i], argName) && i + 1 < args.size())
+        {
+            return args[i + 1];
+        }
+    }
+
+    return {};
 }

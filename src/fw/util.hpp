@@ -31,6 +31,8 @@ namespace util
 
     bool equalsIgnoreCase(const std::string& a, const std::string& b);
 
+    bool equalsIgnoreCase(const std::wstring& a, const std::wstring& b);
+
     bool closeHandle(HANDLE& hObject);
 
     bool freeLibrary(HMODULE& hModule);
@@ -44,6 +46,9 @@ namespace util
     void fmt_msgbox(HWND hWnd, const char* caption, UINT uType, const char* fmt, ...);
 
     void dbgbox(const char* fmt, ...);
+
+    std::vector<std::wstring> getStartupArgs();
+    std::wstring getStartupArgValue(const std::wstring& argName);
 
     constexpr const char* getFileName(const char* path)
     {
