@@ -72,8 +72,8 @@ namespace nexus
         }
     }
 
-    const char* ranks[] = {"Normal", "Veteran", "Elite", "Champion", "Legendary"};
-    const char* modes[] = {"Both", "Attackable", "Non-Attackable"};
+    const char* ranks[]          = {"Normal", "Veteran", "Elite", "Champion", "Legendary"};
+    const char* modes[]          = {"Both", "Attackable", "Non-Attackable"};
 
     void options()
     {
@@ -137,6 +137,18 @@ namespace nexus
             unpc::settings->setAttackable(attackable);
         }
 
+        if (auto hidePlayers = unpc::settings->getHidePlayers(); ui::labeled_checkbox
+            (
+                "Hide Players",
+                "##HidePlayers",
+                hidePlayers,
+                "Players will be hidden when this is ticked, useful for boosting performance.\n"
+                "Their names are still visible, and you can still target them"
+            ))
+        {
+            unpc::settings->setHidePlayers(hidePlayers);
+        }
+
         if (auto maxDistance = static_cast<int32_t>(unpc::settings->getMaximumDistance()); ui::labeled_slider_int
             (
                 "Max Distance",
@@ -162,6 +174,7 @@ namespace nexus
 
         APIDefs->Renderer.Register(ERenderType_OptionsRender, options);
 
+        unpc::mumbleLink = static_cast<MumbleLink*>(APIDefs->DataLink.Get("DL_MUMBLE_LINK"));
         unpc::start();
     }
 
