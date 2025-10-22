@@ -39,6 +39,8 @@ private:
 
     CONFIG_PROPERTY(float, MaximumDistance, 0, "NPCs within this distance will be unhidden. (0=no distance check)")
 
+    CONFIG_PROPERTY(bool, ArcDPS_UIOpen, true, "ArcDPS UI Opened/Closed")
+
 public:
     explicit Settings(const std::filesystem::path& filePath)
         : Config(filePath)
