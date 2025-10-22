@@ -16,14 +16,17 @@ Tested on Windows 11 25H2 and Fedora Linux 42 (GE-Proton10-20).
 
 ## Installation
 There are four different ways to use UnhideNPCs; you only need to follow one of them.
-### 1) ArcDPS
+
+### 1) Nexus (recommended)
+1. It's available in-game in the Nexus Library
+  - When you are using Nexus, a configuration menu is available in-game
+
+
+### 2) ArcDPS
 1. Download `UnhideNPCs.dll` from [Releases](https://github.com/server-imp/UnhideNPCs/releases).
 2. Place it in your game folder (e.g. `C:\Program Files\Guild Wars 2`).
 3. ArcDPS will load the plugin automatically on next launch.
 
-### 2) Nexus
-1. It's available in-game in the Nexus Library
-   - When you are using Nexus, a configuration menu is available in-game
 
 ### 3) DLL Proxy
 1. Download `UnhideNPCs.dll` from [Releases](https://github.com/server-imp/UnhideNPCs/releases).
