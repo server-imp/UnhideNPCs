@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 if (DEFINED ENV{GITHUB_ACTIONS} AND "$ENV{GITHUB_ACTIONS}" STREQUAL "true")
     set(BUILDING_ON_GITHUB TRUE)
+    add_compile_definitions(BUILDING_ON_GITHUB)
 else ()
     set(BUILDING_ON_GITHUB FALSE)
 endif ()
