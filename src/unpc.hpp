@@ -10,6 +10,15 @@
 
 namespace unpc
 {
+    enum class eMode : int32_t
+    {
+        Unknown = 0,
+        Proxy = 1,
+        Injected = 2,
+        Nexus = 3,
+        ArcDPS = 4
+    };
+
     constexpr int32_t signature = 1817724315;
 
     namespace version
@@ -36,6 +45,8 @@ namespace unpc
 #undef STR
 #undef STR_HELPER
     }
+
+    extern eMode mode;
 
     extern bool nexusPresent;
     extern bool arcDpsPresent;
