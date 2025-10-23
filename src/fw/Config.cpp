@@ -57,7 +57,7 @@ bool Config::load()
     }
     catch (const std::exception& ex)
     {
-        LOG_DBG("Failed to read file {}: {}", _filePath.string(), ex.what());
+        LOG_ERR("Failed to read file {}: {}", _filePath.string(), ex.what());
         return false;
     }
 
@@ -84,7 +84,7 @@ bool Config::load()
         size_t indexPos = 0;
         if ((indexPos = line.find_first_of(':')) == std::string::npos)
         {
-            LOG_DBG("Invalid line in {}: {}", _filePath.string(), line.c_str());
+            LOG_ERR("Invalid line in {}: {}", _filePath.string(), line.c_str());
             return false;
         }
 
@@ -129,7 +129,7 @@ bool Config::save()
     std::ofstream ofs(tmp, std::ios::trunc);
     if (!ofs)
     {
-        LOG_DBG("Failed to open {} for writing", tmp.string());
+        LOG_ERR("Failed to open {} for writing", tmp.string());
         return false;
     }
 
@@ -159,7 +159,7 @@ bool Config::save()
     std::filesystem::rename(tmp, _filePath, ec);
     if (ec)
     {
-        LOG_DBG("Failed to replace {} with {}: {}", _filePath.string(), tmp.string(), ec.message());
+        LOG_ERR("Failed to replace {} with {}: {}", _filePath.string(), tmp.string(), ec.message());
         std::filesystem::remove(tmp, ec);
         return false;
     }
