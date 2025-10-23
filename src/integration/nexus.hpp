@@ -2,6 +2,10 @@
 #define UNHIDENPCS_NEXUS_HPP
 #pragma once
 
+namespace logging {
+    struct LogEntry;
+}
+
 struct MumbleLink;
 
 namespace nexus
@@ -13,6 +17,8 @@ namespace nexus
     bool isNexus();
 
     MumbleLink* getMumbleLink();
+
+    void logCallback(const logging::LogEntry& entry);
 
     void options();
 

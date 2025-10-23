@@ -27,6 +27,34 @@ namespace nexus
         return static_cast<MumbleLink*>(APIDefs->DataLink.Get("DL_MUMBLE_LINK"));
     }
 
+    void logCallback(const logging::LogEntry& entry)
+    {
+        if (!APIDefs)
+            return;
+
+        ELogLevel level;
+        switch (entry.level)
+        {
+            case logging::LogLevel::Debug:
+                level = ELogLevel_DEBUG;
+                break;
+            case logging::LogLevel::Info:
+                level = ELogLevel_INFO;
+                break;
+            case logging::LogLevel::Warning:
+                level = ELogLevel_WARNING;
+                break;
+            case logging::LogLevel::Error:
+                level = ELogLevel_CRITICAL;
+                break;
+            default:
+                level = ELogLevel_OFF;
+                break;
+        }
+
+        APIDefs->Log(level, "UnhideNPCs", entry.message.c_str());
+    }
+
     void options()
     {
         if (unpc::exit)
