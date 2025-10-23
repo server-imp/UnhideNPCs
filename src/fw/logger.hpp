@@ -16,7 +16,14 @@ namespace logging
 
     const char* logLevelToString(LogLevel level);
 
-    using LogCallback = std::function<void(LogLevel level, const std::string& message)>;
+    struct LogEntry
+    {
+        std::string timestamp{};
+        LogLevel    level{};
+        std::string message{};
+    };
+
+    using LogCallback = std::function<void(const LogEntry& entry)>;
 
     class Logger
     {
@@ -30,13 +37,6 @@ namespace logging
 
         HANDLE _hConsole{};
         bool   _consoleCreated{};
-
-        struct LogEntry
-        {
-            std::string timestamp{};
-            LogLevel    level{};
-            std::string message{};
-        };
 
         std::deque<LogEntry>     _recentEntries{};
         std::vector<LogCallback> _callbacks{};
@@ -56,9 +56,11 @@ namespace logging
 
         void setLevel(LogLevel level);
 
-        LogLevel level() const;
+        [[nodiscard]] LogLevel level() const;
 
         void registerCallback(const LogCallback& callback);
+
+        void unregisterCallback(const LogCallback& callback);
 
         template<typename... Args>
         void log(LogLevel level, const std::string& format, Args&&... args);
@@ -66,7 +68,7 @@ namespace logging
         bool setConsole(bool value);
 
     private:
-        void runCallbacks(LogLevel level, const std::string& message) const;
+        void runCallbacks(const LogEntry& entry) const;
 
         void printLogEntry(const LogEntry& entry, bool toFile = true);
     };
@@ -81,25 +83,27 @@ namespace logging
         const auto time = std::chrono::system_clock::to_time_t(now);
         const auto ms   = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
 
-        std::tm tm_time{};
-        localtime_s(&tm_time, &time);
+        std::tm tm{};
+        localtime_s(&tm, &time);
 
-        const std::string timestamp = fmt::format
-            ("[{:02}:{:02}:{:02}:{:03}]", tm_time.tm_hour, tm_time.tm_min, tm_time.tm_sec, ms.count());
-        const std::string message = fmt::format(format, std::forward<Args>(args)...);
+        const auto timestamp = fmt::format("[{:02}:{:02}:{:02}:{:03}]", tm.tm_hour, tm.tm_min, tm.tm_sec, ms.count());
+        const auto message   = fmt::format(format, std::forward<Args>(args)...);
 
         if (_recentEntries.size() >= 250)
             _recentEntries.pop_front();
         _recentEntries.push_back({timestamp, level, message});
-        printLogEntry(_recentEntries.back());
 
-        runCallbacks(level, message);
+        const auto& entry = _recentEntries.back();
+
+        printLogEntry(entry);
+        runCallbacks(entry);
     }
 }
 
 #define LOG_DBG(fmt, ...) if (logging::Logger::instance()) logging::Logger::instance()->log(logging::LogLevel::Debug, "[{}:{}\t{}()]\t" fmt, util::getFileName(__FILE__), __LINE__, __func__, ##__VA_ARGS__)
 #define LOG_INFO(fmt, ...) if (logging::Logger::instance()) logging::Logger::instance()->log(logging::LogLevel::Info, " " fmt, ##__VA_ARGS__)
 #define LOG_WARN(fmt, ...) if (logging::Logger::instance()) logging::Logger::instance()->log(logging::LogLevel::Warning, " " fmt, ##__VA_ARGS__)
-#define LOG_ERR(fmt, ...)  if (logging::Logger::instance()) logging::Logger::instance()->log(logging::LogLevel::Error, " " fmt, ##__VA_ARGS__)
+//#define LOG_ERR(fmt, ...)  if (logging::Logger::instance()) logging::Logger::instance()->log(logging::LogLevel::Error, " " fmt, ##__VA_ARGS__)
+#define LOG_ERR(fmt, ...) if (logging::Logger::instance()) logging::Logger::instance()->log(logging::LogLevel::Error, "[{}:{}\t{}()]\t" fmt, util::getFileName(__FILE__), __LINE__, __func__, ##__VA_ARGS__)
 
 #endif //UNHIDENPCS_LOGGER_HPP

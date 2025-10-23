@@ -65,6 +65,29 @@ logging::LogLevel logging::Logger::level() const
 void logging::Logger::registerCallback(const LogCallback& callback)
 {
     _callbacks.push_back(callback);
+
+    // post all recent entries to the new callback
+    for (const auto& entry : _recentEntries)
+    {
+        callback(entry);
+    }
+}
+
+void logging::Logger::unregisterCallback(const LogCallback& callback)
+{
+    _callbacks.erase
+    (
+        std::remove_if
+        (
+            _callbacks.begin(),
+            _callbacks.end(),
+            [&](const LogCallback& cb)
+            {
+                return cb.target<void(const LogEntry&)>() == callback.target<void(const LogEntry&)>();
+            }
+        ),
+        _callbacks.end()
+    );
 }
 
 bool logging::Logger::setConsole(const bool value)
@@ -107,11 +130,11 @@ bool logging::Logger::setConsole(const bool value)
     return true;
 }
 
-void logging::Logger::runCallbacks(const LogLevel level, const std::string& message) const
+void logging::Logger::runCallbacks(const LogEntry& entry) const
 {
     for (const auto& callback : _callbacks)
     {
-        callback(level, message);
+        callback(entry);
     }
 }
 
