@@ -19,6 +19,14 @@ namespace nexus
         return false;
     }
 
+    MumbleLink* getMumbleLink()
+    {
+        if (!APIDefs)
+            return nullptr;
+
+        return static_cast<MumbleLink*>(APIDefs->DataLink.Get("DL_MUMBLE_LINK"));
+    }
+
     void options()
     {
         if (unpc::exit)
@@ -47,7 +55,6 @@ namespace nexus
 
         APIDefs->Renderer.Register(ERenderType_OptionsRender, options);
 
-        unpc::mumbleLink = static_cast<MumbleLink*>(APIDefs->DataLink.Get("DL_MUMBLE_LINK"));
         unpc::start();
     }
 
