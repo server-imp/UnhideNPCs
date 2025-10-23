@@ -6,6 +6,8 @@
 using namespace std::chrono_literals;
 using namespace memory;
 
+using namespace unpc;
+
 auto unpc::mode = eMode::Unknown;
 
 HANDLE      unpc::hMutex{};
@@ -29,87 +31,89 @@ std::optional<detour>          npcHook{};
 
 bool initialize()
 {
-    LOG_DBG("Beginning initialization");
+    LOG_INFO("Initializing");
 
-    if (!unpc::mumbleLink)
+    if (!mumbleLink)
     {
-        unpc::mumbleLink = unpc::mode == unpc::eMode::Nexus ? nexus::getMumbleLink() : getMumbleLink();
-        if (!unpc::mumbleLink)
+        mumbleLink = mode == eMode::Nexus ? nexus::getMumbleLink() : getMumbleLink();
+        if (!mumbleLink)
         {
-            LOG_DBG("Failed to get MumbleLink");
+            LOG_ERR("MumbleLink Failed");
             return false;
         }
     }
+    LOG_INFO("MumbleLink OK");
 
-    unpc::settings.emplace(std::filesystem::current_path() / "addons" / "UnhideNPCs" / "config.cfg");
-    if (!unpc::settings || !unpc::settings->loaded())
+    settings.emplace(std::filesystem::current_path() / "addons" / "UnhideNPCs" / "config.cfg");
+    if (!settings || !settings->loaded())
+    {
+        LOG_ERR("Failed to load config");
         return false;
+    }
+    LOG_INFO("Config OK");
 
-    const auto minRank = unpc::settings->getMinimumRank();
+    const auto minRank = settings->getMinimumRank();
     if (minRank < 0 || minRank >= static_cast<int32_t>(re::gw2::eCharacterRank_MAX))
-        unpc::settings->setMinimumRank(0);
+        settings->setMinimumRank(0);
 
-    const auto attitudeMode = unpc::settings->getAttackable();
+    const auto attitudeMode = settings->getAttackable();
     if (attitudeMode < 0 || attitudeMode > 2)
-        unpc::settings->setAttackable(0);
+        settings->setAttackable(0);
 
-    const auto maximumDistance = unpc::settings->getMaximumDistance();
+    const auto maximumDistance = settings->getMaximumDistance();
     if (maximumDistance < 0.0f || maximumDistance > 1000.0f)
-        unpc::settings->setMaximumDistance(0.0f);
+        settings->setMaximumDistance(0.0f);
 
-    if (unpc::settings->getForceConsole())
-        unpc::logger->setConsole(true);
+    if (settings->getForceConsole())
+        logger->setConsole(true);
 
     module game{};
     if (!module::tryGetByName("Gw2-64.exe", game))
     {
+        LOG_ERR("Unable to get Gw2-64.exe module");
         return false;
     }
-
-#ifdef BUILDING_ON_GITHUB
-    unpc::logger->setLevel(logging::LogLevel::Info);
-#endif
+    LOG_INFO("Gw2-64.exe OK");
 
     handle pointer{};
     if (!game.find_pattern(re::pattern1, pointer))
     {
-        unpc::logger->setLevel(logging::LogLevel::Debug);
-        LOG_DBG("Unable to find pattern 1");
+        logger->setLevel(logging::LogLevel::Debug);
+        LOG_ERR("Unable to find pattern 1");
         return false;
     }
     re::vtableIndex = pointer.add(2).deref<uint32_t>() / 8;
     LOG_DBG("VTable Index: {}", re::vtableIndex);
+    LOG_INFO("Pattern 1 OK");
 
     if (!game.find_pattern(re::pattern2, pointer))
     {
-        unpc::logger->setLevel(logging::LogLevel::Debug);
-        LOG_DBG("Unable to find pattern 2");
+        logger->setLevel(logging::LogLevel::Debug);
+        LOG_ERR("Unable to find pattern 2");
         return false;
     }
     pointer = pointer.add(10).resolve_relative_call();
     LOG_DBG("Resolved call to {}+{:X}", game.name(), pointer.sub(game.start()).raw());
     npcHook.emplace("Hook", pointer.to_ptr<void*>(), re::Hook);
+    LOG_INFO("Pattern 2 OK");
 
     if (!game.find_pattern(re::pattern3, pointer))
     {
-        unpc::logger->setLevel(logging::LogLevel::Debug);
-        LOG_DBG("Unable to find pattern 3");
+        logger->setLevel(logging::LogLevel::Debug);
+        LOG_ERR("Unable to find pattern 3");
         return false;
     }
-    unpc::loadingScreenActive = pointer.add(6).add(pointer.add(2).deref<int32_t>()).to_ptr<int32_t*>();
-    LOG_DBG("Loading screen active: {:08X}", reinterpret_cast<uintptr_t>(unpc::loadingScreenActive));
-
-#ifdef BUILDING_ON_GITHUB
-    unpc::logger->setLevel(logging::LogLevel::Debug);
-#endif
+    loadingScreenActive = pointer.add(6).add(pointer.add(2).deref<int32_t>()).to_ptr<int32_t*>();
+    LOG_DBG("Loading screen active: {:08X}", reinterpret_cast<uintptr_t>(loadingScreenActive));
+    LOG_INFO("Pattern 3 OK");
 
     if (!npcHook->enable())
     {
-        LOG_DBG("Hook enable failed");
+        LOG_ERR("Failed to enable hook");
         return false;
     }
+    LOG_INFO("Hook OK");
 
-    LOG_DBG("Initialization complete");
     return true;
 }
 
@@ -118,36 +122,43 @@ void unpc::start()
     if (settings && logger && npcHook)
         return;
 
-    logger.emplace
-        ("UnhideNPCs", std::filesystem::current_path() / "addons" / "UnhideNPCs" / "log.txt", logging::LogLevel::Debug);
+#ifdef BUILDING_ON_GITHUB
+    auto logLevel = logging::LogLevel::Info;
+#else
+    auto logLevel = logging::LogLevel::Debug;
+#endif
 
-    LOG_DBG("Version {}", version::string);
-    LOG_DBG("Built on {} at {}", __DATE__, __TIME__);
+    logger.emplace("UnhideNPCs", std::filesystem::current_path() / "addons" / "UnhideNPCs" / "log.txt", logLevel);
+
+    LOG_INFO("Starting");
+    LOG_INFO("Version {}", version::string);
+    LOG_INFO("Built on {} at {}", __DATE__, __TIME__);
 
     if (injected)
     {
         logger->setConsole(true);
-        LOG_DBG("Mode: Injected");
+        LOG_INFO("Mode: Injected");
         mode = eMode::Injected;
     }
     else if (hProxyModule)
     {
-        LOG_DBG("Mode: Proxy({})", proxyModuleName);
+        LOG_INFO("Mode: Proxy({})", proxyModuleName);
         mode = eMode::Proxy;
     }
     else if (nexusPresent && util::isModuleInAnyDirsRelativeToExe(hModule, {"addons"}))
     {
-        LOG_DBG("Mode: Nexus");
+        LOG_INFO("Mode: Nexus");
         mode = eMode::Nexus;
+        logger->registerCallback(nexus::logCallback);
     }
     else if (arcDpsPresent && util::isModuleInAnyDirsRelativeToExe(hModule, {"", "bin64"}))
     {
-        LOG_DBG("Mode: ArcDPS");
+        LOG_INFO("Mode: ArcDPS");
         mode = eMode::ArcDPS;
     }
     else
     {
-        LOG_DBG("Mode: Unknown");
+        LOG_INFO("Mode: Unknown");
         mode = eMode::Unknown;
         exit = true;
         return;
@@ -155,18 +166,27 @@ void unpc::start()
 
     if (!initialize())
     {
+        LOG_ERR("Initialization failed");
         exit = true;
+        return;
     }
+
+    LOG_INFO("Initialization complete");
 }
 
 void unpc::stop()
 {
-    LOG_DBG("Exiting");
+    LOG_INFO("Stopping");
 
     if (npcHook)
     {
         npcHook->disable(true);
         npcHook.reset();
+    }
+
+    if (mode == eMode::Nexus)
+    {
+        logger->unregisterCallback(nexus::logCallback);
     }
 
     settings.reset();
