@@ -1,9 +1,12 @@
 #include "unpc.hpp"
-
 #include "ui.hpp"
+
+#include "integration/nexus.hpp"
 
 using namespace std::chrono_literals;
 using namespace memory;
+
+auto unpc::mode = eMode::Unknown;
 
 HANDLE      unpc::hMutex{};
 HMODULE     unpc::hModule{};
@@ -30,7 +33,7 @@ bool initialize()
 
     if (!unpc::mumbleLink)
     {
-        unpc::mumbleLink = getMumbleLink();
+        unpc::mumbleLink = unpc::mode == unpc::eMode::Nexus ? nexus::getMumbleLink() : getMumbleLink();
         if (!unpc::mumbleLink)
         {
             LOG_DBG("Failed to get MumbleLink");
@@ -125,22 +128,29 @@ void unpc::start()
     {
         logger->setConsole(true);
         LOG_DBG("Mode: Injected");
+        mode = eMode::Injected;
     }
     else if (hProxyModule)
     {
         LOG_DBG("Mode: Proxy({})", proxyModuleName);
+        mode = eMode::Proxy;
     }
     else if (nexusPresent && util::isModuleInAnyDirsRelativeToExe(hModule, {"addons"}))
     {
         LOG_DBG("Mode: Nexus");
+        mode = eMode::Nexus;
     }
     else if (arcDpsPresent && util::isModuleInAnyDirsRelativeToExe(hModule, {"", "bin64"}))
     {
         LOG_DBG("Mode: ArcDPS");
+        mode = eMode::ArcDPS;
     }
     else
     {
         LOG_DBG("Mode: Unknown");
+        mode = eMode::Unknown;
+        exit = true;
+        return;
     }
 
     if (!initialize())
@@ -161,6 +171,12 @@ void unpc::stop()
 
     settings.reset();
     logger.reset();
+
+    if (mumbleLink && mode != eMode::Nexus)
+    {
+        UnmapViewOfFile(mumbleLink);
+        mumbleLink = nullptr;
+    }
 
     util::closeHandle(hMutex);
 }
