@@ -1,6 +1,5 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
-#include <fstream>
 #include <TlHelp32.h>
 #include <cstdio>
 #include <string>
@@ -107,6 +106,7 @@ int main()
     if (!WriteProcessMemory(hProc, buffer, path.string().c_str(), strlen(path.string().c_str()), nullptr))
     {
         printf("WriteProcessMemory failed: %ld\n", GetLastError());
+        VirtualFreeEx(hProc, buffer, 0, MEM_RELEASE);
         CloseHandle(hProc);
         system("PAUSE");
         return 6;
@@ -117,6 +117,7 @@ int main()
     if (hThread == nullptr)
     {
         printf("CreateRemoteThread failed: %ld\n", GetLastError());
+        VirtualFreeEx(hProc, buffer, 0, MEM_RELEASE);
         CloseHandle(hProc);
         system("PAUSE");
         return 7;
@@ -127,6 +128,7 @@ int main()
     {
         printf("WaitForSingleObject failed: %lu\n", GetLastError());
         CloseHandle(hThread);
+        VirtualFreeEx(hProc, buffer, 0, MEM_RELEASE);
         CloseHandle(hProc);
         system("PAUSE");
         return 8;
@@ -137,6 +139,7 @@ int main()
     {
         printf("GetExitCodeThread failed: %lu\n", GetLastError());
         CloseHandle(hThread);
+        VirtualFreeEx(hProc, buffer, 0, MEM_RELEASE);
         CloseHandle(hProc);
         system("PAUSE");
         return 9;
@@ -146,11 +149,13 @@ int main()
     {
         printf("Remote thread LoadLibrary failed\n");
         CloseHandle(hThread);
+        VirtualFreeEx(hProc, buffer, 0, MEM_RELEASE);
         CloseHandle(hProc);
         system("PAUSE");
         return 10;
     }
 
+    CloseHandle(hThread);
     VirtualFreeEx(hProc, buffer, 0, MEM_RELEASE);
     CloseHandle(hProc);
 
