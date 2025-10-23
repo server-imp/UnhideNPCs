@@ -87,10 +87,7 @@ inline MumbleLink* getMumbleLink()
     if (mappingName.empty())
         mappingName = L"MumbleLink";
 
-    LOG_DBG("mappingName={}", util::wstringToString(mappingName));
-
     auto hMap = OpenFileMappingW(FILE_MAP_ALL_ACCESS, FALSE, mappingName.c_str());
-    bool created{};
     if (!hMap)
     {
         LOG_DBG("OpenFileMappingW failed: {}", GetLastError());
@@ -103,7 +100,6 @@ inline MumbleLink* getMumbleLink()
             return nullptr;
         }
 
-        created = true;
         LOG_DBG("CreateFileMappingW succeeded");
     }
 
@@ -115,10 +111,7 @@ inline MumbleLink* getMumbleLink()
         return nullptr;
     }
 
-    if (!created)
-        CloseHandle(hMap);
-
+    CloseHandle(hMap);
     return static_cast<MumbleLink*>(ptr);
 }
-
 #endif //UNHIDENPCS_MUMBLELINK_HPP
