@@ -37,7 +37,22 @@ private:
         "Their names are still visible, and you can still target them"
     )
 
+    CONFIG_PROPERTY
+    (bool, HidePlayerOwned, false, "NPCs that are owned by players (pets, clones, minis etc) will be hidden.")
+
+    CONFIG_PROPERTY(bool, HidePlayerOwnedSelf, false, "Also hide NPCs that are owned by you.")
+
     CONFIG_PROPERTY(float, MaximumDistance, 0, "NPCs within this distance will be unhidden. (0=no distance check)")
+
+    CONFIG_PROPERTY
+    (
+        bool,
+        LoadScreenBoost,
+        false,
+        "Speed up loading screens by temporarily limiting number of characters to 0 when one is triggered.\n"
+        "Note: This will cause characters to start loading after the loading screen is finished,\n"
+        "meaning there will be invisible characters for a bit after loading."
+    )
 
     CONFIG_PROPERTY(bool, ArcDPS_UIOpen, true, "ArcDPS UI Opened/Closed")
 
