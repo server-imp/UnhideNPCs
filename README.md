@@ -80,16 +80,33 @@ There is a config file at `<game folder>/addons/UnhideNPCs/config.cfg` with the 
   - Default: 0
 
 
+- `MaximumDistance`: < number >
+    - The maximum distance (in meters) at which NPCs will be unhidden.
+    - Set to 0 or below for no distance check.
+    - Default: 0
+
+
 - `HidePlayers`: < true/false >
   - Players will be hidden when this is ticked, useful for boosting performance.
   - Their names are still visible, and you can still target them
   - Default: false
 
 
-- `MaximumDistance`: < number >
-  - The maximum distance (in meters) at which NPCs will be unhidden.
-  - Set to 0 or below for no distance check.
-  - Default: 0
+- `HidePlayerOwned`: < true/false >
+    - NPCs that are owned by players (pets, clones, minis etc.) will be hidden.
+    - Default: false
+
+
+- `HidePlayerOwnedSelf`: < true/false >
+    - Also hide NPCs that are owned by you.
+    - Default: false
+
+
+- `LoadScreenBoost`: < true/false >
+  - Speed up loading screens by temporarily limiting number of characters to 0 when one is triggered.
+    Note: This will cause characters to start loading after the loading screen is finished,
+    meaning there will be invisible characters for a bit after loading.
+    - Default: false
 
 ## License
 
