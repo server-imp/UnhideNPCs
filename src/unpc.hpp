@@ -26,7 +26,7 @@ namespace unpc
 #define YEAR  2025
 #define MONTH 10
 #define DAY   24
-#define BUILD 1
+#define BUILD 2
 
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
