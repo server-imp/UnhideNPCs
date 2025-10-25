@@ -78,7 +78,6 @@ bool initialize()
     handle pointer{};
     if (!game.find_pattern(re::pattern1, pointer))
     {
-        logger->setLevel(logging::LogLevel::Debug);
         LOG_ERR("Unable to find pattern 1");
         return false;
     }
@@ -88,7 +87,6 @@ bool initialize()
 
     if (!game.find_pattern(re::pattern2, pointer))
     {
-        logger->setLevel(logging::LogLevel::Debug);
         LOG_ERR("Unable to find pattern 2");
         return false;
     }
@@ -99,13 +97,28 @@ bool initialize()
 
     if (!game.find_pattern(re::pattern3, pointer))
     {
-        logger->setLevel(logging::LogLevel::Debug);
         LOG_ERR("Unable to find pattern 3");
         return false;
     }
     loadingScreenActive = pointer.add(6).add(pointer.add(2).deref<int32_t>()).to_ptr<int32_t*>();
     LOG_DBG("Loading screen active: {:08X}", reinterpret_cast<uintptr_t>(loadingScreenActive));
     LOG_INFO("Pattern 3 OK");
+
+    if (!game.find_pattern(re::pattern4, pointer))
+    {
+        LOG_ERR("Unable to find pattern 4");
+        return false;
+    }
+    re::gw2::getContextCollection = reinterpret_cast<re::gw2::GetContextCollectionFn>(pointer.raw());
+    LOG_INFO("Pattern 4 OK");
+
+    if (!scanner::find_string_reference(re::pattern5, pointer))
+    {
+        LOG_ERR("Unable to find pattern 5");
+        return false;
+    }
+    re::gw2::getAvContext = reinterpret_cast<re::gw2::GetAvContextFn>(pointer.add(12).resolve_relative_call().raw());
+    LOG_INFO("Pattern 5 OK");
 
     if (!npcHook->enable())
     {
@@ -131,7 +144,7 @@ void unpc::start()
     logger.emplace("UnhideNPCs", std::filesystem::current_path() / "addons" / "UnhideNPCs" / "log.txt", logLevel);
 
     LOG_INFO("Starting");
-    LOG_INFO("Version {}", version::string);
+    LOG_INFO("Version {}", version::STRING);
     LOG_INFO("Built on {} at {}", __DATE__, __TIME__);
 
     if (injected)
