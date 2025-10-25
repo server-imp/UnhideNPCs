@@ -7,6 +7,7 @@
 #include "gw2.hpp"
 #include "MumbleLink.hpp"
 #include "settings.hpp"
+#include "version.hpp"
 
 namespace unpc
 {
@@ -20,31 +21,6 @@ namespace unpc
     };
 
     constexpr int32_t signature = 1817724315;
-
-    namespace version
-    {
-#define YEAR  2025
-#define MONTH 10
-#define DAY   24
-#define BUILD 2
-
-#define STR_HELPER(x) #x
-#define STR(x) STR_HELPER(x)
-#define VERSION_STRING STR(YEAR) "." STR(MONTH) "." STR(DAY) "." STR(BUILD)
-        constexpr int16_t year  = YEAR;
-        constexpr int16_t month = MONTH;
-        constexpr int16_t day   = DAY;
-        constexpr int16_t build = BUILD;
-
-        constexpr char string[] = VERSION_STRING;
-#undef VERSION_STRING
-#undef BUILD
-#undef DAY
-#undef MONTH
-#undef YEAR
-#undef STR
-#undef STR_HELPER
-    }
 
     extern eMode mode;
 
