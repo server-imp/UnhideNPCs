@@ -22,7 +22,7 @@ arcdps_exports* mod_init()
     arc_exports.imguivers = 18000; // placeholder, ImGui not used
     arc_exports.size      = sizeof(arcdps_exports);
     arc_exports.out_name  = "UnhideNPCs";
-    arc_exports.out_build = unpc::version::string;
+    arc_exports.out_build = unpc::version::STRING;
 
     if (unpc::nexusPresent || unpc::hProxyModule || unpc::injected)
         return &arc_exports;

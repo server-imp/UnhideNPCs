@@ -104,10 +104,10 @@ nexus::AddonDefinition* GetAddonDef()
     nexus::AddonDef.Signature        = unpc::signature;
     nexus::AddonDef.APIVersion       = NEXUS_API_VERSION;
     nexus::AddonDef.Name             = "UnhideNPCs";
-    nexus::AddonDef.Version.Major    = unpc::version::year;
-    nexus::AddonDef.Version.Minor    = unpc::version::month;
-    nexus::AddonDef.Version.Build    = unpc::version::day;
-    nexus::AddonDef.Version.Revision = unpc::version::build;
+    nexus::AddonDef.Version.Major    = unpc::version::YEAR;
+    nexus::AddonDef.Version.Minor    = unpc::version::MONTH;
+    nexus::AddonDef.Version.Build    = unpc::version::DAY;
+    nexus::AddonDef.Version.Revision = unpc::version::BUILD;
     nexus::AddonDef.Author           = "server-imp";
     nexus::AddonDef.Description      = "Stops the game from hiding NPCs/Monsters etc";
     nexus::AddonDef.Load             = nexus::onLoad;
