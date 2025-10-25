@@ -201,7 +201,7 @@ void ui::renderWindow(const uint32_t not_charsel_or_loading, const uint32_t hide
     if (!unpc::logger)
         return;
 
-    if (not_charsel_or_loading == 0 || hide_if_combat_or_ooc == 1)
+    if (not_charsel_or_loading == 0)
         return;
 
     bool       open       = unpc::settings->getArcDPS_UIOpen();
