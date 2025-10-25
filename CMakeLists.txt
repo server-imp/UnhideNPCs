@@ -3,6 +3,16 @@ set(PROJECT_NAME "UnhideNPCs")
 project(${PROJECT_NAME})
 set(CMAKE_CXX_STANDARD 17)
 
+set(UNPC_VER_YEAR  2025)
+set(UNPC_VER_MONTH 10)
+set(UNPC_VER_DAY   25)
+set(UNPC_VER_BUILD 1)
+set(UNPC_VER_STRING "${UNPC_VER_YEAR}.${UNPC_VER_MONTH}.${UNPC_VER_DAY}.${UNPC_VER_BUILD}")
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.rc.in ${CMAKE_CURRENT_BINARY_DIR}/version.rc @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/version.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/version.hpp @ONLY)
+
+
 if (DEFINED ENV{GITHUB_ACTIONS} AND "$ENV{GITHUB_ACTIONS}" STREQUAL "true")
     set(BUILDING_ON_GITHUB TRUE)
     add_compile_definitions(BUILDING_ON_GITHUB)
@@ -68,7 +78,7 @@ FetchContent_MakeAvailable(Nexus)
 
 file(GLOB_RECURSE PROJECT_SOURCES "src/**.cpp")
 
-add_library(${PROJECT_NAME} SHARED src/dllmain.cpp ${PROJECT_SOURCES})
+add_library(${PROJECT_NAME} SHARED src/dllmain.cpp ${PROJECT_SOURCES} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".dll")
 target_precompile_headers(${PROJECT_NAME} PRIVATE "src/pch.hpp")
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -76,6 +86,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
         "${fmt_SOURCE_DIR}"
         "${minhook_SOURCE_DIR}"
         "${nexus_SOURCE_DIR}"
+        "${CMAKE_CURRENT_BINARY_DIR}"
 )
 
 if (BUILDING_ON_GITHUB)
@@ -95,7 +106,7 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
         $<TARGET_FILE:${PROJECT_NAME}>
         "C:/Program Files/Guild Wars 2/addons/UnhideNPCs.dll"
-#        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-#        $<TARGET_FILE:${PROJECT_NAME}>
-#        "C:/Program Files/Guild Wars 2/UnhideNPCs.dll"
+        #        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        #        $<TARGET_FILE:${PROJECT_NAME}>
+        #        "C:/Program Files/Guild Wars 2/UnhideNPCs.dll"
 )
