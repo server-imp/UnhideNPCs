@@ -96,7 +96,7 @@ namespace logging
         catch (const std::exception& e)
         {
             message = "Error formatting log message \"" + format + "\": " + e.what();
-            level = LogLevel::Error;
+            level   = LogLevel::Error;
         }
 
         if (_recentEntries.size() >= 250)
