@@ -74,7 +74,7 @@ namespace logging
     };
 
     template<typename... Args>
-    void Logger::log(const LogLevel level, const std::string& format, Args&&... args)
+    void Logger::log(LogLevel level, const std::string& format, Args&&... args)
     {
         if (level < _level)
             return;
@@ -86,8 +86,18 @@ namespace logging
         std::tm tm{};
         localtime_s(&tm, &time);
 
-        const auto timestamp = fmt::format("[{:02}:{:02}:{:02}:{:03}]", tm.tm_hour, tm.tm_min, tm.tm_sec, ms.count());
-        const auto message   = fmt::format(format, std::forward<Args>(args)...);
+        const auto  timestamp = fmt::format("[{:02}:{:02}:{:02}:{:03}]", tm.tm_hour, tm.tm_min, tm.tm_sec, ms.count());
+        std::string message{};
+
+        try
+        {
+            message = fmt::format(format, std::forward<Args>(args)...);
+        }
+        catch (const std::exception& e)
+        {
+            message = "Error formatting log message \"" + format + "\": " + e.what();
+            level = LogLevel::Error;
+        }
 
         if (_recentEntries.size() >= 250)
             _recentEntries.pop_front();
