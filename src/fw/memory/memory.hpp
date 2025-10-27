@@ -8,6 +8,7 @@
 #include "pattern.hpp"
 #include "scanner.hpp"
 #include "module.hpp"
+#include "pointer_validator.hpp"
 
 namespace memory
 {
