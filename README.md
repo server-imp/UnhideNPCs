@@ -50,16 +50,19 @@ There are four different ways to use UnhideNPCs; you only need to follow one of 
 
 ## Configuration
 There is a config file at `<game folder>/addons/UnhideNPCs/config.cfg` with the following options:
+
 - `ForceConsole`: < true/false >
   - Forces the creation of a console window when set to true.
   - Note: If the console window is exited, then the game will exit as well.
   - Default: false
 
+- `AlwaysShowTarget`: < true/false >
+  - Always show the targeted character, even if it would otherwise be hidden.
+  - Default: true
 
 - `PlayerOwned`: < true/false >
-    - When enabled, it will also unhide player pets, clones, minis etc
-    - Default: false
-
+  - When enabled, player-owned NPCs (pets, clones, minis, etc.) will also be unhidden.
+  - Default: false
 
 - `MinimumRank`: < number >
   - NPCs below this rank will not be unhidden.
@@ -69,43 +72,52 @@ There is a config file at `<game folder>/addons/UnhideNPCs/config.cfg` with the 
     - `3`: Champion
     - `4`: Legendary
   - Default: 0
-  
 
 - `Attackable`: < number >
-  - defines which NPCs to unhide based on their attackable status:
+  - Defines which NPCs to unhide based on their attackable status:
     - `0`: Unhide all NPCs
-    - `1`: Unhide only attackable NPCs
-    - `2`: Unhide only non-attackable NPCs
+    - `1`: Only attackable NPCs
+    - `2`: Only non-attackable NPCs
   - Default: 0
 
-
 - `MaximumDistance`: < number >
-    - The maximum distance (in meters) at which NPCs will be unhidden.
-    - Set to 0 or below for no distance check.
-    - Default: 0
-
+  - The maximum distance (in meters) at which NPCs will be unhidden.
+  - Set to 0 or below for no distance check.
+  - Default: 0
 
 - `HidePlayers`: < true/false >
-  - Players will be hidden when this is ticked, useful for boosting performance.
-  - Their names are still visible, and you can still target them
+  - When enabled, player characters will be hidden to improve performance.
+  - Their names are still visible, and you can still target them.
   - Default: false
 
+- `MaxPlayersVisible`: < number >
+  - Maximum number of visible players. Set to 0 for no limit.
+  - Default: 0
+
+- `MaxPlayerOwnedVisible`: < number >
+  - Maximum number of visible player-owned NPCs (pets, clones, minis, etc.). Set to 0 for no limit.
+  - Default: 0
 
 - `HidePlayerOwned`: < true/false >
-    - NPCs that are owned by players (pets, clones, minis etc.) will be hidden.
-    - Default: false
-
+  - When enabled, NPCs that are owned by players (pets, clones, minis, etc.) will be hidden.
+  - Default: false
 
 - `HidePlayerOwnedSelf`: < true/false >
-    - Also hide NPCs that are owned by you.
-    - Default: false
+  - When enabled, NPCs owned by your own character will also be hidden.
+  - Default: false
 
+- `DisableHidingInInstances`: < true/false >
+  - When enabled, the hiding/unhiding options are disabled while in instanced content (Fractals, Dungeons, etc.).
+  - Default: false
 
 - `LoadScreenBoost`: < true/false >
-  - Speed up loading screens by temporarily limiting number of characters to 0 when one is triggered.
-    Note: This will cause characters to start loading after the loading screen is finished,
-    meaning there will be invisible characters for a bit after loading.
-    - Default: false
+  - Speed up loading screens by temporarily limiting the number of characters to 0 while a loading screen is active.
+  - Note: Characters will start loading after the loading screen finishes, so some characters may be invisible for a short time.
+  - Default: false
+
+- `ArcDPS_UIOpen`: < true/false >
+  - Tracks whether the ArcDPS UI is open; used by the ArcDPS integration.
+  - Default: true
 
 ## License
 
