@@ -3,7 +3,7 @@
 #include "unpc.hpp"
 
 constexpr float LABEL_OFFSET = 272.0f;
-constexpr float FIELD_WIDTH  = 200.0f;
+constexpr float FIELD_WIDTH  = 230.0f;
 
 void ui::tooltip(const char* text)
 {
@@ -15,7 +15,8 @@ void ui::tooltip(const char* text)
     ImGui::EndTooltip();
 }
 
-bool ui::checkbox(const char* label, const char* id, bool& value, const char* tip, const float labelOffset = LABEL_OFFSET)
+bool ui::checkbox
+(const char* label, const char* id, bool& value, const char* tip, const float labelOffset = LABEL_OFFSET)
 {
     const float initialCursorX = ImGui::GetCursorPosX();
     ImGui::Text("%s", label);
@@ -26,7 +27,15 @@ bool ui::checkbox(const char* label, const char* id, bool& value, const char* ti
 }
 
 bool ui::combo
-(const char* label, const char* id, int& value, const char* const* items, const int count, const char* tip, const float labelOffset = LABEL_OFFSET)
+(
+    const char*        label,
+    const char*        id,
+    int&               value,
+    const char* const* items,
+    const int          count,
+    const char*        tip,
+    const float        labelOffset = LABEL_OFFSET
+)
 {
     const float initialCursorX = ImGui::GetCursorPosX();
     ImGui::Text("%s", label);
@@ -40,7 +49,16 @@ bool ui::combo
 }
 
 bool ui::sliderInt
-(const char* label, const char* id, int& value, const int min, const int max, const char* fmt, const char* tip, const float labelOffset = LABEL_OFFSET)
+(
+    const char* label,
+    const char* id,
+    int&        value,
+    const int   min,
+    const int   max,
+    const char* fmt,
+    const char* tip,
+    const float labelOffset = LABEL_OFFSET
+)
 {
     const float initialCursorX = ImGui::GetCursorPosX();
     ImGui::Text("%s", label);
@@ -58,14 +76,25 @@ const char* modes[] = {"Both", "Attackable", "Non-Attackable"};
 
 void ui::renderOptions()
 {
-    ImGui::Text("Unhide:");
-    ImGui::Indent();
     if (!unpc::mumbleLink || unpc::mumbleLink->getContext().IsCompetitiveMode())
     {
         ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 100, 100, 255));
         ImGui::Text("Disabled in Competitive");
         ImGui::PopStyleColor();
         return;
+    }
+
+    ImGui::Text("Unhide:");
+    ImGui::Indent();
+    if (auto alwaysShowTarget = unpc::settings->getAlwaysShowTarget(); ui::checkbox
+        (
+            "Target",
+            "##AlwaysShowTarget",
+            alwaysShowTarget,
+            "Always show the targeted character, even if it would be hidden."
+        ))
+    {
+        unpc::settings->setAlwaysShowTarget(alwaysShowTarget);
     }
     if (auto playerOwned = unpc::settings->getPlayerOwned(); ui::checkbox
         (
@@ -108,7 +137,7 @@ void ui::renderOptions()
             maxDistance,
             0,
             1000,
-            "%d meters",
+            maxDistance == 0 ? "Off" : "%d meters",
             "NPCs within this distance will be unhidden. (0=no distance check)"
         ))
     {
@@ -129,7 +158,32 @@ void ui::renderOptions()
     {
         unpc::settings->setHidePlayers(hidePlayers);
     }
-
+    if (auto maxPlayersVisible = unpc::settings->getMaxPlayersVisible(); ui::sliderInt
+        (
+            "Max Players",
+            "##MaxPlayersVisible",
+            reinterpret_cast<int32_t&>(maxPlayersVisible),
+            0,
+            300,
+            maxPlayersVisible == 0 ? "Off" : "%d",
+            "Maximum number of visible players. (0=no limit)"
+        ))
+    {
+        unpc::settings->setMaxPlayersVisible(maxPlayersVisible);
+    }
+    if (auto maxPlayerOwnedVisible = unpc::settings->getMaxPlayerOwnedVisible(); ui::sliderInt
+        (
+            "Max Player Owned",
+            "##MaxPlayerOwnedVisible",
+            reinterpret_cast<int32_t&>(maxPlayerOwnedVisible),
+            0,
+            300,
+            maxPlayerOwnedVisible == 0 ? "Off" : "%d",
+            "Maximum number of visible player owned NPCs. (0=no limit)"
+        ))
+    {
+        unpc::settings->setMaxPlayerOwnedVisible(maxPlayerOwnedVisible);
+    }
     auto hidePlayerOwned = unpc::settings->getHidePlayerOwned();
     if (ui::checkbox
         (
@@ -144,7 +198,7 @@ void ui::renderOptions()
     if (hidePlayerOwned)
     {
         ImGui::SameLine();
-        const float offset = LABEL_OFFSET + ImGui::GetFontSize() * 1.33f;
+        const float offset = LABEL_OFFSET + ImGui::GetFontSize() * 1.5f;
         ImGui::Indent(offset);
         ImGui::Text("Mine Too");
         tooltip("Also hide NPCs that are owned by you.");
@@ -156,7 +210,16 @@ void ui::renderOptions()
         }
         ImGui::Unindent(offset);
     }
-
+    if (auto disableInInstances = unpc::settings->getDisableHidingInInstances(); ui::checkbox
+        (
+            "Disable in Instances",
+            "##DisableInInstances",
+            disableInInstances,
+            "Disables the hiding options while in an instance (Fractals, Dungeons etc.)"
+        ))
+    {
+        unpc::settings->setDisableHidingInInstances(disableInInstances);
+    }
     ImGui::Unindent();
 
     ImGui::Text("Misc:");
