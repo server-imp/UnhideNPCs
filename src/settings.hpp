@@ -15,6 +15,8 @@ private:
         "Note: If the console window is exited, then the game will exit as well."
     )
 
+    CONFIG_PROPERTY(bool, AlwaysShowTarget, false, "Always show the targeted character, even if it would be hidden.")
+
     CONFIG_PROPERTY
     (bool, PlayerOwned, false, "NPCs that are owned by players (pets, clones, minis etc) will also be unhidden.")
 
@@ -37,10 +39,15 @@ private:
         "Their names are still visible, and you can still target them"
     )
 
+    CONFIG_PROPERTY(uint32_t, MaxPlayersVisible, 0, "Maximum number of visible players. (0=no limit)")
+    CONFIG_PROPERTY(uint32_t, MaxPlayerOwnedVisible, 0, "Maximum number of visible player owned NPCs. (0=no limit)")
+
     CONFIG_PROPERTY
     (bool, HidePlayerOwned, false, "NPCs that are owned by players (pets, clones, minis etc) will be hidden.")
 
     CONFIG_PROPERTY(bool, HidePlayerOwnedSelf, false, "Also hide NPCs that are owned by you.")
+
+    CONFIG_PROPERTY(bool, DisableHidingInInstances, false, "Disables the hiding options while in an instance (Fractals, Dungeons etc.)")
 
     CONFIG_PROPERTY(float, MaximumDistance, 0, "NPCs within this distance will be unhidden. (0=no distance check)")
 
