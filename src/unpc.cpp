@@ -18,6 +18,9 @@ HMODULE     unpc::hProxyModule{};
 MumbleLink* unpc::mumbleLink{};
 int32_t*    unpc::loadingScreenActive{};
 
+uint32_t unpc::numPlayersVisible{};
+uint32_t unpc::numPlayerOwnedVisible{};
+
 bool unpc::nexusPresent{};
 bool unpc::arcDpsPresent{};
 bool unpc::injected{};
@@ -25,7 +28,7 @@ bool unpc::exit{};
 
 std::optional<logging::Logger> unpc::logger;
 std::optional<Settings>        unpc::settings;
-std::optional<detour>          npcHook{};
+std::optional<detour>          unpc::npcHook{};
 
 #include "re.hpp"
 
@@ -126,6 +129,107 @@ bool initialize()
         return false;
     }
     LOG_INFO("Hook OK");
+
+    return true;
+}
+
+bool unpc::shouldHide
+(
+    const bool    isPlayer,
+    const bool    isPlayerOwned,
+    const bool    isOwnerLocalPlayer,
+    const bool    isTarget,
+    const bool    isAttackable,
+    const uint8_t rank,
+    const float   distance,
+    const float   maxDistance
+)
+{
+    if (unpc::settings->getDisableHidingInInstances() && unpc::mumbleLink->getContext().mapType == MapType::Instances)
+        return false;
+
+    if (isTarget && unpc::settings->getAlwaysShowTarget())
+        return false;
+
+    if (isPlayer)
+    {
+        const auto maxPlayersVisible = unpc::settings->getMaxPlayersVisible();
+        if (maxPlayersVisible > 0 && unpc::numPlayersVisible > maxPlayersVisible)
+            return true;
+
+        if (unpc::settings->getHidePlayers())
+            return true;
+
+        return false;
+    }
+
+    if (isPlayerOwned)
+    {
+        const auto maxPlayerOwnedVisible = unpc::settings->getMaxPlayerOwnedVisible();
+        if (maxPlayerOwnedVisible > 0 && unpc::numPlayerOwnedVisible > maxPlayerOwnedVisible)
+            return true;
+
+        if (isOwnerLocalPlayer && !unpc::settings->getHidePlayerOwnedSelf())
+            return false;
+
+        if (unpc::settings->getHidePlayerOwned())
+            return true;
+
+        return false;
+    }
+
+    return false;
+}
+
+bool unpc::shouldShow
+(
+    bool    isPlayer,
+    bool    isPlayerOwned,
+    bool    isOwnerLocalPlayer,
+    bool    isTarget,
+    bool    isAttackable,
+    uint8_t rank,
+    float   distance,
+    float   maxDistance
+)
+{
+    if (isTarget && unpc::settings->getAlwaysShowTarget())
+        return true;
+
+    if (isPlayer)
+        return false;
+
+    if (isPlayerOwned)
+    {
+        if (!unpc::settings->getPlayerOwned())
+            return false;
+
+        if (unpc::settings->getHidePlayerOwned())
+        {
+            if (isOwnerLocalPlayer && !unpc::settings->getHidePlayerOwnedSelf())
+                return true;
+            return false;
+        }
+
+        const auto maxPlayerOwnedVisible = unpc::settings->getMaxPlayerOwnedVisible();
+        if (maxPlayerOwnedVisible > 0 && unpc::numPlayerOwnedVisible > maxPlayerOwnedVisible)
+            return false;
+
+        return true;
+    }
+
+    const auto minRank = static_cast<re::gw2::eCharacterRank>(unpc::settings->getMinimumRank());
+    if (rank < minRank)
+        return false;
+
+    const auto mode = unpc::settings->getAttackable();
+    if (mode == 1 && !isAttackable)
+        return false;
+    if (mode == 2 && isAttackable)
+        return false;
+
+    if (maxDistance > 0 && distance >= maxDistance)
+        return false;
 
     return true;
 }
