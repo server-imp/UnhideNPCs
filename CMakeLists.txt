@@ -3,9 +3,9 @@ set(PROJECT_NAME "UnhideNPCs")
 project(${PROJECT_NAME})
 set(CMAKE_CXX_STANDARD 17)
 
-set(UNPC_VER_YEAR  2025)
+set(UNPC_VER_YEAR 2025)
 set(UNPC_VER_MONTH 10)
-set(UNPC_VER_DAY   25)
+set(UNPC_VER_DAY 27)
 set(UNPC_VER_BUILD 1)
 set(UNPC_VER_STRING "${UNPC_VER_YEAR}.${UNPC_VER_MONTH}.${UNPC_VER_DAY}.${UNPC_VER_BUILD}")
 
@@ -91,9 +91,12 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 
 if (BUILDING_ON_GITHUB)
     target_include_directories(${PROJECT_NAME} PRIVATE "${UnhideNPCs_RE_SOURCE_DIR}")
+    file(GLOB SRC_RE "${UnhideNPCs_RE_SOURCE_DIR}/*.cpp")
 else ()
     target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../UnhideNPCs-RE")
+    file(GLOB SRC_RE "${CMAKE_CURRENT_SOURCE_DIR}/../UnhideNPCs-RE/*.cpp")
 endif ()
+target_sources(${PROJECT_NAME} PRIVATE ${SRC_RE})
 
 target_link_libraries(${PROJECT_NAME} PRIVATE minhook fmt imgui)
 
