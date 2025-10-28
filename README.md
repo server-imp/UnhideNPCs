@@ -20,7 +20,7 @@ There are four different ways to use UnhideNPCs; you only need to follow one of 
 ### 1) Nexus (recommended)
 1. It's available in-game in the Nexus Library
    - When you are using Nexus, a configuration menu is available in-game
-   - <img width="369" height="517" alt="image" src="https://github.com/user-attachments/assets/86dcc5ae-1b13-4487-924e-c30b2d5026ae" />
+   - <img width="220" height="350" alt="image" src="https://github.com/user-attachments/assets/61df3622-7c4f-4256-8de5-826a243e891a" />
    - `Images may or may not be out of date, and not show the latest options`
 
 
@@ -29,7 +29,7 @@ There are four different ways to use UnhideNPCs; you only need to follow one of 
 1. Download `UnhideNPCs.dll` from [Releases](https://github.com/server-imp/UnhideNPCs/releases).
 2. Place it in your game folder (e.g. `C:\Program Files\Guild Wars 2`).
 3. ArcDPS will load the plugin automatically on next launch.
-   - <img width="399" height="345" alt="image" src="https://github.com/user-attachments/assets/a6401f98-39ec-4933-8165-5b97b16308e9" />
+   - <img width="280" height="282" alt="image" src="https://github.com/user-attachments/assets/58c7c9b3-6f80-4bf4-9386-5ef3a5864222" />
    - `Images may or may not be out of date, and not show the latest options`
    - Hotkey: ALT+SHIFT+U
 
