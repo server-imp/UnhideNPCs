@@ -76,7 +76,8 @@ bool memory::PointerValidator::validate(const uintptr_t pointer)
 {
     if (pointer < _minimumApplicableAddress || pointer > _maximumApplicableAddress)
     {
-        LOG_DBG("Rejected pointer {:08X} - out of range", pointer);
+        if (pointer > 0)
+            LOG_DBG("Rejected pointer {:08X} - out of range", pointer);
         return false;
     }
 
