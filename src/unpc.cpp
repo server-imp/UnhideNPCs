@@ -154,7 +154,7 @@ bool unpc::shouldHide
     if (isPlayer)
     {
         const auto maxPlayersVisible = unpc::settings->getMaxPlayersVisible();
-        if (maxPlayersVisible > 0 && unpc::numPlayersVisible > maxPlayersVisible)
+        if (maxPlayersVisible > 0 && unpc::numPlayersVisible >= maxPlayersVisible)
             return true;
 
         if (unpc::settings->getHidePlayers())
@@ -166,7 +166,7 @@ bool unpc::shouldHide
     if (isPlayerOwned)
     {
         const auto maxPlayerOwnedVisible = unpc::settings->getMaxPlayerOwnedVisible();
-        if (maxPlayerOwnedVisible > 0 && unpc::numPlayerOwnedVisible > maxPlayerOwnedVisible)
+        if (maxPlayerOwnedVisible > 0 && unpc::numPlayerOwnedVisible >= maxPlayerOwnedVisible)
             return true;
 
         if (isOwnerLocalPlayer && !unpc::settings->getHidePlayerOwnedSelf())
@@ -212,7 +212,7 @@ bool unpc::shouldShow
         }
 
         const auto maxPlayerOwnedVisible = unpc::settings->getMaxPlayerOwnedVisible();
-        if (maxPlayerOwnedVisible > 0 && unpc::numPlayerOwnedVisible > maxPlayerOwnedVisible)
+        if (maxPlayerOwnedVisible > 0 && unpc::numPlayerOwnedVisible >= maxPlayerOwnedVisible)
             return false;
 
         return true;
