@@ -74,9 +74,6 @@ bool memory::PointerValidator::updateCacheItem(const uintptr_t pointer, const ui
 
 bool memory::PointerValidator::validate(const uintptr_t pointer)
 {
-    if (!pointer)
-        return false;
-
     if (pointer < _minimumApplicableAddress || pointer > _maximumApplicableAddress)
     {
         LOG_DBG("Rejected pointer {:08X} - out of range", pointer);
