@@ -4,8 +4,8 @@ project(${PROJECT_NAME})
 set(CMAKE_CXX_STANDARD 17)
 
 set(UNPC_VER_YEAR 2025)
-set(UNPC_VER_MONTH 10)
-set(UNPC_VER_DAY 28)
+set(UNPC_VER_MONTH 11)
+set(UNPC_VER_DAY 18)
 set(UNPC_VER_BUILD 1)
 set(UNPC_VER_STRING "${UNPC_VER_YEAR}.${UNPC_VER_MONTH}.${UNPC_VER_DAY}.${UNPC_VER_BUILD}")
 
@@ -103,13 +103,13 @@ target_link_libraries(${PROJECT_NAME} PRIVATE minhook fmt imgui)
 add_executable(Injector src/injector.cpp)
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        #COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        #$<TARGET_FILE:${PROJECT_NAME}>
+        #"C:/Users/user/Nextcloud/user files/Guild Wars 2/UnhideNPCs.dll"
+        #COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        #$<TARGET_FILE:${PROJECT_NAME}>
+        #"C:/Program Files/Guild Wars 2/addons/UnhideNPCs.dll"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
         $<TARGET_FILE:${PROJECT_NAME}>
-        "C:/Users/user/Nextcloud/user files/Guild Wars 2/UnhideNPCs.dll"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        $<TARGET_FILE:${PROJECT_NAME}>
-        "C:/Program Files/Guild Wars 2/addons/UnhideNPCs.dll"
-        #        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        #        $<TARGET_FILE:${PROJECT_NAME}>
-        #        "C:/Program Files/Guild Wars 2/UnhideNPCs.dll"
+        "C:/Program Files/Guild Wars 2/UnhideNPCs.dll"
 )

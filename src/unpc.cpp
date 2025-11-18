@@ -103,6 +103,7 @@ bool initialize()
         LOG_ERR("Unable to find pattern 3");
         return false;
     }
+    pointer = pointer.add(5);
     loadingScreenActive = pointer.add(6).add(pointer.add(2).deref<int32_t>()).to_ptr<int32_t*>();
     LOG_DBG("Loading screen active: {:08X}", reinterpret_cast<uintptr_t>(loadingScreenActive));
     LOG_INFO("Pattern 3 OK");
@@ -183,14 +184,14 @@ bool unpc::shouldHide
 
 bool unpc::shouldShow
 (
-    bool    isPlayer,
-    bool    isPlayerOwned,
-    bool    isOwnerLocalPlayer,
-    bool    isTarget,
-    bool    isAttackable,
-    uint8_t rank,
-    float   distance,
-    float   maxDistance
+    const bool    isPlayer,
+    const bool    isPlayerOwned,
+    const bool    isOwnerLocalPlayer,
+    const bool    isTarget,
+    const bool    isAttackable,
+    const uint8_t rank,
+    const float   distance,
+    const float   maxDistance
 )
 {
     if (isTarget && unpc::settings->getAlwaysShowTarget())
