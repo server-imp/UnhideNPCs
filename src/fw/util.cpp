@@ -1,5 +1,6 @@
 #include "util.hpp"
 
+#include <algorithm>
 #include <cwctype>
 
 #include "logger.hpp"
@@ -7,11 +8,9 @@
 
 void util::ltrim(std::string& s)
 {
-    s.erase
-    (
+    s.erase(
         s.begin(),
-        std::find_if
-        (
+        std::find_if(
             s.begin(),
             s.end(),
             [](const unsigned char ch)
@@ -24,10 +23,8 @@ void util::ltrim(std::string& s)
 
 void util::rtrim(std::string& s)
 {
-    s.erase
-    (
-        std::find_if
-        (
+    s.erase(
+        std::find_if(
             s.rbegin(),
             s.rend(),
             [](const unsigned char ch)
@@ -45,6 +42,13 @@ void util::trim(std::string& s)
     ltrim(s);
 }
 
+std::string util::trim(const std::string& s)
+{
+    std::string copy(s);
+    trim(copy);
+    return copy;
+}
+
 void util::replace(std::string& str, const std::string& a, const std::string& b)
 {
     if (a.empty())
@@ -58,13 +62,16 @@ void util::replace(std::string& str, const std::string& a, const std::string& b)
     }
 }
 
-bool util::strtob(const std::string& value)
+bool util::strtob(const std::string& value, const bool defaultValue = false)
 {
-    bool result;
+    const std::string text = tolower(trim(value));
 
-    std::istringstream(tolower(value)) >> std::boolalpha >> result;
+    if (text == "true" || text == "1")
+        return true;
+    if (text == "false" || text == "0")
+        return false;
 
-    return result;
+    return defaultValue;
 }
 
 std::vector<std::string> util::readLines(const std::filesystem::path& filePath)
@@ -87,7 +94,15 @@ std::vector<std::string> util::readLines(const std::filesystem::path& filePath)
 
 std::string util::tolower(std::string s)
 {
-    std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+    std::transform(
+        s.begin(),
+        s.end(),
+        s.begin(),
+        [](const unsigned char c) -> char
+        {
+            return static_cast<char>(std::tolower(c));
+        }
+    );
 
     return s;
 }
@@ -102,7 +117,7 @@ bool util::empty_or_whitespace(const std::string& s)
 
 bool util::getModuleFilePath(const HMODULE hModule, std::filesystem::path& path)
 {
-    char dllPath[MAX_PATH]{};
+    char dllPath[MAX_PATH] {};
     if (!GetModuleFileName(hModule, dllPath, MAX_PATH))
     {
         LOG_DBG("GetModuleFileName failed: {:08X}", GetLastError());
@@ -154,8 +169,7 @@ bool util::equalsIgnoreCase(const std::string& a, const std::string& b)
     if (a.size() != b.size())
         return false;
 
-    return std::equal
-    (
+    return std::equal(
         a.begin(),
         a.end(),
         b.begin(),
@@ -171,14 +185,13 @@ bool util::equalsIgnoreCase(const std::wstring& a, const std::wstring& b)
     if (a.size() != b.size())
         return false;
 
-    return std::equal
-    (
+    return std::equal(
         a.begin(),
         a.end(),
         b.begin(),
         [](const wchar_t c1, const wchar_t c2)
         {
-            return std::tolower(c1) == std::towlower(c2);
+            return std::towlower(c1) == std::towlower(c2);
         }
     );
 }
@@ -269,21 +282,38 @@ void util::dbgbox(const char* fmt, ...)
     MessageBoxA(nullptr, buffer, "Dbg", MB_OK);
 }
 
-std::vector<std::wstring> util::getStartupArgs()
+std::vector<std::string> util::getStartupArgs()
 {
-    int                       argc = 0;
-    LPWSTR*                   argv = CommandLineToArgvW(GetCommandLineW(), &argc);
-    std::vector<std::wstring> args;
-    if (argv && argc > 1)
+    auto    argc = 0;
+    LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+
+    std::vector<std::string> args;
+
+    if (argv)
     {
-        for (int i = 1; i < argc; ++i)
-            args.emplace_back(argv[i]);
+        if (argc > 1)
+        {
+            args.reserve(argc - 1);
+
+            for (auto i = 1; i < argc; ++i)
+            {
+                const int size = WideCharToMultiByte(CP_UTF8, 0, argv[i], -1, nullptr, 0, nullptr, nullptr);
+
+                std::string arg(size - 1, '\0');
+
+                WideCharToMultiByte(CP_UTF8, 0, argv[i], -1, arg.data(), size, nullptr, nullptr);
+
+                args.emplace_back(std::move(arg));
+            }
+        }
+
         LocalFree(argv);
     }
+
     return args;
 }
 
-std::wstring util::getStartupArgValue(const std::wstring& argName)
+std::string util::getStartupArgValue(const std::string& argName)
 {
     static auto args = getStartupArgs();
 
@@ -306,8 +336,7 @@ bool util::isModuleInAnyDirsRelativeToExe(const HMODULE hModule, const std::init
         return false;
     path = path.parent_path();
 
-    return std::any_of
-    (
+    return std::any_of(
         relativeDirs.begin(),
         relativeDirs.end(),
         [&](const std::string& dir)

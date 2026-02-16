@@ -11,9 +11,11 @@ namespace util
 
     void trim(std::string& s);
 
+    std::string trim(const std::string& s);
+
     void replace(std::string& str, const std::string& a, const std::string& b);
 
-    bool strtob(const std::string& value);
+    bool strtob(const std::string& value, bool defaultValue);
 
     std::vector<std::string> readLines(const std::filesystem::path& filePath);
 
@@ -47,9 +49,9 @@ namespace util
 
     void dbgbox(const char* fmt, ...);
 
-    std::vector<std::wstring> getStartupArgs();
+    std::vector<std::string> getStartupArgs();
 
-    std::wstring getStartupArgValue(const std::wstring& argName);
+    std::string getStartupArgValue(const std::string& argName);
 
     bool isModuleInAnyDirsRelativeToExe(HMODULE hModule, const std::initializer_list<std::string>& relativeDirs);
 
