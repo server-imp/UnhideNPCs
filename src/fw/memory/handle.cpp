@@ -63,6 +63,16 @@ bool memory::handle::operator==(const uintptr_t other) const noexcept
     return pointer == other;
 }
 
+bool memory::handle::operator!=(const uintptr_t other) const noexcept
+{
+    return pointer != other;
+}
+
+bool memory::handle::operator!=(const handle& other) const noexcept
+{
+    return pointer != other.pointer;
+}
+
 bool memory::handle::operator<(const handle& other) const noexcept
 {
     return pointer < other.pointer;
