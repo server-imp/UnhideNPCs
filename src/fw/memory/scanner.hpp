@@ -3,7 +3,6 @@
 #pragma once
 
 #include "range.hpp"
-#include "pattern.hpp"
 
 namespace memory
 {

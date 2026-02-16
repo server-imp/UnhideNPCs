@@ -1,11 +1,18 @@
 #include "scanner.hpp"
 
+#include "pattern.hpp"
 #include "../logger.hpp"
+#include "fw/util.hpp"
 
 bool memory::scanner::find_pattern(const std::string& pattern, const range& range, handle& result)
 {
-    LOG_DBG
-    ("Looking for \"{}\" in range {:X}-{:X} [{:04X}]", pattern, range.start().raw(), range.end().raw(), range.size());
+    LOG_DBG(
+        "Looking for \"{}\" in range {:X}-{:X} [{:04X}]",
+        pattern,
+        range.start().raw(),
+        range.end().raw(),
+        range.size()
+    );
     const auto  parsed = memory::pattern(pattern);
     const auto& data   = parsed.data();
     const auto& mask   = parsed.mask();
@@ -144,7 +151,7 @@ bool memory::scanner::find_string_reference(const std::string& string, handle& r
     }
 
     const auto hModule = GetModuleHandleA(nullptr);
-    MODULEINFO mi{};
+    MODULEINFO mi {};
     if (!GetModuleInformation(GetCurrentProcess(), hModule, &mi, sizeof(mi)))
     {
         LOG_DBG("Could not get module information: {:08X}", GetLastError());
@@ -200,7 +207,7 @@ bool memory::scanner::find_wstring_reference(const std::wstring& string, handle&
     }
 
     const auto hModule = GetModuleHandleA(nullptr);
-    MODULEINFO mi{};
+    MODULEINFO mi {};
     if (!GetModuleInformation(GetCurrentProcess(), hModule, &mi, sizeof(mi)))
     {
         LOG_DBG("Could not get module information: {:08X}", GetLastError());
@@ -211,6 +218,9 @@ bool memory::scanner::find_wstring_reference(const std::wstring& string, handle&
     const size_t   imgSize = mi.SizeOfImage;
     const auto*    text    = reinterpret_cast<const uint8_t*>(string.data());
     const size_t   len     = string.size() * sizeof(wchar_t);
+
+    if (len == 0 || len > imgSize)
+        return false;
 
     for (size_t i = 0; i <= imgSize - len; ++i)
     {
