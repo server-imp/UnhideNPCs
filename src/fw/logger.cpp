@@ -1,21 +1,20 @@
 #include "logger.hpp"
 
+#include <algorithm>
+
+#include "util.hpp"
+
 logging::Logger* logging::Logger::_instance = nullptr;
 
 const char* logging::logLevelToString(const LogLevel level)
 {
     switch (level)
     {
-        case LogLevel::Debug:
-            return " DBG";
-        case LogLevel::Info:
-            return "INFO";
-        case LogLevel::Warning:
-            return "WARN";
-        case LogLevel::Error:
-            return " ERR";
-        default:
-            return " UNK";
+    case LogLevel::Debug: return " DBG";
+    case LogLevel::Info: return "INFO";
+    case LogLevel::Warning: return "WARN";
+    case LogLevel::Error: return " ERR";
+    default: return " UNK";
     }
 }
 
@@ -24,8 +23,12 @@ logging::Logger* logging::Logger::instance()
     return _instance;
 }
 
-logging::Logger::Logger
-(const std::string& name, const std::filesystem::path& path, const LogLevel level, const bool console)
+logging::Logger::Logger(
+    const std::string&           name,
+    const std::filesystem::path& path,
+    const LogLevel               level,
+    const bool                   console
+)
 {
     _name = name;
     _path = path;
@@ -47,6 +50,9 @@ logging::Logger::Logger
 
 logging::Logger::~Logger()
 {
+    if (_instance == this)
+        _instance = nullptr;
+
     setConsole(false);
 
     _file.close();
@@ -64,6 +70,8 @@ logging::LogLevel logging::Logger::level() const
 
 void logging::Logger::registerCallback(const LogCallback& callback)
 {
+    std::lock_guard lock(_mutex);
+
     _callbacks.push_back(callback);
 
     // post all recent entries to the new callback
@@ -75,10 +83,10 @@ void logging::Logger::registerCallback(const LogCallback& callback)
 
 void logging::Logger::unregisterCallback(const LogCallback& callback)
 {
-    _callbacks.erase
-    (
-        std::remove_if
-        (
+    std::lock_guard lock(_mutex);
+
+    _callbacks.erase(
+        std::remove_if(
             _callbacks.begin(),
             _callbacks.end(),
             [&](const LogCallback& cb)
