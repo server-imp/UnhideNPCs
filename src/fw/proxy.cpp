@@ -5,17 +5,16 @@
 bool proxy::check(const std::initializer_list<std::string>& candidates, std::string& proxyName)
 {
     HMODULE hOurModule = nullptr;
-    if (!GetModuleHandleEx
-        (
-            GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-            reinterpret_cast<LPCSTR>(&check),
-            &hOurModule
-        ))
+    if (!GetModuleHandleEx(
+        GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+        reinterpret_cast<LPCSTR>(&check),
+        &hOurModule
+    ))
     {
         return false;
     }
 
-    std::filesystem::path ourPath{};
+    std::filesystem::path ourPath {};
     if (!util::getModuleFilePath(hOurModule, ourPath))
     {
         return false;
@@ -27,7 +26,7 @@ bool proxy::check(const std::initializer_list<std::string>& candidates, std::str
         return false;
     }
 
-    std::filesystem::path exePath{};
+    std::filesystem::path exePath {};
     if (!util::getModuleFilePath(hMainModule, exePath))
     {
         return false;
