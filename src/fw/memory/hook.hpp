@@ -8,13 +8,13 @@ namespace memory
     class hook
     {
     protected:
-        std::string _name{};
+        std::string _name {};
 
-        bool _enabled{};
+        bool _enabled {};
 
-        void* _target{};
-        void* _original{};
-        void* _ownFunction{};
+        void* _target {};
+        void* _original {};
+        void* _ownFunction {};
 
         hook(std::string name, void* target, void* original, void* ownFunction);
 
@@ -27,7 +27,7 @@ namespace memory
 
         [[nodiscard]] void* target() const;
 
-        template<typename T>
+        template <typename T>
         T original() const;
 
         virtual bool enable() = 0;
@@ -35,7 +35,7 @@ namespace memory
         virtual bool disable(bool uninitialize) = 0;
     };
 
-    template<typename T>
+    template <typename T>
     T hook::original() const
     {
         return reinterpret_cast<T>(_original);
