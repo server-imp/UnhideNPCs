@@ -8,9 +8,9 @@ namespace memory
     class range
     {
     protected:
-        handle    _start{};
-        handle    _end{};
-        ptrdiff_t _size{};
+        handle    _start {};
+        handle    _end {};
+        ptrdiff_t _size {};
 
         range() = default;
 
@@ -23,15 +23,15 @@ namespace memory
 
         explicit range(uintptr_t start, ptrdiff_t size);
 
-        const handle& start() const;
+        [[nodiscard]] const handle& start() const;
 
-        const handle& end() const;
+        [[nodiscard]] const handle& end() const;
 
-        const ptrdiff_t& size() const;
+        [[nodiscard]] const ptrdiff_t& size() const;
 
-        bool contains(const handle& address) const;
+        [[nodiscard]] bool contains(const handle& address) const;
 
-        bool contains(uintptr_t address) const;
+        [[nodiscard]] bool contains(uintptr_t address) const;
     };
 }
 

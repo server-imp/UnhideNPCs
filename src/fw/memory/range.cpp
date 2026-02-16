@@ -3,7 +3,7 @@
 memory::range::range(const char* moduleName)
 {
     const auto hModule = GetModuleHandleA(moduleName);
-    MODULEINFO moduleInfo{};
+    MODULEINFO moduleInfo {};
 
     if (!GetModuleInformation(GetCurrentProcess(), hModule, &moduleInfo, sizeof(moduleInfo)))
     {
@@ -22,7 +22,7 @@ memory::range::range(const handle& start, const ptrdiff_t size) : _start(start),
 
 memory::range::range(const handle& start, const handle& end) : _start(start), _end(end)
 {
-    _size = static_cast<std::ptrdiff_t>(_start.raw()) - static_cast<std::ptrdiff_t>(_start.raw());
+    _size = static_cast<std::ptrdiff_t>(_end.raw()) - static_cast<std::ptrdiff_t>(_start.raw());
 }
 
 memory::range::range(const uintptr_t start, const ptrdiff_t size) : _start(start), _size(size)
@@ -47,10 +47,10 @@ const ptrdiff_t& memory::range::size() const
 
 bool memory::range::contains(const handle& address) const
 {
-    return _start <= address && _end >= address;
+    return _start <= address && address < _end.raw();
 }
 
 bool memory::range::contains(const uintptr_t address) const
 {
-    return _start <= address && _end >= address;
+    return _start <= address && address < _end.raw();
 }
