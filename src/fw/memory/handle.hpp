@@ -7,7 +7,7 @@ namespace memory
     class handle
     {
     private:
-        uintptr_t pointer{};
+        uintptr_t pointer {};
 
     public:
         handle() = default;
@@ -18,27 +18,27 @@ namespace memory
 
         handle(const handle& other);
 
-        uintptr_t raw() const;
+        [[nodiscard]] uintptr_t raw() const;
 
-        handle add(ptrdiff_t offset) const;
+        [[nodiscard]] handle add(ptrdiff_t offset) const;
 
-        handle add(const handle& other) const;
+        [[nodiscard]] handle add(const handle& other) const;
 
-        handle sub(ptrdiff_t offset) const;
+        [[nodiscard]] handle sub(ptrdiff_t offset) const;
 
-        handle sub(const handle& other) const;
+        [[nodiscard]] handle sub(const handle& other) const;
 
         handle rip();
 
-        handle resolve_relative_call() const;
+        [[nodiscard]] handle resolve_relative_call() const;
 
-        template<typename T>
+        template <typename T>
         std::enable_if_t<std::is_pointer_v<T>, T> to_ptr() const
         {
             return reinterpret_cast<T>(pointer);
         }
 
-        template<typename T>
+        template <typename T>
         std::enable_if_t<std::is_object_v<T>, T&> deref()
         {
             return *to_ptr<T*>();
@@ -47,6 +47,10 @@ namespace memory
         bool operator==(const handle& other) const noexcept;
 
         bool operator==(uintptr_t other) const noexcept;
+
+        bool operator!=(uintptr_t other) const noexcept;
+
+        bool operator!=(const handle& other) const noexcept;
 
         bool operator<(const handle& other) const noexcept;
 
