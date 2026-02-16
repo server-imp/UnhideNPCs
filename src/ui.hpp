@@ -1,24 +1,67 @@
 #ifndef UNHIDENPCS_UI_HPP
 #define UNHIDENPCS_UI_HPP
 #pragma once
+#include "fw/memory/hooks/d3d11.hpp"
+#include "fw/memory/hooks/wndproc.hpp"
 
 namespace ui
 {
+    extern std::optional<std::unique_ptr<memory::hooks::d3d11>> d3dHook;
+    extern std::optional<memory::hooks::wndproc>                wndProcHook;
+
     void tooltip(const char* text);
 
     bool checkbox(const char* label, const char* id, bool& value, const char* tip, float labelOffset);
 
-    bool combo(const char* label, const char* id, int& value, const char* const* items, int count, const char* tip, float labelOffset);
+    bool combo(
+        const char*        label,
+        const char*        id,
+        int&               value,
+        const char* const* items,
+        int                count,
+        const char*        tip,
+        float              labelOffset
+    );
 
-    bool sliderInt(const char* label, const char* id, int& value, int min, int max, const char* fmt, const char* tip, float labelOffset);
+    bool sliderInt(
+        const char* label,
+        const char* id,
+        int32_t&    value,
+        int32_t     min,
+        int32_t     max,
+        const char* fmt,
+        const char* tip,
+        float       labelOffset
+    );
+
+    bool sliderFloat(
+        const char* label,
+        const char* id,
+        float&      value,
+        float       min,
+        float       max,
+        const char* fmt,
+        const char* tip,
+        float       labelOffset
+    );
 
     void renderOptions();
 
-    void renderWindow(uint32_t not_charsel_or_loading, uint32_t hide_if_combat_or_ooc);
+    void renderWindow();
 
     bool wasKeyPressed(int vKey);
 
     bool wasComboPressed(const std::initializer_list<int>& combo);
+
+    bool OnWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+    void OnD3DPresent();
+
+    void OnD3DResizeBuffers(const memory::hooks::d3d11* hk, bool pre);
+
+    bool OnD3DStarted(const memory::hooks::d3d11* hk);
+
+    void OnD3DShutdown(const memory::hooks::d3d11* hk);
 }
 
 #endif //UNHIDENPCS_UI_HPP
