@@ -6,34 +6,43 @@ UnhideNPCs keeps them visible.
 Using this, you could even put `Character Model Limit` to `Lowest` and still see all enemies/bosses/NPCs!
 
 ## Notes
-UnhideNPCs works as expected in my testing, but it hasn’t been widely used yet. Use with caution, as unforeseen issues may appear.
-
 UnhideNPCs does nothing while in PvP or WvW.
 
-When using the Nexus or ArcDPS there is in-game configuration available, in proxy or injected modes you need to manually edit the config file)
+Tested on Windows 11 25H2 and Fedora Linux 43 (GE-Proton10-30).
 
-Tested on Windows 11 25H2 and Fedora Linux 42 (GE-Proton10-20).
+## In-Game Configuration
+
+This add-on includes an in-game configuration interface.
+
+> **Note:** The images below may or may not show an older version of the plugin
+
+### Nexus Version
+When installed via **Nexus**, the configuration is available directly in the Nexus UI:
+
+<img width="275" height="437" alt="Nexus configuration UI" src="https://github.com/user-attachments/assets/61df3622-7c4f-4256-8de5-826a243e891a" />
+
+---
+
+### ArcDPS / Proxy / Injection Version
+When using **ArcDPS**, **Proxy**, or **Injection**, the configuration appears in its own separate window:
+
+<img width="363" height="444" alt="image" src="https://github.com/user-attachments/assets/5b3e7fd9-e23b-4a1e-806f-0a5420c70b4c" />
+
+> **Note:** The "Overlay" section's settings shown in the image are only functional when using **Proxy** or **Injection** mode.
+
+> If you tick "Disable Overlay", it will immediately unload the window, and if you want it back you need to edit the config file
+> and set DisableOverlay to false.
 
 ## Installation
-There are four different ways to use UnhideNPCs; you only need to follow one of them.
+There are four different ways to use UnhideNPCs; only follow one of them.
 
 ### 1) Nexus (recommended)
 1. It's available in-game in the Nexus Library
-   - When you are using Nexus, a configuration menu is available in-game
-   - <img width="220" height="350" alt="image" src="https://github.com/user-attachments/assets/61df3622-7c4f-4256-8de5-826a243e891a" />
-   - `Images may or may not be out of date, and not show the latest options`
-
-
 
 ### 2) ArcDPS
 1. Download `UnhideNPCs.dll` from [Releases](https://github.com/server-imp/UnhideNPCs/releases).
 2. Place it in your game folder (e.g. `C:\Program Files\Guild Wars 2`).
 3. ArcDPS will load the plugin automatically on next launch.
-   - <img width="280" height="282" alt="image" src="https://github.com/user-attachments/assets/58c7c9b3-6f80-4bf4-9386-5ef3a5864222" />
-   - `Images may or may not be out of date, and not show the latest options`
-   - Hotkey: ALT+SHIFT+U
-
-
 
 ### 3) DLL Proxy
 1. Download `UnhideNPCs.dll` from [Releases](https://github.com/server-imp/UnhideNPCs/releases).
@@ -45,7 +54,6 @@ There are four different ways to use UnhideNPCs; you only need to follow one of 
 ### 4) Manual injection (for developers/testing mainly)
 1. Inject `UnhideNPCs.dll` using your injector of choice, a simple one is included in the project for convenience.
 2. When injected:
-   - A console window will open for logs (closing it will also close the game).
    - Press `END` to unload the plugin so it can be reloaded without restarting the game.
 
 ## Configuration
