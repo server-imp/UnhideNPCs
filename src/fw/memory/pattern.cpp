@@ -1,8 +1,11 @@
 #include "pattern.hpp"
 #include "../logger.hpp"
+#include "fw/util.hpp"
 
-memory::pattern::pattern
-(const std::vector<uint8_t>& data, const std::vector<uint8_t>& mask) : _data(data), _mask(mask) {}
+memory::pattern::pattern(
+    const std::vector<uint8_t>& data,
+    const std::vector<uint8_t>& mask
+) : _data(data), _mask(mask) {}
 
 memory::pattern::pattern(const std::string& ida)
 {
