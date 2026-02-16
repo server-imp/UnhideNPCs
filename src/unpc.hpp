@@ -20,14 +20,14 @@ namespace unpc
         ArcDPS   = 4
     };
 
-    constexpr int32_t signature = 1817724315;
+    constexpr auto signature = 1817724315;
 
-    extern eMode mode;
+    inline auto mode = eMode::Unknown;
 
-    extern bool nexusPresent;
-    extern bool arcDpsPresent;
-    extern bool injected;
-    extern bool exit;
+    extern std::atomic_bool nexusPresent;
+    extern std::atomic_bool arcDpsPresent;
+    extern std::atomic_bool injected;
+    extern std::atomic_bool exit;
 
     extern std::optional<logging::Logger> logger;
     extern std::optional<Settings>        settings;
@@ -45,9 +45,12 @@ namespace unpc
     extern uint32_t numPlayersVisible;
     extern uint32_t numPlayerOwnedVisible;
 
+    extern bool unloadOverlay;
+
+    void onHookTick();
+
     // This function may be called second, returning true means the character will be forced invisible
-    bool shouldHide
-    (
+    bool shouldHide(
         bool    isPlayer,
         bool    isPlayerOwned,
         bool    isOwnerLocalPlayer,
@@ -60,8 +63,7 @@ namespace unpc
 
     // This function is called first, returning true means the character will be forced visible
     // if returning false, it will go on to call shouldHide
-    bool shouldShow
-    (
+    bool shouldShow(
         bool    isPlayer,
         bool    isPlayerOwned,
         bool    isOwnerLocalPlayer,

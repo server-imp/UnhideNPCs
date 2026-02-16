@@ -1,6 +1,5 @@
 #include "unpc.hpp"
 #include "ui.hpp"
-
 #include "integration/nexus.hpp"
 
 using namespace std::chrono_literals;
@@ -8,27 +7,27 @@ using namespace memory;
 
 using namespace unpc;
 
-auto unpc::mode = eMode::Unknown;
+HANDLE      unpc::hMutex {};
+HMODULE     unpc::hModule {};
+HANDLE      unpc::hThread {};
+std::string unpc::proxyModuleName {};
+HMODULE     unpc::hProxyModule {};
+MumbleLink* unpc::mumbleLink {};
+int32_t*    unpc::loadingScreenActive {};
 
-HANDLE      unpc::hMutex{};
-HMODULE     unpc::hModule{};
-HANDLE      unpc::hThread{};
-std::string unpc::proxyModuleName{};
-HMODULE     unpc::hProxyModule{};
-MumbleLink* unpc::mumbleLink{};
-int32_t*    unpc::loadingScreenActive{};
+uint32_t unpc::numPlayersVisible {};
+uint32_t unpc::numPlayerOwnedVisible {};
 
-uint32_t unpc::numPlayersVisible{};
-uint32_t unpc::numPlayerOwnedVisible{};
+bool unpc::unloadOverlay {};
 
-bool unpc::nexusPresent{};
-bool unpc::arcDpsPresent{};
-bool unpc::injected{};
-bool unpc::exit{};
+std::atomic_bool unpc::nexusPresent {};
+std::atomic_bool unpc::arcDpsPresent {};
+std::atomic_bool unpc::injected {};
+std::atomic_bool unpc::exit {};
 
 std::optional<logging::Logger> unpc::logger;
 std::optional<Settings>        unpc::settings;
-std::optional<detour>          unpc::npcHook{};
+std::optional<detour>          unpc::npcHook {};
 
 #include "re.hpp"
 
@@ -67,10 +66,21 @@ bool initialize()
     if (maximumDistance < 0.0f || maximumDistance > 1000.0f)
         settings->setMaximumDistance(0.0f);
 
+    const auto fontSize = settings->getOverlayFontSize();
+    if (fontSize < 10 || fontSize > 24)
+        settings->setOverlayFontSize(24);
+
+    const auto maximumPlayers = settings->getMaxPlayersVisible();
+    if (maximumPlayers > 50)
+        settings->setMaxPlayersVisible(0);
+    const auto maximumPlayerOwned = settings->getMaxPlayerOwnedVisible();
+    if (maximumPlayerOwned > 50)
+        settings->setMaxPlayerOwnedVisible(0);
+
     if (settings->getForceConsole())
         logger->setConsole(true);
 
-    module game{};
+    module game {};
     if (!module::tryGetByName("Gw2-64.exe", game))
     {
         LOG_ERR("Unable to get Gw2-64.exe module");
@@ -78,7 +88,7 @@ bool initialize()
     }
     LOG_INFO("Gw2-64.exe OK");
 
-    handle pointer{};
+    handle pointer {};
     if (!game.find_pattern(re::pattern1, pointer))
     {
         LOG_ERR("Unable to find pattern 1");
@@ -95,7 +105,7 @@ bool initialize()
     }
     pointer = pointer.add(10).resolve_relative_call();
     LOG_DBG("Resolved call to {}+{:X}", game.name(), pointer.sub(game.start()).raw());
-    npcHook.emplace("Hook", pointer.to_ptr<void*>(), re::Hook);
+    npcHook.emplace("Hook", pointer.to_ptr<void*>(), reinterpret_cast<void*>(re::Hook));
     LOG_INFO("Pattern 2 OK");
 
     if (!game.find_pattern(re::pattern3, pointer))
@@ -103,7 +113,7 @@ bool initialize()
         LOG_ERR("Unable to find pattern 3");
         return false;
     }
-    pointer = pointer.add(5);
+    pointer             = pointer.add(5);
     loadingScreenActive = pointer.add(6).add(pointer.add(2).deref<int32_t>()).to_ptr<int32_t*>();
     LOG_DBG("Loading screen active: {:08X}", reinterpret_cast<uintptr_t>(loadingScreenActive));
     LOG_INFO("Pattern 3 OK");
@@ -134,8 +144,58 @@ bool initialize()
     return true;
 }
 
-bool unpc::shouldHide
-(
+void unpc::onHookTick()
+{
+    if (exit)
+        return;
+
+    if (unloadOverlay && ui::d3dHook)
+    {
+        ui::d3dHook.reset();
+        unloadOverlay = false;
+    }
+
+    if (mode != eMode::Injected && mode != eMode::Proxy)
+        return;
+
+    if (!settings || settings->getDisableOverlay())
+        return;
+
+    const bool loadingScreen = *loadingScreenActive;
+    const bool uiVersion     = mumbleLink && mumbleLink->uiVersion == 2;
+
+    if (loadingScreen || uiVersion)
+    {
+        // If loading wait 3 seconds, otherwise initialize overlay straight away
+        static uint64_t initialTick = GetTickCount64() - (uiVersion ? 3000 : 0);
+        if (GetTickCount64() - initialTick < 3000)
+            return;
+        initialTick = GetTickCount64();
+
+        if (!ui::d3dHook && (mode == eMode::Proxy || mode == eMode::Injected))
+        {
+            ui::d3dHook = hooks::d3d11::create(
+                "ArenaNet_Gr_Window_Class",
+                "",
+                ui::OnD3DPresent,
+                ui::OnD3DResizeBuffers,
+                ui::OnD3DStarted,
+                ui::OnD3DShutdown
+            );
+
+            if (!ui::d3dHook || !ui::d3dHook.value()->enable())
+            {
+                LOG_INFO("Overlay Not OK");
+            }
+            else
+            {
+                LOG_INFO("Overlay OK");
+            }
+        }
+    }
+}
+
+bool unpc::shouldHide(
     const bool    isPlayer,
     const bool    isPlayerOwned,
     const bool    isOwnerLocalPlayer,
@@ -182,8 +242,7 @@ bool unpc::shouldHide
     return false;
 }
 
-bool unpc::shouldShow
-(
+bool unpc::shouldShow(
     const bool    isPlayer,
     const bool    isPlayerOwned,
     const bool    isOwnerLocalPlayer,
@@ -223,10 +282,10 @@ bool unpc::shouldShow
     if (rank < minRank)
         return false;
 
-    const auto mode = unpc::settings->getAttackable();
-    if (mode == 1 && !isAttackable)
+    const auto _mode = unpc::settings->getAttackable();
+    if (_mode == 1 && !isAttackable)
         return false;
-    if (mode == 2 && isAttackable)
+    if (_mode == 2 && isAttackable)
         return false;
 
     if (maxDistance > 0 && distance >= maxDistance)
@@ -254,7 +313,6 @@ void unpc::start()
 
     if (injected)
     {
-        logger->setConsole(true);
         LOG_INFO("Mode: Injected");
         mode = eMode::Injected;
     }
@@ -263,13 +321,13 @@ void unpc::start()
         LOG_INFO("Mode: Proxy({})", proxyModuleName);
         mode = eMode::Proxy;
     }
-    else if (nexusPresent && util::isModuleInAnyDirsRelativeToExe(hModule, {"addons"}))
+    else if (nexusPresent && util::isModuleInAnyDirsRelativeToExe(hModule, { "addons" }))
     {
         LOG_INFO("Mode: Nexus");
         mode = eMode::Nexus;
         logger->registerCallback(nexus::logCallback);
     }
-    else if (arcDpsPresent && util::isModuleInAnyDirsRelativeToExe(hModule, {"", "bin64"}))
+    else if (arcDpsPresent && util::isModuleInAnyDirsRelativeToExe(hModule, { "", "bin64" }))
     {
         LOG_INFO("Mode: ArcDPS");
         mode = eMode::ArcDPS;
@@ -295,6 +353,9 @@ void unpc::start()
 void unpc::stop()
 {
     LOG_INFO("Stopping");
+
+    if (ui::d3dHook)
+        ui::d3dHook.reset();
 
     if (npcHook)
     {
@@ -322,8 +383,7 @@ void unpc::stop()
 void unpc::entrypoint()
 {
     // need to use CreateThread because for some reason std::thread doesn't allow the dll to unload cleanly
-    hThread = CreateThread
-    (
+    hThread = CreateThread(
         nullptr,
         0,
         [](PVOID) -> DWORD
