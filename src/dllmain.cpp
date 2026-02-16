@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "pch.hpp"
 #include "unpc.hpp"
 #include "fw/proxy.hpp"
@@ -18,10 +20,9 @@ bool isInGameFolder(const HMODULE hModule)
     dllPath = dllPath.parent_path();
 
     // allowed folders relative to exe
-    const std::filesystem::path allowed[] = {exePath, exePath / "addons", exePath / "bin64"};
+    const std::filesystem::path allowed[] = { exePath, exePath / "addons", exePath / "bin64" };
 
-    return std::any_of
-    (
+    return std::any_of(
         std::begin(allowed),
         std::end(allowed),
         [&](const std::filesystem::path& p)
@@ -52,9 +53,13 @@ BOOL APIENTRY DllMain(const HMODULE hModule, const DWORD ul_reason_for_call, PVO
         // attempts to determine if we are performing as a proxy dll
         // if we are, then we call LoadLibrary for our own module to
         // increase refcount, otherwise we might get unloaded prematurely
-        if (proxy::check({"dxgi.dll", "midimap.dll", "d3d9.dll"}, unpc::proxyModuleName))
+        if (proxy::check({ "dxgi.dll", "midimap.dll", "d3d9.dll" }, unpc::proxyModuleName))
         {
-            unpc::hProxyModule = LoadLibraryA(unpc::proxyModuleName.c_str());
+            if (!GetModuleHandleEx(0, unpc::proxyModuleName.c_str(), &unpc::hProxyModule))
+            {
+                return FALSE;
+            }
+
             unpc::entrypoint();
             return TRUE;
         }
