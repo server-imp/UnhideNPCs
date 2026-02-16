@@ -8,17 +8,30 @@ permissions:
 
 jobs:
   build-and-release:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v3
 
+      - name: Install MinGW toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mingw-w64
+
       - name: Configure git for private fetch
         run: |
           git config --global url."https://${{ secrets.GH_PAT }}:@github.com/".insteadOf "https://github.com/"
-          
+
       - name: Configure CMake
-        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_CXX_STANDARD=17
+        run: >
+          cmake -S . -B build
+          -G Ninja
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          -DCMAKE_CXX_STANDARD=17
+          -DCMAKE_SYSTEM_NAME=Windows
+          -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc
+          -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++
+          -DCMAKE_RC_COMPILER=x86_64-w64-mingw32-windres
 
       - name: Build
         run: cmake --build build --config RelWithDebInfo
@@ -38,18 +51,18 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./build/RelWithDebInfo/UnhideNPCs.dll
+          asset_path: ./build/UnhideNPCs.dll
           asset_name: UnhideNPCs.dll
           asset_content_type: application/octet-stream
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload PDB to Release
+      - name: Upload Debug Symbols to Release
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./build/RelWithDebInfo/UnhideNPCs.pdb
-          asset_name: UnhideNPCs.pdb
+          asset_path: ./build/UnhideNPCs.dll.debug
+          asset_name: UnhideNPCs.dll.debug
           asset_content_type: application/octet-stream
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
