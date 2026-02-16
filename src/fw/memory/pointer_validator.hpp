@@ -1,7 +1,6 @@
 #ifndef UNHIDENPCS_POINTER_VALIDATOR_HPP
 #define UNHIDENPCS_POINTER_VALIDATOR_HPP
 #pragma once
-#include "range.hpp"
 
 namespace memory
 {
@@ -10,16 +9,16 @@ namespace memory
     private:
         struct CacheEntry
         {
-            uint64_t expireTime{};
-            bool     valid{};
+            uint64_t expireTime {};
+            bool     valid {};
         };
 
-        uint64_t                                  _currentTick{};
-        uint32_t                                  _cacheDurationMs{};
-        std::unordered_map<uintptr_t, CacheEntry> _cache{};
-        size_t                                    _pageSize{};
-        uintptr_t                                 _minimumApplicableAddress{};
-        uintptr_t                                 _maximumApplicableAddress{};
+        uint64_t                                  _currentTick {};
+        uint32_t                                  _cacheDurationMs {};
+        std::unordered_map<uintptr_t, CacheEntry> _cache {};
+        size_t                                    _pageSize {};
+        uintptr_t                                 _minimumApplicableAddress {};
+        uintptr_t                                 _maximumApplicableAddress {};
 
         static bool probe(uintptr_t pointer);
 
@@ -34,7 +33,7 @@ namespace memory
 
         bool validate(void* pointer);
 
-        template<typename T>
+        template <typename T>
         std::enable_if_t<std::is_pointer_v<T>, bool> dereference(T pointer, T* result);
 
         void clearCache();
@@ -47,13 +46,13 @@ namespace memory
 
         static bool Validate(void* pointer);
 
-        template<typename T>
+        template <typename T>
         static std::enable_if_t<std::is_pointer_v<T>, bool> Dereference(T pointer, T* result);
 
         static void ClearCache();
     };
 
-    template<typename T>
+    template <typename T>
     std::enable_if_t<std::is_pointer_v<T>, bool> PointerValidator::dereference(T pointer, T* result)
     {
         if (!validate(pointer))
@@ -63,7 +62,7 @@ namespace memory
         return true;
     }
 
-    template<typename T>
+    template <typename T>
     std::enable_if_t<std::is_pointer_v<T>, bool> PointerValidator::Dereference(T pointer, T* result)
     {
         return instance().dereference(pointer, result);

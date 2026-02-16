@@ -1,53 +1,11 @@
 #include "pointer_validator.hpp"
 
 #include "fw/logger.hpp"
-
-memory::PointerValidator::PointerValidator()
-{
-    SYSTEM_INFO sysInfo{};
-    GetSystemInfo(&sysInfo);
-
-    _pageSize                 = sysInfo.dwPageSize;
-    _minimumApplicableAddress = reinterpret_cast<uintptr_t>(sysInfo.lpMinimumApplicationAddress);
-    _maximumApplicableAddress = reinterpret_cast<uintptr_t>(sysInfo.lpMaximumApplicationAddress);
-
-    _cacheDurationMs = 1000;
-}
-
-void memory::PointerValidator::updateTick()
-{
-    _currentTick = GetTickCount64();
-}
-
-memory::PointerValidator& memory::PointerValidator::instance()
-{
-    static PointerValidator instance{};
-    return instance;
-}
-
-void memory::PointerValidator::UpdateTick()
-{
-    instance().updateTick();
-}
-
-bool memory::PointerValidator::Validate(const uintptr_t pointer)
-{
-    return instance().validate(pointer);
-}
-
-bool memory::PointerValidator::Validate(void* pointer)
-{
-    return instance().validate(pointer);
-}
-
-void memory::PointerValidator::ClearCache()
-{
-    instance().clearCache();
-}
+#include "fw/util.hpp"
 
 bool memory::PointerValidator::probe(const uintptr_t pointer)
 {
-    MEMORY_BASIC_INFORMATION mbi{};
+    MEMORY_BASIC_INFORMATION mbi {};
     if (const auto result = VirtualQuery(reinterpret_cast<LPCVOID>(pointer), &mbi, sizeof(mbi)); result == 0)
         return false;
 
@@ -66,10 +24,27 @@ bool memory::PointerValidator::updateCacheItem(const uintptr_t pointer, const ui
     }
     else
     {
-        _cache.emplace(pointer, CacheEntry{expireTime, valid});
+        _cache.emplace(pointer, CacheEntry { expireTime, valid });
     }
 
     return valid;
+}
+
+memory::PointerValidator::PointerValidator()
+{
+    SYSTEM_INFO sysInfo {};
+    GetSystemInfo(&sysInfo);
+
+    _pageSize                 = sysInfo.dwPageSize;
+    _minimumApplicableAddress = reinterpret_cast<uintptr_t>(sysInfo.lpMinimumApplicationAddress);
+    _maximumApplicableAddress = reinterpret_cast<uintptr_t>(sysInfo.lpMaximumApplicationAddress);
+
+    _cacheDurationMs = 1000;
+}
+
+void memory::PointerValidator::updateTick()
+{
+    _currentTick = GetTickCount64();
 }
 
 bool memory::PointerValidator::validate(const uintptr_t pointer)
@@ -105,4 +80,30 @@ bool memory::PointerValidator::validate(void* pointer)
 void memory::PointerValidator::clearCache()
 {
     _cache.clear();
+}
+
+memory::PointerValidator& memory::PointerValidator::instance()
+{
+    static PointerValidator instance {};
+    return instance;
+}
+
+void memory::PointerValidator::UpdateTick()
+{
+    instance().updateTick();
+}
+
+bool memory::PointerValidator::Validate(const uintptr_t pointer)
+{
+    return instance().validate(pointer);
+}
+
+bool memory::PointerValidator::Validate(void* pointer)
+{
+    return instance().validate(pointer);
+}
+
+void memory::PointerValidator::ClearCache()
+{
+    instance().clearCache();
 }
