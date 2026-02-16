@@ -5,9 +5,11 @@
 
 bool isArcDPS()
 {
-    const HMODULE hModule = LoadLibraryA("d3d11.dll");
-    if (!hModule)
+    HMODULE hModule {};
+    if (!GetModuleHandleEx(0, "d3d11.dll", &hModule))
+    {
         return false;
+    }
 
     const auto check = GetProcAddress(hModule, "arcdps_identifier_export");
     FreeLibrary(hModule);
@@ -35,15 +37,22 @@ arcdps_exports* mod_init()
 
 uintptr_t mod_release()
 {
-    if (!unpc::nexusPresent && !unpc::hProxyModule & !unpc::injected)
+    if (!unpc::nexusPresent && !unpc::hProxyModule && !unpc::injected)
         unpc::stop();
     return 0;
 }
 
-void* get_init_addr
-(char* arcversion, void* imguictx, void* id3dptr, HANDLE arcdll, void* mallocfn, void* freefn, uint32_t d3dversion)
+void* get_init_addr(
+    char*    arcversion,
+    void*    imguictx,
+    void*    id3dptr,
+    HANDLE   arcdll,
+    void*    mallocfn,
+    void*    freefn,
+    uint32_t d3dversion
+)
 {
-    if (!unpc::nexusPresent && !unpc::hProxyModule & !unpc::injected)
+    if (!unpc::nexusPresent && !unpc::hProxyModule && !unpc::injected)
     {
         ImGui::SetCurrentContext(static_cast<ImGuiContext*>(imguictx));
         const auto allocatorFn = reinterpret_cast<void*(*)(size_t, void*)>(reinterpret_cast<std::uintptr_t>(mallocfn));
