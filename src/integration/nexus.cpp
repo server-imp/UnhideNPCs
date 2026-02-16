@@ -5,8 +5,8 @@
 
 namespace nexus
 {
-    AddonDefinition AddonDef{};
-    AddonAPI*       APIDefs{};
+    AddonDefinition AddonDef {};
+    AddonAPI*       APIDefs {};
 
     bool isNexus()
     {
@@ -35,21 +35,16 @@ namespace nexus
         ELogLevel level;
         switch (entry.level)
         {
-            case logging::LogLevel::Debug:
-                level = ELogLevel_DEBUG;
-                break;
-            case logging::LogLevel::Info:
-                level = ELogLevel_INFO;
-                break;
-            case logging::LogLevel::Warning:
-                level = ELogLevel_WARNING;
-                break;
-            case logging::LogLevel::Error:
-                level = ELogLevel_CRITICAL;
-                break;
-            default:
-                level = ELogLevel_OFF;
-                break;
+        case logging::LogLevel::Debug: level = ELogLevel_DEBUG;
+            break;
+        case logging::LogLevel::Info: level = ELogLevel_INFO;
+            break;
+        case logging::LogLevel::Warning: level = ELogLevel_WARNING;
+            break;
+        case logging::LogLevel::Error: level = ELogLevel_CRITICAL;
+            break;
+        default: level = ELogLevel_OFF;
+            break;
         }
 
         APIDefs->Log(level, "UnhideNPCs", entry.message.c_str());

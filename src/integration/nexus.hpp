@@ -2,7 +2,8 @@
 #define UNHIDENPCS_NEXUS_HPP
 #pragma once
 
-namespace logging {
+namespace logging
+{
     struct LogEntry;
 }
 
