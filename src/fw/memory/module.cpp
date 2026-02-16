@@ -41,21 +41,21 @@ memory::module memory::module::getFromHandle(const HMODULE hModule)
         return {};
     }
 
-    MODULEINFO moduleInfo{};
+    MODULEINFO moduleInfo {};
     if (!GetModuleInformation(GetCurrentProcess(), hModule, &moduleInfo, sizeof(moduleInfo)))
     {
         LOG_DBG("GetModuleInformation failed: {}", GetLastError());
         return {};
     }
 
-    char dllPath[MAX_PATH]{};
+    char dllPath[MAX_PATH] {};
     if (!GetModuleFileName(hModule, dllPath, MAX_PATH))
     {
         LOG_DBG("GetModuleFileName failed: {}", GetLastError());
         return {};
     }
 
-    module result{};
+    module result {};
     result._hModule = hModule;
     result._path    = dllPath;
     result._name    = result._path.filename().string();
@@ -78,9 +78,13 @@ memory::module memory::module::getThis()
 bool memory::module::tryGetByName(const std::string& name, module& result)
 {
     if (name.empty())
+    {
         LOG_DBG("Getting main module");
+    }
     else
+    {
         LOG_DBG("Getting module by name \"{}\"", name);
+    }
 
     const auto hModule = GetModuleHandleA(name.empty() ? nullptr : name.c_str());
     if (!hModule)
@@ -99,7 +103,7 @@ bool memory::module::tryGetByName(const std::string& name, module& result)
 
 memory::module memory::module::getByName(const std::string& name)
 {
-    module result{};
+    module result {};
     if (!tryGetByName(name, result))
         LOG_DBG("tryGetModuleByName failed");
     return result;
@@ -107,10 +111,13 @@ memory::module memory::module::getByName(const std::string& name)
 
 bool memory::module::tryGetByAddr(const memory::handle& addr, module& result)
 {
+    if (!addr.raw())
+        return false;
+
     LOG_DBG("Attempting to find module that holds address {:08X}", addr.raw());
     DWORD needed = 0;
 
-    // Get required size
+    // Get the required size
     if (!EnumProcessModules(GetCurrentProcess(), nullptr, 0, &needed) || needed == 0)
     {
         LOG_DBG("EnumProcessModules[1] failed: {}", GetLastError());

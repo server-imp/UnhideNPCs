@@ -8,12 +8,12 @@ namespace memory
     class module : public range
     {
     private:
-        HMODULE               _hModule{};
-        std::string           _name{};
-        std::filesystem::path _path{};
+        HMODULE               _hModule {};
+        std::string           _name {};
+        std::filesystem::path _path {};
 
     public:
-        HMODULE handle() const;
+        [[nodiscard]] HMODULE handle() const;
 
         const std::string& name();
 
