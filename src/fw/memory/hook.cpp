@@ -7,35 +7,28 @@
 #include "../logger.hpp"
 
 #include "MinHook.h"
+#include "fw/util.hpp"
 
-memory::hook::hook
-(std::string name, void* target, void* original, void* ownFunction) : _name(std::move(name)),
-                                                                      _target(target),
-                                                                      _original(original),
-                                                                      _ownFunction(ownFunction)
+memory::hook::hook(std::string name, void* target, void* original, void* ownFunction) : _name(std::move(name)),
+    _target(target), _original(original), _ownFunction(ownFunction)
 {
-    auto from = handle(_target);
-    std::string fromStr{};
-    auto to = handle(_ownFunction);
-    std::string toStr{};
+    const auto  from = handle(_target);
+    std::string fromStr {};
+    const auto  to = handle(_ownFunction);
+    std::string toStr {};
 
-    module module{};
+    module module {};
     if (module::tryGetByAddr(from, module))
         fromStr = fmt::format("{}+{:X}", module.name(), from.sub(module.start()).raw());
     else
         fromStr = fmt::format("{:08X}", from.raw());
 
-    if (module.tryGetByAddr(to, module))
+    if (memory::module::tryGetByAddr(to, module))
         toStr = fmt::format("{}+{:X}", module.name(), to.sub(module.start()).raw());
     else
         toStr = fmt::format("{:08X}", to.raw());
 
     LOG_DBG("Created hook \"{}\" {} -> {}", _name, fromStr, toStr);
-}
-
-void* memory::hook::target() const
-{
-    return _target;
 }
 
 const std::string& memory::hook::name() const
@@ -48,8 +41,17 @@ bool memory::hook::enabled() const
     return _enabled;
 }
 
-memory::detour::detour
-(std::string name, void* target, void* ownFunction) : hook(std::move(name), target, nullptr, ownFunction) {}
+void* memory::hook::target() const
+{
+    return _target;
+}
+
+memory::detour::detour(std::string name, void* target, void* ownFunction) : hook(
+    std::move(name),
+    target,
+    nullptr,
+    ownFunction
+) {}
 
 bool memory::detour::enable()
 {
