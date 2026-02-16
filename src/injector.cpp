@@ -1,6 +1,7 @@
 #define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#include <TlHelp32.h>
+#include <algorithm>
+#include <windows.h>
+#include <tlhelp32.h>
 #include <cstdio>
 #include <string>
 #include <filesystem>
@@ -17,14 +18,14 @@ DWORD getPidByName(const char* name)
 
     if (Process32First(snapshot, &entry) == TRUE)
     {
-        while (Process32Next(snapshot, &entry) == TRUE)
+        do
         {
             if (strcmp(entry.szExeFile, name) == 0)
             {
                 CloseHandle(snapshot);
                 return entry.th32ProcessID;
             }
-        }
+        } while (Process32Next(snapshot, &entry) == TRUE);
     }
 
     CloseHandle(snapshot);
@@ -38,11 +39,34 @@ bool findModule(const DWORD dwPid, const std::string& name)
 
     const auto snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, dwPid);
 
+    auto normalize = [](std::string s) -> std::string
+    {
+        std::transform(
+            s.begin(),
+            s.end(),
+            s.begin(),
+            [](unsigned char c)
+            {
+                return std::tolower(c);
+            }
+        );
+
+        constexpr std::string_view suffix = ".dll";
+        if (s.size() >= suffix.size() && s.compare(s.size() - suffix.size(), suffix.size(), suffix) == 0)
+        {
+            s.erase(s.size() - suffix.size());
+        }
+
+        return s;
+    };
+
+    const auto normalizedName = normalize(name);
+
     if (Module32First(snapshot, &entry))
     {
         do
         {
-            if (entry.szModule == name)
+            if (normalize(entry.szModule) == normalizedName)
             {
                 CloseHandle(snapshot);
                 return true;
@@ -74,7 +98,7 @@ int main()
         return 2;
     }
 
-    if (findModule(pid, "UnhideNPCs"))
+    if (findModule(pid, "UnhideNPCs.dll"))
     {
         printf("%s already loaded!\n", ModuleName);
         system("pause");
@@ -92,8 +116,7 @@ int main()
     const auto kernel32     = GetModuleHandleA("kernel32.dll");
     const auto loadLibraryA = reinterpret_cast<LPVOID>(GetProcAddress(kernel32, "LoadLibraryA"));
 
-    const auto buffer = VirtualAllocEx
-        (hProc, nullptr, strlen(path.string().c_str()), MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+    const auto buffer = VirtualAllocEx(hProc, nullptr, MAX_PATH, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 
     if (!buffer)
     {
@@ -112,8 +135,15 @@ int main()
         return 6;
     }
 
-    const auto hThread = CreateRemoteThread
-        (hProc, nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(loadLibraryA), buffer, 0, nullptr);
+    const auto hThread = CreateRemoteThread(
+        hProc,
+        nullptr,
+        0,
+        reinterpret_cast<LPTHREAD_START_ROUTINE>(loadLibraryA),
+        buffer,
+        0,
+        nullptr
+    );
     if (hThread == nullptr)
     {
         printf("CreateRemoteThread failed: %ld\n", GetLastError());
