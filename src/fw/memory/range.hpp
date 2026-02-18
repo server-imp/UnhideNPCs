@@ -12,9 +12,9 @@ namespace memory
         handle    _end {};
         ptrdiff_t _size {};
 
+    public:
         range() = default;
 
-    public:
         explicit range(const char* moduleName);
 
         explicit range(const handle& start, ptrdiff_t size);
