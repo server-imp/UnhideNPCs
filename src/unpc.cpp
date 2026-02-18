@@ -67,15 +67,15 @@ bool initialize()
         settings->setMaximumDistance(0.0f);
 
     const auto fontSize = settings->getOverlayFontSize();
-    if (fontSize < 10 || fontSize > 24)
-        settings->setOverlayFontSize(24);
+    if (fontSize < 10 || fontSize > 20)
+        settings->setOverlayFontSize(20);
 
     const auto maximumPlayers = settings->getMaxPlayersVisible();
-    if (maximumPlayers > 50)
-        settings->setMaxPlayersVisible(0);
+    if (maximumPlayers > 250)
+        settings->setMaxPlayersVisible(250);
     const auto maximumPlayerOwned = settings->getMaxPlayerOwnedVisible();
-    if (maximumPlayerOwned > 50)
-        settings->setMaxPlayerOwnedVisible(0);
+    if (maximumPlayerOwned > 250)
+        settings->setMaxPlayerOwnedVisible(250);
 
     if (settings->getForceConsole())
         logger->setConsole(true);
@@ -203,11 +203,17 @@ bool unpc::shouldHide(
     const bool    isAttackable,
     const uint8_t rank,
     const float   distance,
-    const float   maxDistance
+    const float   maxDistance,
+    const bool isActiveGuildMember,
+    const bool isGuildMember,
+    const bool isPartyMember,
+    const bool isSquadMember
 )
 {
     if (unpc::settings->getDisableHidingInInstances() && unpc::mumbleLink->getContext().mapType == MapType::Instances)
+    {
         return false;
+    }
 
     if (isTarget && unpc::settings->getAlwaysShowTarget())
         return false;
@@ -219,6 +225,14 @@ bool unpc::shouldHide(
             return true;
 
         if (unpc::settings->getHidePlayers())
+            return true;
+
+        const bool guild = isActiveGuildMember || isGuildMember;
+        if (unpc::settings->getHideNonGuildMembers() && !guild)
+            return true;
+
+        const bool group = isPartyMember || isSquadMember;
+        if (unpc::settings->getHideNonGroupMembers() && !group)
             return true;
 
         return false;
@@ -236,6 +250,14 @@ bool unpc::shouldHide(
         if (unpc::settings->getHidePlayerOwned())
             return true;
 
+        bool guild = isActiveGuildMember || isGuildMember;
+        if (unpc::settings->getHideNonGuildMembersOwned() && !guild)
+            return true;
+
+        bool group = isPartyMember || isSquadMember;
+        if (unpc::settings->getHideNonGroupMembersOwned() && !group)
+            return true;
+
         return false;
     }
 
@@ -250,7 +272,11 @@ bool unpc::shouldShow(
     const bool    isAttackable,
     const uint8_t rank,
     const float   distance,
-    const float   maxDistance
+    const float   maxDistance,
+    const bool isActiveGuildMember,
+    const bool isGuildMember,
+    const bool isPartyMember,
+    const bool isSquadMember
 )
 {
     if (isTarget && unpc::settings->getAlwaysShowTarget())

@@ -58,7 +58,11 @@ namespace unpc
         bool    isAttackable,
         uint8_t rank,
         float   distance,
-        float   maxDistance
+        float   maxDistance,
+        bool    isActiveGuildMember,
+        bool    isGuildMember,
+        bool    isPartyMember,
+        bool    isSquadMember
     );
 
     // This function is called first, returning true means the character will be forced visible
@@ -71,7 +75,11 @@ namespace unpc
         bool    isAttackable,
         uint8_t rank,
         float   distance,
-        float   maxDistance
+        float   maxDistance,
+        bool    isActiveGuildMember,
+        bool    isGuildMember,
+        bool    isPartyMember,
+        bool    isSquadMember
     );
 
     void start();
