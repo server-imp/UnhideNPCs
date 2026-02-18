@@ -43,6 +43,16 @@ private:
     CONFIG_PROPERTY(int32_t, MaxPlayersVisible, 0, "Maximum number of visible players. (0=no limit)")
     CONFIG_PROPERTY(int32_t, MaxPlayerOwnedVisible, 0, "Maximum number of visible player owned NPCs. (0=no limit)")
 
+    CONFIG_PROPERTY(bool, HideNonGuildMembers, false, "Hide any players that aren't mutual guild members")
+    CONFIG_PROPERTY(bool, HideNonGuildMembersOwned, false, "Also hide their owned characters (pets, clones etc)")
+    CONFIG_PROPERTY(
+        bool,
+        HideNonGroupMembers,
+        false,
+        "Hide any players who are not in the same group as you (party, squad)"
+    )
+    CONFIG_PROPERTY(bool, HideNonGroupMembersOwned, false, "Also hide their owned characters (pets, clones etc)")
+
     CONFIG_PROPERTY(
         bool,
         HidePlayerOwned,
@@ -72,10 +82,11 @@ private:
 
     CONFIG_PROPERTY(bool, ArcDPS_UIOpen, true, "ArcDPS UI Opened/Closed")
     CONFIG_PROPERTY(bool, DisableOverlay, false, "Disable the built in overlay when using Injection or Proxy mode")
+    CONFIG_PROPERTY(bool, CloseOnEscape, true, "Close the overlay when Escape is pressed")
     CONFIG_PROPERTY(
         float,
         OverlayFontSize,
-        24.0f,
+        14.0f,
         "The font size used for the overlay\nRequires a restart/reload to reflect changes"
     )
 
