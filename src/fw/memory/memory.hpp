@@ -9,6 +9,7 @@
 #include "scanner.hpp"
 #include "module.hpp"
 #include "pointer_validator.hpp"
+#include "protection.hpp"
 
 namespace memory
 {
