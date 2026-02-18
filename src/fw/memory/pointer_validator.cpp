@@ -52,7 +52,7 @@ bool memory::PointerValidator::validate(const uintptr_t pointer)
     if (pointer < _minimumApplicableAddress || pointer > _maximumApplicableAddress)
     {
         if (pointer > 0)
-            LOG_DBG("Rejected pointer {:08X} - out of range", pointer);
+            ;// LOG_DBG("Rejected pointer {:08X} - out of range", pointer);
         return false;
     }
 
@@ -66,7 +66,7 @@ bool memory::PointerValidator::validate(const uintptr_t pointer)
     const bool result = probe(alignedPointer);
     if (!result)
     {
-        LOG_DBG("Rejected pointer {:08X} - probe failed", pointer);
+        // LOG_DBG("Rejected pointer {:08X} - probe failed", pointer);
     }
 
     return updateCacheItem(alignedPointer, _currentTick + _cacheDurationMs, result);
