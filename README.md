@@ -26,7 +26,8 @@ When installed via **Nexus**, the configuration is available directly in the Nex
 ### ArcDPS / Proxy / Injection Version
 When using **ArcDPS**, **Proxy or **Injection**, the configuration appears in its own separate window:
 
-<img width="363" height="444" alt="image" src="https://github.com/user-attachments/assets/5b3e7fd9-e23b-4a1e-806f-0a5420c70b4c" />
+<img width="304" height="451" alt="image" src="https://github.com/user-attachments/assets/efe630e7-2b7b-4d98-baa8-cb0e052474d1" />
+
 
 > **Note:** The "Overlay" section's settings shown in the image are only functional when using **Proxy** or **Injection** mode.
 
