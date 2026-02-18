@@ -414,65 +414,9 @@ void ui::renderOptions()
         "Useful for \"resetting\" things after modifying any settings."
     );
 #ifndef BUILDING_ON_GITHUB
-    if (ImGui::Button("Print Target Info", { LABEL_OFFSET + FIELD_WIDTH, 30 }))
+    if (ImGui::Button("DBG", { LABEL_OFFSET + FIELD_WIDTH, 30 }))
     {
-        re::doPrintTargetInformation = true;
-    }
-    if (ImGui::Button("Dump Structs", { LABEL_OFFSET + FIELD_WIDTH, 30 }))
-    {
-        auto ctx = re::contextCollection;
-        if (ctx)
-        {
-            re::gw2::traverseObject(ctx, 768, 5, 0x1024, 0, "ContextCollection");
-        }
-    }
-    if (ImGui::Button("Users", { LABEL_OFFSET + FIELD_WIDTH, 30 }))
-    {
-        if (re::contextCollection && re::contextCollection->pPlCliContext)
-        {
-            auto user = re::contextCollection->pPlCliContext->pLocalUser;
 
-            LOG_INFO("Local user id: {}", user->id.to_string());
-            std::set<u128> s {};
-            int            count = 0;
-            while (VALIDATE(user->pOtherUser))
-            {
-                user = user->pOtherUser;
-
-                auto find = s.find(user->id);
-                if (find != s.end())
-                {
-                    LOG_INFO("Found duplicate user: {:08X}", reinterpret_cast<uintptr_t>(user));
-
-                    break;
-                }
-                s.emplace(user->id);
-
-                auto name = util::wstringToString(user->accountName);
-                if (name == ":Mukluk.9082")
-                {
-                    LOG_INFO("Found user: {:08X} [{}]", reinterpret_cast<uintptr_t>(user), user->id.to_string());
-                }
-                count++;
-            }
-
-            LOG_INFO("Found {} users", count);
-        }
-    }
-    if (ImGui::Button("DBG 1", { LABEL_OFFSET + FIELD_WIDTH, 30 }))
-    {
-        auto ctx = re::contextCollection;
-        if (ctx)
-        {
-            auto obj  = re::contextCollection->pChCliContext->pLocalChCliPlayer;
-            auto func = util::getVirtualFunctionAddress(obj, 0xa8);
-            auto offs = func.sub(memory::module::getMain().start());
-            LOG_INFO("Function at +{:04X}", offs.raw());
-        }
-    }
-    if (ImGui::Button("DBG 2", { LABEL_OFFSET + FIELD_WIDTH, 30 }))
-    {
-        re::printGuildMembers();
     }
 #endif
     ImGui::Unindent();
@@ -508,7 +452,7 @@ void ui::renderOptions()
             "##OverlayFontSize",
             overlayFontSize,
             10,
-            24,
+            20,
             "%.0f",
             unpc::settings->getCommentOverlayFontSize().c_str()
         ))
