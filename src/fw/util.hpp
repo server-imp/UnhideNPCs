@@ -2,6 +2,7 @@
 #define UNHIDENPCS_UTIL_HPP
 #pragma once
 #include "pch.hpp"
+#include "memory/handle.hpp"
 
 namespace util
 {
@@ -67,6 +68,11 @@ namespace util
         }
         return last_slash;
     }
+
+    memory::handle getVirtualFunctionAddress(void* object, std::size_t offset);
+
+    bool isValidGuildWars2Name(const wchar_t* name);
+
 }
 
 #endif //UNHIDENPCS_UTIL_HPP

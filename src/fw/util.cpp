@@ -6,6 +6,8 @@
 #include "logger.hpp"
 #include <shellapi.h>
 
+#include "memory/handle.hpp"
+
 void util::ltrim(std::string& s)
 {
     s.erase(
@@ -344,4 +346,66 @@ bool util::isModuleInAnyDirsRelativeToExe(const HMODULE hModule, const std::init
             return isModuleInDir(hModule, dir.empty() ? path : path / dir);
         }
     );
+}
+
+memory::handle util::getVirtualFunctionAddress(void* object, const std::size_t offset)
+{
+    if (!object)
+        return memory::handle(nullptr);
+
+    const auto vtable = *static_cast<std::uintptr_t**>(object);
+
+    if (!vtable)
+        return memory::handle(nullptr);
+
+    return memory::handle(vtable[offset / sizeof(void*)]);
+}
+
+static constexpr std::array<uint8_t, 65536> allowedTable = []() constexpr
+{
+    std::array<uint8_t, 65536> table {};
+
+    // ASCII letters
+    for (wchar_t c = L'A'; c <= L'Z'; ++c)
+        table[c] = 1;
+    for (wchar_t c = L'a'; c <= L'z'; ++c)
+        table[c] = 1;
+
+    // Space
+    table[L' '] = 1;
+
+    // Extra allowed chars
+    constexpr wchar_t extra[] = L"ÁáÂâÄäÀàÆæÇçÊêÉéËëÈèÏïÍíÎîÑñŒœÔôÖöÓóÚúÜüÛûÙù";
+
+    for (const wchar_t c : extra)
+        table[static_cast<uint16_t>(c)] = 1;
+
+    return table;
+}();
+
+bool util::isValidGuildWars2Name(const wchar_t* name)
+{
+    if (!name)
+        return false;
+
+    size_t length = wcsnlen(name, 24);
+
+    if (length >= 4 && name[0] == L'g' && name[1] == L'w' && name[2] == L'2' && name[3] == L':')
+    {
+        name   += 4;
+        length -= 4;
+    }
+
+    if (length < 3 || length > 19)
+        return false;
+
+    const uint8_t* table = allowedTable.data();
+
+    for (; length; --length)
+    {
+        if (!table[static_cast<uint16_t>(*name++)])
+            return false;
+    }
+
+    return true;
 }
