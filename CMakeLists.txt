@@ -141,7 +141,6 @@ if (BUILDING_ON_GITHUB)
 else ()
     target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../UnhideNPCs-RE")
     file(GLOB SRC_RE "${CMAKE_CURRENT_SOURCE_DIR}/../UnhideNPCs-RE/*.cpp")
-    include("${CMAKE_CURRENT_SOURCE_DIR}/../UnhideNPCs-RE/ReClass.cmake")
 endif ()
 target_sources(${PROJECT_NAME} PRIVATE ${SRC_RE})
 
