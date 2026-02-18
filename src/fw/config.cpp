@@ -153,6 +153,18 @@ bool Config::save()
     return true;
 }
 
+const std::string& Config::getComment(const std::string_view key) const
+{
+    const std::string nkey = normalize_key(key);
+    std::lock_guard   lock(_mutex);
+    if (const auto it = _index.find(nkey); it != _index.end())
+    {
+        return _properties[it->second].comment();
+    }
+
+    return "";
+}
+
 bool Config::needs_save() const noexcept
 {
     return _needSave;

@@ -194,6 +194,8 @@ public:
 
     bool save();
 
+    const std::string& getComment(std::string_view key) const;
+
     template <typename T>
     T get(std::string_view key, const T& defaultValue = {}, std::string comment = "");
 
@@ -256,6 +258,11 @@ void Config::set(const std::string_view key, const T& value)
 private:\
 type _##name = this->get<type>(#name, defaultValue, comment);\
 public:\
+const std::string& getComment##name() const\
+{\
+return this->getComment(#name);\
+}\
+\
 type get##name() const\
 {\
 return _##name;\
