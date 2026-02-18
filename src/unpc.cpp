@@ -71,11 +71,11 @@ bool initialize()
         settings->setOverlayFontSize(20);
 
     const auto maximumPlayers = settings->getMaxPlayersVisible();
-    if (maximumPlayers > 250)
-        settings->setMaxPlayersVisible(250);
+    if (maximumPlayers > 1000)
+        settings->setMaxPlayersVisible(1000);
     const auto maximumPlayerOwned = settings->getMaxPlayerOwnedVisible();
-    if (maximumPlayerOwned > 250)
-        settings->setMaxPlayerOwnedVisible(250);
+    if (maximumPlayerOwned > 1000)
+        settings->setMaxPlayerOwnedVisible(1000);
 
     if (settings->getForceConsole())
         logger->setConsole(true);
