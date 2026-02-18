@@ -20,7 +20,7 @@ private:
         bool,
         PlayerOwned,
         false,
-        "NPCs that are owned by players (pets, clones, minis etc) will also be unhidden."
+        "NPCs that players own (pets, clones, minis etc) will also be unhidden."
     )
 
     CONFIG_PROPERTY(int32_t, MinimumRank, 0, "Only NPCs that have at least this rank get unhidden.")
@@ -60,7 +60,7 @@ private:
         "NPCs that are owned by players (pets, clones, minis etc) will be hidden."
     )
 
-    CONFIG_PROPERTY(bool, HidePlayerOwnedSelf, false, "Also hide NPCs that are owned by you.")
+    CONFIG_PROPERTY(bool, HidePlayerOwnedSelf, false, "Also hide NPCs that you own.")
 
     CONFIG_PROPERTY(
         bool,
