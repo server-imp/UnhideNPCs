@@ -242,7 +242,7 @@ void ui::renderOptions()
         maxDistance,
         0,
         1000,
-        maxDistance == 0 ? "Off" : "%d meters",
+        maxDistance == 0 ? "Unlimited" : "%d meters",
         unpc::settings->getCommentMaximumDistance().c_str()
     ))
     {
@@ -323,7 +323,7 @@ void ui::renderOptions()
         maxPlayersVisible,
         0,
         250,
-        maxPlayersVisible == 0 ? "Off" : "%d",
+        maxPlayersVisible == 0 ? "Unlimited" : "%d",
         unpc::settings->getCommentMaxPlayersVisible().c_str()
     ))
     {
@@ -335,8 +335,8 @@ void ui::renderOptions()
         "##MaxPlayerOwnedVisible",
         maxPlayerOwnedVisible,
         0,
-        250,
-        maxPlayerOwnedVisible == 0 ? "Off" : "%d",
+        100,
+        maxPlayerOwnedVisible == 0 ? "Unlimited" : "%d",
         unpc::settings->getCommentMaxPlayerOwnedVisible().c_str()
     ))
     {
