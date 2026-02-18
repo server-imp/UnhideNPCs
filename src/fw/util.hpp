@@ -22,7 +22,7 @@ namespace util
 
     std::string tolower(std::string s);
 
-    bool empty_or_whitespace(const std::string& s);
+    bool emptyOrWhitespace(const std::string& s);
 
     bool getModuleFilePath(HMODULE hModule, std::filesystem::path& path);
 
@@ -46,7 +46,7 @@ namespace util
 
     bool shmExists(const std::string& name);
 
-    void fmt_msgbox(HWND hWnd, const char* caption, UINT uType, const char* fmt, ...);
+    void fmtMsgBox(HWND hWnd, const char* caption, UINT uType, const char* fmt, ...);
 
     void dbgbox(const char* fmt, ...);
 
@@ -58,18 +58,18 @@ namespace util
 
     constexpr const char* getFileName(const char* path)
     {
-        const char* last_slash = path;
+        const char* lastSlash = path;
         for (std::size_t i = 0; path[i] != '\0'; ++i)
         {
             if (path[i] == '/' || path[i] == '\\')
             {
-                last_slash = path + i + 1;
+                lastSlash = path + i + 1;
             }
         }
-        return last_slash;
+        return lastSlash;
     }
 
-    memory::handle getVirtualFunctionAddress(void* object, std::size_t offset);
+    memory::Handle getVirtualFunctionAddress(void* object, std::size_t offset);
 
     bool isValidGuildWars2Name(const wchar_t* name);
 

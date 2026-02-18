@@ -13,13 +13,13 @@
 
 namespace memory
 {
-    bool try_near_alloc(const handle& target, size_t size, handle& result);
+    bool tryNearAlloc(const Handle& target, size_t size, Handle& result);
 
-    bool locate_all_pointers(
-        const handle&        base,
-        size_t               largest_offset,
-        const handle&        target,
-        std::vector<handle>& results
+    bool locateAllPointers(
+        const Handle&        base,
+        size_t               largestOffset,
+        const Handle&        target,
+        std::vector<Handle>& results
     );
 }
 

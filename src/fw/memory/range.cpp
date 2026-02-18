@@ -1,6 +1,6 @@
 #include "range.hpp"
 
-memory::range::range(const char* moduleName)
+memory::Range::Range(const char* moduleName)
 {
     const auto hModule = GetModuleHandleA(moduleName);
     MODULEINFO moduleInfo {};
@@ -10,47 +10,47 @@ memory::range::range(const char* moduleName)
         return;
     }
 
-    this->_start = handle(moduleInfo.lpBaseOfDll);
+    this->_start = Handle(moduleInfo.lpBaseOfDll);
     this->_end   = _start.add(moduleInfo.SizeOfImage);
     this->_size  = moduleInfo.SizeOfImage;
 }
 
-memory::range::range(const handle& start, const ptrdiff_t size) : _start(start), _size(size)
+memory::Range::Range(const Handle& start, const ptrdiff_t size) : _start(start), _size(size)
 {
-    _end = handle(start).add(size);
+    _end = Handle(start).add(size);
 }
 
-memory::range::range(const handle& start, const handle& end) : _start(start), _end(end)
+memory::Range::Range(const Handle& start, const Handle& end) : _start(start), _end(end)
 {
     _size = static_cast<std::ptrdiff_t>(_end.raw()) - static_cast<std::ptrdiff_t>(_start.raw());
 }
 
-memory::range::range(const uintptr_t start, const ptrdiff_t size) : _start(start), _size(size)
+memory::Range::Range(const uintptr_t start, const ptrdiff_t size) : _start(start), _size(size)
 {
-    _end = handle(start).add(size);
+    _end = Handle(start).add(size);
 }
 
-const memory::handle& memory::range::start() const
+const memory::Handle& memory::Range::start() const
 {
     return _start;
 }
 
-const memory::handle& memory::range::end() const
+const memory::Handle& memory::Range::end() const
 {
     return _end;
 }
 
-const ptrdiff_t& memory::range::size() const
+const ptrdiff_t& memory::Range::size() const
 {
     return _size;
 }
 
-bool memory::range::contains(const handle& address) const
+bool memory::Range::contains(const Handle& address) const
 {
     return _start <= address && address < _end.raw();
 }
 
-bool memory::range::contains(const uintptr_t address) const
+bool memory::Range::contains(const uintptr_t address) const
 {
     return _start <= address && address < _end.raw();
 }

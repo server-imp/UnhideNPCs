@@ -6,8 +6,8 @@
 #include <string>
 #include <filesystem>
 
-#define ModuleName ("UnhideNPCs.dll")
-#define TargetName ("Gw2-64.exe")
+#define MODULE_NAME ("UnhideNPCs.dll")
+#define TARGET_NAME ("Gw2-64.exe")
 
 DWORD getPidByName(const char* name)
 {
@@ -45,7 +45,7 @@ bool findModule(const DWORD dwPid, const std::string& name)
             s.begin(),
             s.end(),
             s.begin(),
-            [](unsigned char c)
+            [](const unsigned char c)
             {
                 return std::tolower(c);
             }
@@ -80,27 +80,27 @@ bool findModule(const DWORD dwPid, const std::string& name)
 int main()
 {
     namespace fs = std::filesystem;
-    const auto path = fs::absolute(fs::path(ModuleName));
+    const auto path = fs::absolute(fs::path(MODULE_NAME));
 
     if (!fs::exists(path))
     {
-        printf("%s missing!\n", ModuleName);
+        printf("%s missing!\n", MODULE_NAME);
         system("pause");
         return 1;
     }
 
-    const DWORD pid = getPidByName(TargetName);
+    const DWORD pid = getPidByName(TARGET_NAME);
 
     if (pid == 0)
     {
-        printf("%s not running!\n", TargetName);
+        printf("%s not running!\n", TARGET_NAME);
         system("pause");
         return 2;
     }
 
     if (findModule(pid, "UnhideNPCs.dll"))
     {
-        printf("%s already loaded!\n", ModuleName);
+        printf("%s already loaded!\n", MODULE_NAME);
         system("pause");
         return 3;
     }

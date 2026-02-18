@@ -5,7 +5,7 @@
 
 namespace memory
 {
-    class module : public range
+    class Module : public Range
     {
     private:
         HMODULE               _hModule {};
@@ -19,23 +19,23 @@ namespace memory
 
         const std::filesystem::path& path();
 
-        bool find_pattern(const std::string& pattern, memory::handle& result) const;
+        bool findPattern(const std::string& pattern, memory::Handle& result) const;
 
-        bool find_string(const std::string& string, memory::handle& result) const;
+        bool findString(const std::string& string, memory::Handle& result) const;
 
-        bool find_wstring(const std::wstring& string, memory::handle& result) const;
+        bool findWstring(const std::wstring& string, memory::Handle& result) const;
 
-        static module getFromHandle(HMODULE hModule);
+        static Module getFromHandle(HMODULE hModule);
 
-        static bool tryGetByName(const std::string& name, module& result);
+        static bool tryGetByName(const std::string& name, Module& result);
 
-        static module getByName(const std::string& name);
+        static Module getByName(const std::string& name);
 
-        static bool tryGetByAddr(const memory::handle& addr, module& result);
+        static bool tryGetByAddr(const memory::Handle& addr, Module& result);
 
-        static module getMain();
+        static Module getMain();
 
-        static module getThis();
+        static Module getThis();
     };
 }
 

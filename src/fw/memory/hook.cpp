@@ -9,51 +9,59 @@
 #include "MinHook.h"
 #include "fw/util.hpp"
 
-memory::hook::hook(std::string name, void* target, void* original, void* ownFunction) : _name(std::move(name)),
+memory::Hook::Hook(std::string name, void* target, void* original, void* ownFunction) : _name(std::move(name)),
     _target(target), _original(original), _ownFunction(ownFunction)
 {
-    const auto  from = handle(_target);
+    const auto  from = Handle(_target);
     std::string fromStr {};
-    const auto  to = handle(_ownFunction);
+    const auto  to = Handle(_ownFunction);
     std::string toStr {};
 
-    module module {};
-    if (module::tryGetByAddr(from, module))
+    Module module {};
+    if (Module::tryGetByAddr(from, module))
+    {
         fromStr = fmt::format("{}+{:X}", module.name(), from.sub(module.start()).raw());
+    }
     else
+    {
         fromStr = fmt::format("{:08X}", from.raw());
+    }
 
-    if (memory::module::tryGetByAddr(to, module))
+    if (memory::Module::tryGetByAddr(to, module))
+    {
         toStr = fmt::format("{}+{:X}", module.name(), to.sub(module.start()).raw());
+    }
     else
+    {
         toStr = fmt::format("{:08X}", to.raw());
+    }
 
     LOG_DBG("Created hook \"{}\" {} -> {}", _name, fromStr, toStr);
 }
 
-const std::string& memory::hook::name() const
+const std::string& memory::Hook::name() const
 {
     return _name;
 }
 
-bool memory::hook::enabled() const
+bool memory::Hook::enabled() const
 {
     return _enabled;
 }
 
-void* memory::hook::target() const
+void* memory::Hook::target() const
 {
     return _target;
 }
 
-memory::detour::detour(std::string name, void* target, void* ownFunction) : hook(
+memory::Detour::Detour(std::string name, void* target, void* ownFunction) : Hook(
     std::move(name),
     target,
     nullptr,
     ownFunction
 ) {}
 
-bool memory::detour::enable()
+bool memory::Detour::enable()
 {
     LOG_DBG("Enabling \"{}\"", _name);
 
@@ -89,7 +97,7 @@ bool memory::detour::enable()
     return true;
 }
 
-bool memory::detour::disable(const bool uninitialize)
+bool memory::Detour::disable(const bool uninitialize)
 {
     LOG_DBG("Disabling \"{}\"", _name);
     if (!_enabled)

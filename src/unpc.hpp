@@ -2,7 +2,6 @@
 #define UNHIDENPCS_UNPC_HPP
 #pragma once
 #include "fw/logger.hpp"
-#include "fw/util.hpp"
 #include "fw/memory/memory.hpp"
 #include "gw2.hpp"
 #include "MumbleLink.hpp"
@@ -11,18 +10,18 @@
 
 namespace unpc
 {
-    enum class eMode : int32_t
+    enum class EMode : int32_t
     {
         Unknown  = 0,
         Proxy    = 1,
         Injected = 2,
         Nexus    = 3,
-        ArcDPS   = 4
+        ArcDps   = 4
     };
 
-    constexpr auto signature = 1817724315;
+    constexpr auto SIGNATURE = 1817724315;
 
-    inline auto mode = eMode::Unknown;
+    inline auto mode = EMode::Unknown;
 
     extern std::atomic_bool nexusPresent;
     extern std::atomic_bool arcDpsPresent;
@@ -31,7 +30,7 @@ namespace unpc
 
     extern std::optional<logging::Logger> logger;
     extern std::optional<Settings>        settings;
-    extern std::optional<memory::detour>  npcHook;
+    extern std::optional<memory::Detour>  npcHook;
 
     extern HANDLE      hMutex;
     extern HMODULE     hModule;

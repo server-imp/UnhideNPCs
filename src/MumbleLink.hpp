@@ -49,37 +49,37 @@ struct MumbleContext
     uint32_t processId;
     uint8_t  mountIndex;
 
-    [[nodiscard]] bool IsMapOpen() const
+    [[nodiscard]] bool isMapOpen() const
     {
         return uiState & (1 << 0);
     }
 
-    [[nodiscard]] bool IsCompassTopRight() const
+    [[nodiscard]] bool isCompassTopRight() const
     {
         return uiState & (1 << 1);
     }
 
-    [[nodiscard]] bool IsCompassRotationEnabled() const
+    [[nodiscard]] bool isCompassRotationEnabled() const
     {
         return uiState & (1 << 2);
     }
 
-    [[nodiscard]] bool HasGameFocus() const
+    [[nodiscard]] bool hasGameFocus() const
     {
         return uiState & (1 << 3);
     }
 
-    [[nodiscard]] bool IsCompetitiveMode() const
+    [[nodiscard]] bool isCompetitiveMode() const
     {
         return uiState & (1 << 4);
     }
 
-    [[nodiscard]] bool IsTextboxFocused() const
+    [[nodiscard]] bool isTextboxFocused() const
     {
         return uiState & (1 << 5);
     }
 
-    [[nodiscard]] bool IsInCombat() const
+    [[nodiscard]] bool isInCombat() const
     {
         return uiState & (1 << 6);
     }
@@ -99,7 +99,7 @@ struct MumbleLink
     float    fCameraFront[3];
     float    fCameraTop[3];
     wchar_t  identity[256];
-    uint32_t context_len;
+    uint32_t contextLen;
     // Despite the actual context containing more data, this value is currently 48. See "context" section below.
     unsigned char context[256];
     wchar_t       description[2048];
@@ -115,7 +115,9 @@ inline MumbleLink* getMumbleLink()
 {
     std::string mappingName = util::getStartupArgValue("-mumble");
     if (mappingName.empty())
+    {
         mappingName = "MumbleLink";
+    }
 
     auto hMap = OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, mappingName.c_str());
     if (!hMap)

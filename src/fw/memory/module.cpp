@@ -3,37 +3,37 @@
 #include "scanner.hpp"
 #include "fw/logger.hpp"
 
-HMODULE memory::module::handle() const
+HMODULE memory::Module::handle() const
 {
     return _hModule;
 }
 
-const std::string& memory::module::name()
+const std::string& memory::Module::name()
 {
     return _name;
 }
 
-const std::filesystem::path& memory::module::path()
+const std::filesystem::path& memory::Module::path()
 {
     return _path;
 }
 
-bool memory::module::find_pattern(const std::string& pattern, memory::handle& result) const
+bool memory::Module::findPattern(const std::string& pattern, memory::Handle& result) const
 {
-    return scanner::find_pattern(pattern, *this, result);
+    return Scanner::findPattern(pattern, *this, result);
 }
 
-bool memory::module::find_string(const std::string& string, memory::handle& result) const
+bool memory::Module::findString(const std::string& string, memory::Handle& result) const
 {
-    return scanner::find_string(string, *this, result);
+    return Scanner::findString(string, *this, result);
 }
 
-bool memory::module::find_wstring(const std::wstring& string, memory::handle& result) const
+bool memory::Module::findWstring(const std::wstring& string, memory::Handle& result) const
 {
-    return scanner::find_wstring(string, *this, result);
+    return Scanner::findWstring(string, *this, result);
 }
 
-memory::module memory::module::getFromHandle(const HMODULE hModule)
+memory::Module memory::Module::getFromHandle(const HMODULE hModule)
 {
     if (!hModule)
     {
@@ -55,27 +55,19 @@ memory::module memory::module::getFromHandle(const HMODULE hModule)
         return {};
     }
 
-    module result {};
+    Module result {};
     result._hModule = hModule;
     result._path    = dllPath;
     result._name    = result._path.filename().string();
 
-    result._start = memory::handle(moduleInfo.lpBaseOfDll);
+    result._start = memory::Handle(moduleInfo.lpBaseOfDll);
     result._end   = result._start.add(moduleInfo.SizeOfImage);
     result._size  = moduleInfo.SizeOfImage;
 
     return result;
 }
 
-memory::module memory::module::getThis()
-{
-    HMODULE hModule = nullptr;
-    GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, reinterpret_cast<LPCTSTR>(&getThis), &hModule);
-
-    return getFromHandle(hModule);
-}
-
-bool memory::module::tryGetByName(const std::string& name, module& result)
+bool memory::Module::tryGetByName(const std::string& name, Module& result)
 {
     if (name.empty())
     {
@@ -95,24 +87,30 @@ bool memory::module::tryGetByName(const std::string& name, module& result)
 
     result = getFromHandle(hModule);
     if (!result.size())
+    {
         return false;
+    }
 
     LOG_DBG("Found module at {:08X}", result._start.raw());
     return true;
 }
 
-memory::module memory::module::getByName(const std::string& name)
+memory::Module memory::Module::getByName(const std::string& name)
 {
-    module result {};
+    Module result {};
     if (!tryGetByName(name, result))
+    {
         LOG_DBG("tryGetModuleByName failed");
+    }
     return result;
 }
 
-bool memory::module::tryGetByAddr(const memory::handle& addr, module& result)
+bool memory::Module::tryGetByAddr(const memory::Handle& addr, Module& result)
 {
     if (!addr.raw())
+    {
         return false;
+    }
 
     LOG_DBG("Attempting to find module that holds address {:08X}", addr.raw());
     DWORD needed = 0;
@@ -135,7 +133,9 @@ bool memory::module::tryGetByAddr(const memory::handle& addr, module& result)
     {
         result = getFromHandle(mod);
         if (!result.size())
+        {
             continue;
+        }
 
         if (addr >= result.start() && addr < result.end())
         {
@@ -148,7 +148,15 @@ bool memory::module::tryGetByAddr(const memory::handle& addr, module& result)
     return false;
 }
 
-memory::module memory::module::getMain()
+memory::Module memory::Module::getMain()
 {
     return getByName("");
+}
+
+memory::Module memory::Module::getThis()
+{
+    HMODULE hModule = nullptr;
+    GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, reinterpret_cast<LPCTSTR>(&getThis), &hModule);
+
+    return getFromHandle(hModule);
 }

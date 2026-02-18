@@ -2,12 +2,12 @@
 #include "../logger.hpp"
 #include "fw/util.hpp"
 
-memory::pattern::pattern(
+memory::Pattern::Pattern(
     const std::vector<uint8_t>& data,
     const std::vector<uint8_t>& mask
 ) : _data(data), _mask(mask) {}
 
-memory::pattern::pattern(const std::string& ida)
+memory::Pattern::Pattern(const std::string& ida)
 {
     if (ida.empty())
     {
@@ -33,12 +33,12 @@ memory::pattern::pattern(const std::string& ida)
     }
 }
 
-const std::vector<uint8_t>& memory::pattern::data() const
+const std::vector<uint8_t>& memory::Pattern::data() const
 {
     return _data;
 }
 
-const std::vector<uint8_t>& memory::pattern::mask() const
+const std::vector<uint8_t>& memory::Pattern::mask() const
 {
     return _mask;
 }

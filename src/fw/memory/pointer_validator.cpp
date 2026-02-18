@@ -7,10 +7,14 @@ bool memory::PointerValidator::probe(const uintptr_t pointer)
 {
     MEMORY_BASIC_INFORMATION mbi {};
     if (const auto result = VirtualQuery(reinterpret_cast<LPCVOID>(pointer), &mbi, sizeof(mbi)); result == 0)
+    {
         return false;
+    }
 
     if (const auto protect = mbi.Protect; protect & PAGE_NOACCESS || protect & PAGE_GUARD)
+    {
         return false;
+    }
 
     return true;
 }
@@ -51,8 +55,6 @@ bool memory::PointerValidator::validate(const uintptr_t pointer)
 {
     if (pointer < _minimumApplicableAddress || pointer > _maximumApplicableAddress)
     {
-        if (pointer > 0)
-            ;// LOG_DBG("Rejected pointer {:08X} - out of range", pointer);
         return false;
     }
 
@@ -60,16 +62,12 @@ bool memory::PointerValidator::validate(const uintptr_t pointer)
     if (const auto it = _cache.find(alignedPointer); it != _cache.end())
     {
         if (const auto& [expireTime, valid] = it->second; _currentTick < expireTime)
+        {
             return valid;
+        }
     }
 
-    const bool result = probe(alignedPointer);
-    if (!result)
-    {
-        // LOG_DBG("Rejected pointer {:08X} - probe failed", pointer);
-    }
-
-    return updateCacheItem(alignedPointer, _currentTick + _cacheDurationMs, result);
+    return updateCacheItem(alignedPointer, _currentTick + _cacheDurationMs, probe(alignedPointer));
 }
 
 bool memory::PointerValidator::validate(void* pointer)
@@ -86,24 +84,4 @@ memory::PointerValidator& memory::PointerValidator::instance()
 {
     static PointerValidator instance {};
     return instance;
-}
-
-void memory::PointerValidator::UpdateTick()
-{
-    instance().updateTick();
-}
-
-bool memory::PointerValidator::Validate(const uintptr_t pointer)
-{
-    return instance().validate(pointer);
-}
-
-bool memory::PointerValidator::Validate(void* pointer)
-{
-    return instance().validate(pointer);
-}
-
-void memory::PointerValidator::ClearCache()
-{
-    instance().clearCache();
 }

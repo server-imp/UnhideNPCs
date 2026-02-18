@@ -5,31 +5,31 @@
 
 namespace memory
 {
-    class range
+    class Range
     {
     protected:
-        handle    _start {};
-        handle    _end {};
+        Handle    _start {};
+        Handle    _end {};
         ptrdiff_t _size {};
 
     public:
-        range() = default;
+        Range() = default;
 
-        explicit range(const char* moduleName);
+        explicit Range(const char* moduleName);
 
-        explicit range(const handle& start, ptrdiff_t size);
+        explicit Range(const Handle& start, ptrdiff_t size);
 
-        explicit range(const handle& start, const handle& end);
+        explicit Range(const Handle& start, const Handle& end);
 
-        explicit range(uintptr_t start, ptrdiff_t size);
+        explicit Range(uintptr_t start, ptrdiff_t size);
 
-        [[nodiscard]] const handle& start() const;
+        [[nodiscard]] const Handle& start() const;
 
-        [[nodiscard]] const handle& end() const;
+        [[nodiscard]] const Handle& end() const;
 
         [[nodiscard]] const ptrdiff_t& size() const;
 
-        [[nodiscard]] bool contains(const handle& address) const;
+        [[nodiscard]] bool contains(const Handle& address) const;
 
         [[nodiscard]] bool contains(uintptr_t address) const;
     };

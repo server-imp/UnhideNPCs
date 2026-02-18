@@ -6,8 +6,8 @@
 
 namespace ui
 {
-    extern std::optional<std::unique_ptr<memory::hooks::d3d11>> d3dHook;
-    extern std::optional<memory::hooks::wndproc>                wndProcHook;
+    extern std::optional<std::unique_ptr<memory::hooks::D3D11>> d3dHook;
+    extern std::optional<memory::hooks::WndProc>                wndProcHook;
 
     void tooltip(const char* text);
 
@@ -60,11 +60,11 @@ namespace ui
 
     void onD3DPresent();
 
-    void onD3DResizeBuffers(const memory::hooks::d3d11* hk, bool pre);
+    void onD3DResizeBuffers(const memory::hooks::D3D11* hk, bool pre);
 
-    bool onD3DStarted(const memory::hooks::d3d11* hk);
+    bool onD3DStarted(const memory::hooks::D3D11* hk);
 
-    void onD3DShutdown(const memory::hooks::d3d11* hk);
+    void onD3DShutdown(const memory::hooks::D3D11* hk);
 }
 
 #endif //UNHIDENPCS_UI_HPP

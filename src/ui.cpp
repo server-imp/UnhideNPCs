@@ -18,8 +18,8 @@
 constexpr auto LABEL_OFFSET = 272.0f;
 constexpr auto FIELD_WIDTH  = 230.0f;
 
-std::optional<std::unique_ptr<memory::hooks::d3d11>> ui::d3dHook {};
-std::optional<memory::hooks::wndproc>                ui::wndProcHook {};
+std::optional<std::unique_ptr<memory::hooks::D3D11>> ui::d3dHook {};
+std::optional<memory::hooks::WndProc>                ui::wndProcHook {};
 
 void ui::tooltip(const char* text)
 {
@@ -186,7 +186,7 @@ const char* modes[] = { "Both", "Attackable", "Non-Attackable" };
 
 void ui::renderOptions()
 {
-    if (!unpc::mumbleLink || unpc::mumbleLink->getContext().IsCompetitiveMode())
+    if (!unpc::mumbleLink || unpc::mumbleLink->getContext().isCompetitiveMode())
     {
         ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 100, 100, 255));
         ImGui::Text("Disabled in Competitive");
@@ -411,7 +411,7 @@ void ui::renderOptions()
 
     if (ImGui::Button("Force Visibility", { LABEL_OFFSET + FIELD_WIDTH, 30 }))
     {
-        re::forceVisibility++;
+        ++re::forceVisibility;
     }
     tooltip(
         "Forces all characters to be visible for the next frame\n"
@@ -425,7 +425,7 @@ void ui::renderOptions()
 #endif
     ImGui::Unindent();
 
-    if (unpc::mode == unpc::eMode::Proxy || unpc::mode == unpc::eMode::Injected)
+    if (unpc::mode == unpc::EMode::Proxy || unpc::mode == unpc::EMode::Injected)
     {
         separatorText("Overlay");
         ImGui::Indent();
@@ -687,7 +687,7 @@ void ui::onD3DPresent()
     ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 }
 
-void ui::onD3DResizeBuffers(const memory::hooks::d3d11* hk, const bool pre)
+void ui::onD3DResizeBuffers(const memory::hooks::D3D11* hk, const bool pre)
 {
     LOG_DBG("OnD3DResizeBuffers");
 
@@ -815,7 +815,7 @@ void ApplyTheme()
     colors[ImGuiCol_ModalWindowDimBg]      = ImVec4(0, 0, 0, 0.6f);
 }
 
-bool ui::onD3DStarted(const memory::hooks::d3d11* hk)
+bool ui::onD3DStarted(const memory::hooks::D3D11* hk)
 {
     LOG_DBG("OnD3DStarted");
 
@@ -856,7 +856,7 @@ bool ui::onD3DStarted(const memory::hooks::d3d11* hk)
     return true;
 }
 
-void ui::onD3DShutdown(const memory::hooks::d3d11* hk)
+void ui::onD3DShutdown(const memory::hooks::D3D11* hk)
 {
     LOG_DBG("OnD3DShutdown");
 

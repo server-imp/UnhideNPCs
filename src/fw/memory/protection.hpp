@@ -6,28 +6,28 @@ namespace memory
 {
     struct ProtectedRegion
     {
-        memory::range range {};
+        memory::Range range {};
         DWORD         oldProtect {};
 
-        handle    start() const;
-        handle    end() const;
-        ptrdiff_t size() const;
+        [[nodiscard]] Handle    start() const;
+        [[nodiscard]] Handle    end() const;
+        [[nodiscard]] ptrdiff_t size() const;
     };
 
-    class protection
+    class Protection
     {
     private:
         std::vector<ProtectedRegion> _regions;
 
     public:
-        protection(const memory::handle& base, size_t size, DWORD protection);
-        protection(const memory::range& range, DWORD protection);
+        Protection(const memory::Handle& base, size_t size, DWORD protection);
+        Protection(const memory::Range& range, DWORD protection);
 
-        ~protection();
-        protection(const protection&)            = delete;
-        protection& operator=(const protection&) = delete;
+        ~Protection();
+        Protection(const Protection&)            = delete;
+        Protection& operator=(const Protection&) = delete;
 
-        const std::vector<ProtectedRegion>& regions() const;
+        [[nodiscard]] const std::vector<ProtectedRegion>& regions() const;
     };
 }
 

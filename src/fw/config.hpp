@@ -83,7 +83,7 @@ void property::set(const T& value)
 template <typename T>
 T property::get(const T& defaultValue) const
 {
-    if (util::empty_or_whitespace(_raw))
+    if (util::emptyOrWhitespace(_raw))
     {
         return defaultValue;
     }
@@ -103,29 +103,39 @@ T property::get(const T& defaultValue) const
         const char*        end   = begin + s.size();
         int                base  = 10;
         if (s.size() > 2 && (s[0] == '0') && (s[1] == 'x' || s[1] == 'X'))
+        {
             base = 16;
+        }
 
         T result {};
         if constexpr (std::is_signed_v<T>)
         {
             long long              tmp = 0;
-            std::from_chars_result r {};
+            std::from_chars_result r{};
             if (base == 16)
             {
                 unsigned long long utmp = 0;
                 r                       = std::from_chars(begin, end, utmp, 16);
                 if (r.ec == std::errc())
+                {
                     result = static_cast<T>(utmp);
+                }
                 else
+                {
                     return defaultValue;
+                }
             }
             else
             {
                 r = std::from_chars(begin, end, tmp, 10);
                 if (r.ec == std::errc())
+                {
                     result = static_cast<T>(tmp);
+                }
                 else
+                {
                     return defaultValue;
+                }
             }
         }
         else
@@ -133,9 +143,13 @@ T property::get(const T& defaultValue) const
             unsigned long long utmp = 0;
 
             if (auto [ptr, ec] = std::from_chars(begin, end, utmp, base); ec == std::errc())
+            {
                 result = static_cast<T>(utmp);
+            }
             else
+            {
                 return defaultValue;
+            }
         }
         return result;
     }
@@ -148,14 +162,18 @@ T property::get(const T& defaultValue) const
             errno   = 0;
             float v = std::strtof(begin, &endptr);
             if (endptr != begin && errno == 0)
+            {
                 return v;
+            }
         }
         else
         {
             errno    = 0;
             double v = std::strtod(begin, &endptr);
             if (endptr != begin && errno == 0)
+            {
                 return static_cast<T>(v);
+            }
         }
         return defaultValue;
     }
@@ -177,7 +195,7 @@ private:
     mutable std::mutex                      _mutex {};
     bool                                    _loaded {};
 
-    static std::string normalize_key(std::string_view k);
+    static std::string normalizeKey(std::string_view k);
 
 public:
     explicit Config(std::filesystem::path filePath);
@@ -211,7 +229,7 @@ public:
 template <typename T>
 T Config::get(const std::string_view key, const T& defaultValue, std::string comment)
 {
-    const std::string nkey = normalize_key(key);
+    const std::string nkey = normalizeKey(key);
     {
         std::lock_guard lock(_mutex);
         if (const auto it = _index.find(nkey); it != _index.end())
@@ -237,7 +255,7 @@ T Config::get(const std::string_view key, const T& defaultValue, std::string com
 template <typename T>
 void Config::set(const std::string_view key, const T& value)
 {
-    const std::string nkey = normalize_key(key);
+    const std::string nkey = normalizeKey(key);
 
     std::lock_guard lock(_mutex);
     if (const auto it = _index.find(nkey); it != _index.end())

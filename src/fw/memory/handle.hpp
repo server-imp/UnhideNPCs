@@ -4,38 +4,38 @@
 
 namespace memory
 {
-    class handle
+    class Handle
     {
     private:
-        uintptr_t pointer {};
+        uintptr_t _pointer {};
 
     public:
-        handle() = default;
+        Handle() = default;
 
-        explicit handle(void* pointer);
+        explicit Handle(void* pointer);
 
-        explicit handle(uint64_t pointer);
+        explicit Handle(uint64_t pointer);
 
-        handle(const handle& other);
+        Handle(const Handle& other);
 
         [[nodiscard]] uintptr_t raw() const;
 
-        [[nodiscard]] handle add(ptrdiff_t offset) const;
+        [[nodiscard]] Handle add(ptrdiff_t offset) const;
 
-        [[nodiscard]] handle add(const handle& other) const;
+        [[nodiscard]] Handle add(const Handle& other) const;
 
-        [[nodiscard]] handle sub(ptrdiff_t offset) const;
+        [[nodiscard]] Handle sub(ptrdiff_t offset) const;
 
-        [[nodiscard]] handle sub(const handle& other) const;
+        [[nodiscard]] Handle sub(const Handle& other) const;
 
-        handle rip();
+        Handle rip();
 
-        [[nodiscard]] handle resolve_relative_call() const;
+        [[nodiscard]] Handle resolve_relative_call() const;
 
         template <typename T>
         std::enable_if_t<std::is_pointer_v<T>, T> to_ptr() const
         {
-            return reinterpret_cast<T>(pointer);
+            return reinterpret_cast<T>(_pointer);
         }
 
         template <typename T>
@@ -44,27 +44,27 @@ namespace memory
             return *to_ptr<T*>();
         }
 
-        bool operator==(const handle& other) const noexcept;
+        bool operator==(const Handle& other) const noexcept;
 
         bool operator==(uintptr_t other) const noexcept;
 
         bool operator!=(uintptr_t other) const noexcept;
 
-        bool operator!=(const handle& other) const noexcept;
+        bool operator!=(const Handle& other) const noexcept;
 
-        bool operator<(const handle& other) const noexcept;
+        bool operator<(const Handle& other) const noexcept;
 
         bool operator<(uintptr_t other) const noexcept;
 
-        bool operator<=(const handle& other) const noexcept;
+        bool operator<=(const Handle& other) const noexcept;
 
         bool operator<=(uintptr_t other) const noexcept;
 
-        bool operator>(const handle& other) const noexcept;
+        bool operator>(const Handle& other) const noexcept;
 
         bool operator>(uintptr_t other) const noexcept;
 
-        bool operator>=(const handle& other) const noexcept;
+        bool operator>=(const Handle& other) const noexcept;
 
         bool operator>=(uintptr_t other) const noexcept;
     };

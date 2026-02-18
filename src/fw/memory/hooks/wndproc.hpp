@@ -5,19 +5,19 @@
 
 namespace memory::hooks
 {
-    class wndproc final : hook
+    class WndProc final : Hook
     {
     private:
-        static wndproc* _instance;
+        static WndProc* _instance;
         HWND            _hWnd {};
         WNDPROC         _originalWndProc {};
 
         std::vector<std::function<bool(HWND, UINT, WPARAM, LPARAM)>> _callbacks {};
 
     public:
-        explicit wndproc(HWND hWnd);
+        explicit WndProc(HWND hWnd);
 
-        ~wndproc();
+        ~WndProc();
 
         virtual bool enable();
 
@@ -26,9 +26,9 @@ namespace memory::hooks
         void addCallback(const std::function<bool(HWND, UINT, WPARAM, LPARAM)>& callback);
 
     private:
-        LRESULT CALLBACK InternalWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+        LRESULT CALLBACK internalWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) const;
 
-        static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+        static LRESULT CALLBACK wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
     public:
     };

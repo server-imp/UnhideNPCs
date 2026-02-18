@@ -14,7 +14,9 @@ bool isInGameFolder(const HMODULE hModule)
 {
     std::filesystem::path exePath, dllPath;
     if (!util::getModuleFilePath(nullptr, exePath) || !util::getModuleFilePath(hModule, dllPath))
+    {
         return false;
+    }
 
     exePath = exePath.parent_path();
     dllPath = dllPath.parent_path();
@@ -32,15 +34,15 @@ bool isInGameFolder(const HMODULE hModule)
     );
 }
 
-BOOL APIENTRY DllMain(const HMODULE hModule, const DWORD ul_reason_for_call, PVOID)
+BOOL APIENTRY DllMain(const HMODULE hModule, const DWORD ulReasonForCall, PVOID)
 {
-    if (ul_reason_for_call == DLL_PROCESS_ATTACH)
+    if (ulReasonForCall == DLL_PROCESS_ATTACH)
     {
         DisableThreadLibraryCalls(hModule);
         unpc::hModule = hModule;
 
         unpc::nexusPresent  = nexus::isNexus();
-        unpc::arcDpsPresent = !unpc::nexusPresent && isArcDPS();
+        unpc::arcDpsPresent = !unpc::nexusPresent && isArcDps();
         unpc::injected      = !isInGameFolder(hModule);
 
         // make sure we are the only instance of UnhideNPCs that is loaded

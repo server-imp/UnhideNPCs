@@ -6,24 +6,24 @@
 
 namespace memory
 {
-    class scanner
+    class Scanner
     {
     public:
-        scanner() = delete;
+        Scanner() = delete;
 
-        ~scanner() = delete;
+        ~Scanner() = delete;
 
-        scanner& operator=(const scanner&) = delete;
+        Scanner& operator=(const Scanner&) = delete;
 
-        static bool find_pattern(const std::string& pattern, const range& range, handle& result);
+        static bool findPattern(const std::string& pattern, const Range& range, Handle& result);
 
-        static bool find_string(const std::string& string, const range& range, handle& result);
+        static bool findString(const std::string& string, const Range& range, Handle& result);
 
-        static bool find_wstring(const std::wstring& string, const range& range, handle& result);
+        static bool findWstring(const std::wstring& string, const Range& range, Handle& result);
 
-        static bool find_string_reference(const std::string& string, handle& result);
+        static bool findStringReference(const std::string& string, Handle& result);
 
-        static bool find_wstring_reference(const std::wstring& string, handle& result);
+        static bool findWstringReference(const std::wstring& string, Handle& result);
     };
 }
 

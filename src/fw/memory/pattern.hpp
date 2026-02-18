@@ -4,20 +4,20 @@
 
 namespace memory
 {
-    class pattern
+    class Pattern
     {
     private:
         std::vector<uint8_t> _data;
         std::vector<uint8_t> _mask;
 
     public:
-        explicit pattern(const std::vector<uint8_t>& data, const std::vector<uint8_t>& mask);
+        explicit Pattern(const std::vector<uint8_t>& data, const std::vector<uint8_t>& mask);
 
-        explicit pattern(const std::string& ida);
+        explicit Pattern(const std::string& ida);
 
-        const std::vector<uint8_t>& data() const;
+        [[nodiscard]] const std::vector<uint8_t>& data() const;
 
-        const std::vector<uint8_t>& mask() const;
+        [[nodiscard]] const std::vector<uint8_t>& mask() const;
     };
 }
 

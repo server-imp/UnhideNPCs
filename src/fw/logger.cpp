@@ -4,8 +4,6 @@
 
 #include "util.hpp"
 
-logging::Logger* logging::Logger::_instance = nullptr;
-
 const char* logging::logLevelToString(const LogLevel level)
 {
     switch (level)
@@ -17,6 +15,8 @@ const char* logging::logLevelToString(const LogLevel level)
     default: return " UNK";
     }
 }
+
+logging::Logger* logging::Logger::_instance = nullptr;
 
 logging::Logger* logging::Logger::instance()
 {
@@ -34,7 +34,9 @@ logging::Logger::Logger(
     _path = path;
 
     if (!std::filesystem::exists(path.parent_path()))
+    {
         std::filesystem::create_directories(path.parent_path());
+    }
 
     _file.open(_path, std::ios::trunc);
     _level    = level;
@@ -51,7 +53,9 @@ logging::Logger::Logger(
 logging::Logger::~Logger()
 {
     if (_instance == this)
+    {
         _instance = nullptr;
+    }
 
     setConsole(false);
 
@@ -101,9 +105,13 @@ void logging::Logger::unregisterCallback(const LogCallback& callback)
 bool logging::Logger::setConsole(const bool value)
 {
     if (value && _hConsole)
+    {
         return true;
+    }
     if (!value && !_hConsole)
+    {
         return true;
+    }
 
     if (value)
     {

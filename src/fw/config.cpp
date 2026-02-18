@@ -24,7 +24,7 @@ const std::string& property::raw() const noexcept
     return _raw;
 }
 
-std::string Config::normalize_key(const std::string_view k)
+std::string Config::normalizeKey(const std::string_view k)
 {
     std::string s { k };
     util::trim(s);
@@ -34,7 +34,9 @@ std::string Config::normalize_key(const std::string_view k)
 Config::Config(std::filesystem::path filePath) : _filePath(std::move(filePath))
 {
     if (!std::filesystem::exists(_filePath.parent_path()))
+    {
         std::filesystem::create_directories(_filePath.parent_path());
+    }
 
     load();
 }
@@ -65,7 +67,9 @@ bool Config::load()
     {
         util::trim(line);
         if (line.empty())
+        {
             continue;
+        }
 
         if (line.rfind('#', 0) == 0)
         {
@@ -73,7 +77,9 @@ bool Config::load()
             util::ltrim(line);
 
             if (!comment.empty())
+            {
                 comment.append("\n");
+            }
             comment.append(line);
             continue;
         }
@@ -90,7 +96,7 @@ bool Config::load()
         util::trim(raw);
         util::trim(key);
 
-        if (util::empty_or_whitespace(raw))
+        if (util::emptyOrWhitespace(raw))
         {
             raw.clear();
             _needSave = true;
@@ -113,12 +119,16 @@ bool Config::load()
 bool Config::save()
 {
     if (!_needSave)
+    {
         return true;
+    }
 
     std::lock_guard lock(_mutex);
 
     if (!_needSave)
+    {
         return true;
+    }
 
     std::ofstream ofs(_filePath, std::ios::trunc | std::ios::out);
     if (!ofs)
@@ -131,7 +141,9 @@ bool Config::save()
     for (const auto& p : _properties)
     {
         if (!first)
+        {
             ofs << "\n\n";
+        }
         first = false;
 
         if (!p.comment().empty())
@@ -155,7 +167,7 @@ bool Config::save()
 
 const std::string& Config::getComment(const std::string_view key) const
 {
-    const std::string nkey = normalize_key(key);
+    const std::string nkey = normalizeKey(key);
     std::lock_guard   lock(_mutex);
     if (const auto it = _index.find(nkey); it != _index.end())
     {

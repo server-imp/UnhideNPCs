@@ -3,7 +3,7 @@
 #pragma once
 #include "../pch.hpp"
 
-bool isArcDPS();
+bool isArcDps();
 
 typedef struct arcdps_exports
 {

@@ -1,51 +1,51 @@
 #include "handle.hpp"
 
-memory::handle::handle(void* pointer)
+memory::Handle::Handle(void* pointer)
 {
-    this->pointer = reinterpret_cast<uintptr_t>(pointer);
+    this->_pointer = reinterpret_cast<uintptr_t>(pointer);
 }
 
-memory::handle::handle(const uint64_t pointer)
+memory::Handle::Handle(const uint64_t pointer)
 {
-    this->pointer = pointer;
+    this->_pointer = pointer;
 }
 
-memory::handle::handle(const handle& other)
+memory::Handle::Handle(const Handle& other)
 {
-    this->pointer = other.pointer;
+    this->_pointer = other._pointer;
 }
 
-uintptr_t memory::handle::raw() const
+uintptr_t memory::Handle::raw() const
 {
-    return this->pointer;
+    return this->_pointer;
 }
 
-memory::handle memory::handle::add(const ptrdiff_t offset) const
+memory::Handle memory::Handle::add(const ptrdiff_t offset) const
 {
-    return handle(this->pointer + offset);
+    return Handle(this->_pointer + offset);
 }
 
-memory::handle memory::handle::add(const handle& other) const
+memory::Handle memory::Handle::add(const Handle& other) const
 {
-    return handle(this->pointer + other.pointer);
+    return Handle(this->_pointer + other._pointer);
 }
 
-memory::handle memory::handle::sub(const ptrdiff_t offset) const
+memory::Handle memory::Handle::sub(const ptrdiff_t offset) const
 {
-    return handle(this->pointer - offset);
+    return Handle(this->_pointer - offset);
 }
 
-memory::handle memory::handle::sub(const handle& other) const
+memory::Handle memory::Handle::sub(const Handle& other) const
 {
-    return handle(this->pointer - other.pointer);
+    return Handle(this->_pointer - other._pointer);
 }
 
-memory::handle memory::handle::rip()
+memory::Handle memory::Handle::rip()
 {
     return add(deref<int32_t>()).add(4);
 }
 
-memory::handle memory::handle::resolve_relative_call() const
+memory::Handle memory::Handle::resolve_relative_call() const
 {
     const auto offset          = add(1).deref<int32_t>();
     const auto nextInstruction = add(5);
@@ -53,62 +53,62 @@ memory::handle memory::handle::resolve_relative_call() const
     return nextInstruction.add(offset);
 }
 
-bool memory::handle::operator==(const handle& other) const noexcept
+bool memory::Handle::operator==(const Handle& other) const noexcept
 {
-    return pointer == other.pointer;
+    return _pointer == other._pointer;
 }
 
-bool memory::handle::operator==(const uintptr_t other) const noexcept
+bool memory::Handle::operator==(const uintptr_t other) const noexcept
 {
-    return pointer == other;
+    return _pointer == other;
 }
 
-bool memory::handle::operator!=(const uintptr_t other) const noexcept
+bool memory::Handle::operator!=(const uintptr_t other) const noexcept
 {
-    return pointer != other;
+    return _pointer != other;
 }
 
-bool memory::handle::operator!=(const handle& other) const noexcept
+bool memory::Handle::operator!=(const Handle& other) const noexcept
 {
-    return pointer != other.pointer;
+    return _pointer != other._pointer;
 }
 
-bool memory::handle::operator<(const handle& other) const noexcept
+bool memory::Handle::operator<(const Handle& other) const noexcept
 {
-    return pointer < other.pointer;
+    return _pointer < other._pointer;
 }
 
-bool memory::handle::operator<(const uintptr_t other) const noexcept
+bool memory::Handle::operator<(const uintptr_t other) const noexcept
 {
-    return pointer < other;
+    return _pointer < other;
 }
 
-bool memory::handle::operator<=(const handle& other) const noexcept
+bool memory::Handle::operator<=(const Handle& other) const noexcept
 {
-    return pointer <= other.pointer;
+    return _pointer <= other._pointer;
 }
 
-bool memory::handle::operator<=(const uintptr_t other) const noexcept
+bool memory::Handle::operator<=(const uintptr_t other) const noexcept
 {
-    return pointer <= other;
+    return _pointer <= other;
 }
 
-bool memory::handle::operator>(const handle& other) const noexcept
+bool memory::Handle::operator>(const Handle& other) const noexcept
 {
-    return pointer > other.pointer;
+    return _pointer > other._pointer;
 }
 
-bool memory::handle::operator>(const uintptr_t other) const noexcept
+bool memory::Handle::operator>(const uintptr_t other) const noexcept
 {
-    return pointer > other;
+    return _pointer > other;
 }
 
-bool memory::handle::operator>=(const handle& other) const noexcept
+bool memory::Handle::operator>=(const Handle& other) const noexcept
 {
-    return pointer >= other.pointer;
+    return _pointer >= other._pointer;
 }
 
-bool memory::handle::operator>=(const uintptr_t other) const noexcept
+bool memory::Handle::operator>=(const uintptr_t other) const noexcept
 {
-    return pointer >= other;
+    return _pointer >= other;
 }

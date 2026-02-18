@@ -4,7 +4,7 @@
 #include "../logger.hpp"
 #include "fw/util.hpp"
 
-bool memory::scanner::find_pattern(const std::string& pattern, const range& range, handle& result)
+bool memory::Scanner::findPattern(const std::string& pattern, const Range& range, Handle& result)
 {
     LOG_DBG(
         "Looking for \"{}\" in range {:X}-{:X} [{:04X}]",
@@ -13,7 +13,7 @@ bool memory::scanner::find_pattern(const std::string& pattern, const range& rang
         range.end().raw(),
         range.size()
     );
-    const auto  parsed = memory::pattern(pattern);
+    const auto  parsed = memory::Pattern(pattern);
     const auto& data   = parsed.data();
     const auto& mask   = parsed.mask();
 
@@ -32,7 +32,9 @@ bool memory::scanner::find_pattern(const std::string& pattern, const range& rang
     for (size_t i = 0; i <= stopAt; ++i)
     {
         if (mask[0] && start[i] != data[0])
+        {
             continue;
+        }
 
         bool match = true;
         for (size_t j = 1; j < patternSize; ++j)
@@ -46,7 +48,7 @@ bool memory::scanner::find_pattern(const std::string& pattern, const range& rang
 
         if (match)
         {
-            result = handle(reinterpret_cast<uintptr_t>(start) + i);
+            result = Handle(reinterpret_cast<uintptr_t>(start) + i);
             LOG_DBG("Found pattern at {:08X}", result.raw());
             return true;
         }
@@ -56,11 +58,13 @@ bool memory::scanner::find_pattern(const std::string& pattern, const range& rang
     return false;
 }
 
-bool memory::scanner::find_string(const std::string& string, const range& range, handle& result)
+bool memory::Scanner::findString(const std::string& string, const Range& range, Handle& result)
 {
     LOG_DBG("Looking for {}", string);
     if (string.empty())
+    {
         return false;
+    }
 
     const char*  start = range.start().to_ptr<char*>();
     const size_t n     = range.size();
@@ -87,7 +91,7 @@ bool memory::scanner::find_string(const std::string& string, const range& range,
             }
             if (match)
             {
-                result = handle(reinterpret_cast<uintptr_t>(start) + i);
+                result = Handle(reinterpret_cast<uintptr_t>(start) + i);
                 LOG_DBG("Found string at {:08X}", result.raw());
                 return true;
             }
@@ -98,11 +102,13 @@ bool memory::scanner::find_string(const std::string& string, const range& range,
     return false;
 }
 
-bool memory::scanner::find_wstring(const std::wstring& string, const range& range, handle& result)
+bool memory::Scanner::findWstring(const std::wstring& string, const Range& range, Handle& result)
 {
     LOG_DBG("Looking for {}", util::wstringToString(string));
     if (string.empty())
+    {
         return false;
+    }
 
     const auto   start = range.start().to_ptr<wchar_t*>();
     const size_t n     = range.size() / sizeof(wchar_t);
@@ -129,7 +135,7 @@ bool memory::scanner::find_wstring(const std::wstring& string, const range& rang
             }
             if (match)
             {
-                result = handle(start + i);
+                result = Handle(start + i);
                 LOG_DBG("Found string at {:08X}", result.raw());
                 return true;
             }
@@ -140,7 +146,7 @@ bool memory::scanner::find_wstring(const std::wstring& string, const range& rang
     return false;
 }
 
-bool memory::scanner::find_string_reference(const std::string& string, handle& result)
+bool memory::Scanner::findStringReference(const std::string& string, Handle& result)
 {
     LOG_DBG("Looking for {}", string);
 
@@ -166,7 +172,9 @@ bool memory::scanner::find_string_reference(const std::string& string, handle& r
     for (size_t i = 0; i + len <= imgSize; ++i)
     {
         if (memcmp(base + i, text, len) != 0)
+        {
             continue;
+        }
 
         const uint8_t* strAddr = base + i;
 
@@ -177,14 +185,18 @@ bool memory::scanner::find_string_reference(const std::string& string, handle& r
 
             // Quick byte check for REX.W + LEA
             if (insn[0] != 0x48 || insn[1] != 0x8D)
+            {
                 continue;
+            }
 
             if (const uint8_t modrm = insn[2]; (modrm & 0xC7) != 0x05) // mod=00, rm=101
+            {
                 continue;
+            }
 
             if (const int32_t disp = *reinterpret_cast<const int32_t*>(insn + 3); insn + 7 + disp == strAddr)
             {
-                result = handle(const_cast<uint8_t*>(insn));
+                result = Handle(const_cast<uint8_t*>(insn));
                 LOG_DBG("Found reference at {:08X}", result.raw());
                 return true;
             }
@@ -196,7 +208,7 @@ bool memory::scanner::find_string_reference(const std::string& string, handle& r
     return false;
 }
 
-bool memory::scanner::find_wstring_reference(const std::wstring& string, handle& result)
+bool memory::Scanner::findWstringReference(const std::wstring& string, Handle& result)
 {
     LOG_DBG("Looking for {}", util::wstringToString(string));
 
@@ -220,12 +232,16 @@ bool memory::scanner::find_wstring_reference(const std::wstring& string, handle&
     const size_t   len     = string.size() * sizeof(wchar_t);
 
     if (len == 0 || len > imgSize)
+    {
         return false;
+    }
 
     for (size_t i = 0; i <= imgSize - len; ++i)
     {
         if (memcmp(base + i, text, len) != 0)
+        {
             continue;
+        }
 
         const uint8_t* strAddr = base + i;
 
@@ -235,14 +251,18 @@ bool memory::scanner::find_wstring_reference(const std::wstring& string, handle&
             const uint8_t* insn = base + j;
 
             if (insn[0] != 0x48 || insn[1] != 0x8D) // REX.W + LEA
+            {
                 continue;
+            }
 
             if (const uint8_t modrm = insn[2]; (modrm & 0xC7) != 0x05) // mod=00, rm=101
+            {
                 continue;
+            }
 
             if (const int32_t disp = *reinterpret_cast<const int32_t*>(insn + 3); insn + 7 + disp == strAddr)
             {
-                result = handle(const_cast<uint8_t*>(insn));
+                result = Handle(const_cast<uint8_t*>(insn));
                 LOG_DBG("Found reference at {:08X}", result.raw());
                 return true;
             }

@@ -54,13 +54,15 @@ std::string util::trim(const std::string& s)
 void util::replace(std::string& str, const std::string& a, const std::string& b)
 {
     if (a.empty())
-        return;
-
-    size_t start_pos = 0;
-    while ((start_pos = str.find(a, start_pos)) != std::string::npos)
     {
-        str.replace(start_pos, a.length(), b);
-        start_pos += b.length();
+        return;
+    }
+
+    size_t startPos = 0;
+    while ((startPos = str.find(a, startPos)) != std::string::npos)
+    {
+        str.replace(startPos, a.length(), b);
+        startPos += b.length();
     }
 }
 
@@ -69,9 +71,13 @@ bool util::strtob(const std::string& value, const bool defaultValue = false)
     const std::string text = tolower(trim(value));
 
     if (text == "true" || text == "1")
+    {
         return true;
+    }
     if (text == "false" || text == "0")
+    {
         return false;
+    }
 
     return defaultValue;
 }
@@ -109,10 +115,12 @@ std::string util::tolower(std::string s)
     return s;
 }
 
-bool util::empty_or_whitespace(const std::string& s)
+bool util::emptyOrWhitespace(const std::string& s)
 {
     if (s.empty())
+    {
         return true;
+    }
 
     return std::all_of(s.begin(), s.end(), isspace);
 }
@@ -140,7 +148,9 @@ bool util::isModuleInDir(const HMODULE hModule, const std::filesystem::path& dir
 
     std::filesystem::path dllPath;
     if (!getModuleFilePath(hModule, dllPath))
+    {
         return false;
+    }
 
     return dllPath.parent_path() == directory;
 }
@@ -148,11 +158,15 @@ bool util::isModuleInDir(const HMODULE hModule, const std::filesystem::path& dir
 bool util::isModuleInExeDir(const HMODULE hModule)
 {
     if (!hModule)
+    {
         return true;
+    }
 
     std::filesystem::path exePath;
     if (!getModuleFilePath(nullptr, exePath))
+    {
         return false;
+    }
 
     return isModuleInDir(hModule, exePath.parent_path());
 }
@@ -161,7 +175,9 @@ std::string util::getModuleFileName(const HMODULE hModule)
 {
     std::filesystem::path dllPath;
     if (!getModuleFilePath(hModule, dllPath))
+    {
         return "";
+    }
 
     return dllPath.filename().string();
 }
@@ -169,7 +185,9 @@ std::string util::getModuleFileName(const HMODULE hModule)
 bool util::equalsIgnoreCase(const std::string& a, const std::string& b)
 {
     if (a.size() != b.size())
+    {
         return false;
+    }
 
     return std::equal(
         a.begin(),
@@ -185,7 +203,9 @@ bool util::equalsIgnoreCase(const std::string& a, const std::string& b)
 bool util::equalsIgnoreCase(const std::wstring& a, const std::wstring& b)
 {
     if (a.size() != b.size())
+    {
         return false;
+    }
 
     return std::equal(
         a.begin(),
@@ -201,7 +221,9 @@ bool util::equalsIgnoreCase(const std::wstring& a, const std::wstring& b)
 bool util::closeHandle(HANDLE& hObject)
 {
     if (!hObject)
+    {
         return true;
+    }
 
     if (!CloseHandle(hObject))
     {
@@ -215,7 +237,9 @@ bool util::closeHandle(HANDLE& hObject)
 bool util::freeLibrary(HMODULE& hModule)
 {
     if (!hModule)
+    {
         return true;
+    }
 
     if (!FreeLibrary(hModule))
     {
@@ -241,7 +265,9 @@ bool util::checkMutex(const char* name, HANDLE& hMutex)
 std::string util::wstringToString(const std::wstring& wstring)
 {
     if (wstring.empty())
+    {
         return {};
+    }
     const int   size = WideCharToMultiByte(CP_UTF8, 0, wstring.c_str(), -1, nullptr, 0, nullptr, nullptr);
     std::string out(size - 1, '\0');
     WideCharToMultiByte(CP_UTF8, 0, wstring.c_str(), -1, out.data(), size, nullptr, nullptr);
@@ -251,7 +277,9 @@ std::string util::wstringToString(const std::wstring& wstring)
 bool util::shmExists(const std::string& name)
 {
     if (name.empty())
+    {
         return false;
+    }
 
     if (const auto h = OpenFileMappingA(FILE_MAP_READ, FALSE, name.c_str()))
     {
@@ -262,7 +290,7 @@ bool util::shmExists(const std::string& name)
     return false;
 }
 
-void util::fmt_msgbox(HWND hWnd, const char* caption, const UINT uType, const char* fmt, ...)
+void util::fmtMsgBox(HWND hWnd, const char* caption, const UINT uType, const char* fmt, ...)
 {
     char    buffer[4096];
     va_list args;
@@ -335,7 +363,9 @@ bool util::isModuleInAnyDirsRelativeToExe(const HMODULE hModule, const std::init
 {
     std::filesystem::path path;
     if (!getModuleFilePath(nullptr, path))
+    {
         return false;
+    }
     path = path.parent_path();
 
     return std::any_of(
@@ -348,17 +378,21 @@ bool util::isModuleInAnyDirsRelativeToExe(const HMODULE hModule, const std::init
     );
 }
 
-memory::handle util::getVirtualFunctionAddress(void* object, const std::size_t offset)
+memory::Handle util::getVirtualFunctionAddress(void* object, const std::size_t offset)
 {
     if (!object)
-        return memory::handle(nullptr);
+    {
+        return memory::Handle(nullptr);
+    }
 
     const auto vtable = *static_cast<std::uintptr_t**>(object);
 
     if (!vtable)
-        return memory::handle(nullptr);
+    {
+        return memory::Handle(nullptr);
+    }
 
-    return memory::handle(vtable[offset / sizeof(void*)]);
+    return memory::Handle(vtable[offset / sizeof(void*)]);
 }
 
 static constexpr std::array<uint8_t, 65536> allowedTable = []() constexpr
@@ -367,9 +401,13 @@ static constexpr std::array<uint8_t, 65536> allowedTable = []() constexpr
 
     // ASCII letters
     for (wchar_t c = L'A'; c <= L'Z'; ++c)
+    {
         table[c] = 1;
+    }
     for (wchar_t c = L'a'; c <= L'z'; ++c)
+    {
         table[c] = 1;
+    }
 
     // Space
     table[L' '] = 1;
@@ -378,7 +416,9 @@ static constexpr std::array<uint8_t, 65536> allowedTable = []() constexpr
     constexpr wchar_t extra[] = L"ÁáÂâÄäÀàÆæÇçÊêÉéËëÈèÏïÍíÎîÑñŒœÔôÖöÓóÚúÜüÛûÙù";
 
     for (const wchar_t c : extra)
+    {
         table[static_cast<uint16_t>(c)] = 1;
+    }
 
     return table;
 }();
@@ -386,7 +426,9 @@ static constexpr std::array<uint8_t, 65536> allowedTable = []() constexpr
 bool util::isValidGuildWars2Name(const wchar_t* name)
 {
     if (!name)
+    {
         return false;
+    }
 
     size_t length = wcsnlen(name, 24);
 
@@ -397,14 +439,18 @@ bool util::isValidGuildWars2Name(const wchar_t* name)
     }
 
     if (length < 3 || length > 19)
+    {
         return false;
+    }
 
     const uint8_t* table = allowedTable.data();
 
     for (; length; --length)
     {
         if (!table[static_cast<uint16_t>(*name++)])
+        {
             return false;
+        }
     }
 
     return true;

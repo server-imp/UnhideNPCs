@@ -11,10 +11,14 @@ namespace nexus
     bool isNexus()
     {
         if (APIDefs)
+        {
             return true;
+        }
 
         if (util::shmExists(fmt::format("DL_NEXUS_LINK_{}", GetCurrentProcessId())))
+        {
             return true;
+        }
 
         return false;
     }
@@ -22,7 +26,9 @@ namespace nexus
     MumbleLink* getMumbleLink()
     {
         if (!APIDefs)
+        {
             return nullptr;
+        }
 
         return static_cast<MumbleLink*>(APIDefs->DataLink.Get("DL_MUMBLE_LINK"));
     }
@@ -30,7 +36,9 @@ namespace nexus
     void logCallback(const logging::LogEntry& entry)
     {
         if (!APIDefs)
+        {
             return;
+        }
 
         ELogLevel level;
         switch (entry.level)
@@ -53,13 +61,21 @@ namespace nexus
     void options()
     {
         if (unpc::exit)
+        {
             return;
+        }
         if (!unpc::settings || !unpc::settings->loaded())
+        {
             return;
+        }
         if (!unpc::logger)
+        {
             return;
+        }
         if (unpc::hProxyModule || unpc::injected)
+        {
             return;
+        }
 
         ui::renderOptions();
     }
@@ -67,7 +83,9 @@ namespace nexus
     void onLoad(AddonAPI* aApi)
     {
         if (unpc::hProxyModule || unpc::injected)
+        {
             return;
+        }
 
         APIDefs = aApi;
 
@@ -84,7 +102,9 @@ namespace nexus
     void onUnload()
     {
         if (unpc::hProxyModule || unpc::injected)
+        {
             return;
+        }
 
         APIDefs->Renderer.Deregister(options);
 
@@ -96,7 +116,7 @@ namespace nexus
 
 nexus::AddonDefinition* GetAddonDef()
 {
-    nexus::AddonDef.Signature        = unpc::signature;
+    nexus::AddonDef.Signature        = unpc::SIGNATURE;
     nexus::AddonDef.APIVersion       = NEXUS_API_VERSION;
     nexus::AddonDef.Name             = "UnhideNPCs";
     nexus::AddonDef.Version.Major    = unpc::version::YEAR;

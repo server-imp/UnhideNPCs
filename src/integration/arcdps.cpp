@@ -3,7 +3,7 @@
 #include "imgui.h"
 #include "../ui.hpp"
 
-bool isArcDPS()
+bool isArcDps()
 {
     HMODULE hModule {};
     if (!GetModuleHandleEx(0, "d3d11.dll", &hModule))
@@ -20,14 +20,16 @@ bool isArcDPS()
 arcdps_exports* mod_init()
 {
     memset(&arc_exports, 0, sizeof(arcdps_exports));
-    arc_exports.sig       = unpc::signature;
+    arc_exports.sig       = unpc::SIGNATURE;
     arc_exports.imguivers = 18000; // placeholder, ImGui not used
     arc_exports.size      = sizeof(arcdps_exports);
     arc_exports.out_name  = "UnhideNPCs";
     arc_exports.out_build = unpc::version::STRING;
 
     if (unpc::nexusPresent || unpc::hProxyModule || unpc::injected)
+    {
         return &arc_exports;
+    }
 
     arc_exports.imgui = reinterpret_cast<void*>(reinterpret_cast<std::uintptr_t>(ui::renderWindow));
 
@@ -38,7 +40,9 @@ arcdps_exports* mod_init()
 uintptr_t mod_release()
 {
     if (!unpc::nexusPresent && !unpc::hProxyModule && !unpc::injected)
+    {
         unpc::stop();
+    }
     return 0;
 }
 

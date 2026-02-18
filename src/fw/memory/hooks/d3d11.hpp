@@ -7,18 +7,18 @@
 
 namespace memory::hooks
 {
-    class d3d11 final : hook
+    class D3D11 final : Hook
     {
     private:
-        static d3d11* _instance;
+        static D3D11* _instance;
 
         std::function<void()>             _cbPresent {};
-        std::function<void(d3d11*, bool)> _cbResizeBuffers {};
-        std::function<bool(d3d11*)>       _cbStarted {};
-        std::function<void(d3d11*)>       _cbShutdown {};
+        std::function<void(D3D11*, bool)> _cbResizeBuffers {};
+        std::function<bool(D3D11*)>       _cbStarted {};
+        std::function<void(D3D11*)>       _cbShutdown {};
 
-        std::optional<detour> _hkPresent {};
-        std::optional<detour> _hkResizeBuffers {};
+        std::optional<Detour> _hkPresent {};
+        std::optional<Detour> _hkResizeBuffers {};
 
         void* _presentPtr {};
         void* _resizeBuffersPtr {};
@@ -33,18 +33,18 @@ namespace memory::hooks
 
         bool _shuttingDown {};
 
-        d3d11(
+        D3D11(
             HWND                                     hWnd,
             void*                                    presentPtr,
             void*                                    resizeBuffersPtr,
             const std::function<void()>&             cbPresent,
-            const std::function<void(d3d11*, bool)>& cbResizeBuffers,
-            const std::function<bool(d3d11*)>&       cbStarted,
-            const std::function<void(d3d11*)>&       cbShutdown
+            const std::function<void(D3D11*, bool)>& cbResizeBuffers,
+            const std::function<bool(D3D11*)>&       cbStarted,
+            const std::function<void(D3D11*)>&       cbShutdown
         );
 
     public:
-        ~d3d11();
+        ~D3D11();
 
         virtual bool enable();
 
@@ -58,23 +58,23 @@ namespace memory::hooks
 
         [[nodiscard]] HWND hWnd() const;
 
-        static std::optional<std::unique_ptr<d3d11>> create(
+        static std::optional<std::unique_ptr<D3D11>> create(
             const std::string&                       windowClassName,
             const std::string&                       windowName,
             const std::function<void()>&             cbPresent,
-            const std::function<void(d3d11*, bool)>& cbResizeBuffers,
-            const std::function<bool(d3d11*)>&       cbStarted,
-            const std::function<void(d3d11*)>&       cbShutdown
+            const std::function<void(D3D11*, bool)>& cbResizeBuffers,
+            const std::function<bool(D3D11*)>&       cbStarted,
+            const std::function<void(D3D11*)>&       cbShutdown
         );
 
     private:
-        bool CreateRenderTarget(IDXGISwapChain* swapChain);
+        bool createRenderTarget(IDXGISwapChain* swapChain);
 
-        void DestroyRenderTarget();
+        void destroyRenderTarget();
 
-        HRESULT InternalPresent(IDXGISwapChain* swapChain, UINT syncInterval, UINT flags);
+        HRESULT internalPresent(IDXGISwapChain* swapChain, UINT syncInterval, UINT flags);
 
-        HRESULT InternalResizeBuffers(
+        HRESULT internalResizeBuffers(
             IDXGISwapChain* swapChain,
             UINT            bufferCount,
             UINT            width,
@@ -83,9 +83,9 @@ namespace memory::hooks
             UINT            swapChainFlags
         );
 
-        static HRESULT Present(IDXGISwapChain* swapChain, UINT syncInterval, UINT flags);
+        static HRESULT present(IDXGISwapChain* swapChain, UINT syncInterval, UINT flags);
 
-        static HRESULT ResizeBuffers(
+        static HRESULT resizeBuffers(
             IDXGISwapChain* swapChain,
             UINT            bufferCount,
             UINT            width,

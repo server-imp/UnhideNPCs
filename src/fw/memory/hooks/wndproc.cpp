@@ -1,66 +1,76 @@
 #include "wndproc.hpp"
 
-memory::hooks::wndproc* memory::hooks::wndproc::_instance {};
+memory::hooks::WndProc* memory::hooks::WndProc::_instance {};
 
-memory::hooks::wndproc::wndproc(HWND hWnd) : hook("WndProc", nullptr, nullptr, nullptr)
+memory::hooks::WndProc::WndProc(HWND hWnd) : Hook("WndProc", nullptr, nullptr, nullptr)
 {
     _instance = this;
     _hWnd     = hWnd;
 }
 
-memory::hooks::wndproc::~wndproc()
+memory::hooks::WndProc::~WndProc()
 {
     disable(false);
     if (_instance == this)
+    {
         _instance = nullptr;
+    }
 }
 
-bool memory::hooks::wndproc::enable()
+bool memory::hooks::WndProc::enable()
 {
     _originalWndProc = reinterpret_cast<WNDPROC>(SetWindowLongPtr(
         _hWnd,
         GWLP_WNDPROC,
-        reinterpret_cast<LONG_PTR>(WndProc)
+        reinterpret_cast<LONG_PTR>(wndProc)
     ));
 
     if (!_originalWndProc)
+    {
         return false;
+    }
 
     return true;
 }
 
-bool memory::hooks::wndproc::disable(bool uninitialize)
+bool memory::hooks::WndProc::disable(bool uninitialize)
 {
     SetWindowLongPtr(_hWnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(_originalWndProc));
 
     return true;
 }
 
-void memory::hooks::wndproc::addCallback(const std::function<bool(HWND, UINT, WPARAM, LPARAM)>& callback)
+void memory::hooks::WndProc::addCallback(const std::function<bool(HWND, UINT, WPARAM, LPARAM)>& callback)
 {
     _callbacks.push_back(callback);
 }
 
-LRESULT memory::hooks::wndproc::InternalWndProc(HWND hWnd, const UINT msg, const WPARAM wParam, const LPARAM lParam)
+LRESULT memory::hooks::WndProc::internalWndProc(HWND hWnd, const UINT msg, const WPARAM wParam, const LPARAM lParam) const
 {
     bool callOriginal = true;
 
     for (const auto& callback : _callbacks)
     {
         if (callback(hWnd, msg, wParam, lParam))
+        {
             callOriginal = false;
+        }
     }
 
     if (!callOriginal)
+    {
         return 0;
+    }
 
     return CallWindowProc(_originalWndProc, hWnd, msg, wParam, lParam);
 }
 
-LRESULT memory::hooks::wndproc::WndProc(HWND hWnd, const UINT msg, const WPARAM wParam, const LPARAM lParam)
+LRESULT memory::hooks::WndProc::wndProc(HWND hWnd, const UINT msg, const WPARAM wParam, const LPARAM lParam)
 {
     if (!_instance)
+    {
         return 0;
+    }
 
-    return _instance->InternalWndProc(hWnd, msg, wParam, lParam);
+    return _instance->internalWndProc(hWnd, msg, wParam, lParam);
 }

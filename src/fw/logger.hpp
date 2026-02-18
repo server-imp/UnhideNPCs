@@ -78,7 +78,9 @@ namespace logging
     void Logger::log(LogLevel level, const std::string& format, Args&&... args)
     {
         if (level < _level)
+        {
             return;
+        }
 
         const auto now  = std::chrono::system_clock::now();
         const auto time = std::chrono::system_clock::to_time_t(now);
@@ -103,7 +105,9 @@ namespace logging
         std::lock_guard lock(_mutex);
 
         if (_recentEntries.size() >= 250)
+        {
             _recentEntries.pop_front();
+        }
         _recentEntries.push_back({ timestamp, level, message });
 
         const auto& entry = _recentEntries.back();

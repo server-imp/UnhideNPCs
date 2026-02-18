@@ -1,13 +1,14 @@
 #include "protection.hpp"
 
 #include "fw/logger.hpp"
+#include "fw/util.hpp"
 
-memory::handle memory::ProtectedRegion::start() const
+memory::Handle memory::ProtectedRegion::start() const
 {
     return range.start();
 }
 
-memory::handle memory::ProtectedRegion::end() const
+memory::Handle memory::ProtectedRegion::end() const
 {
     return range.end();
 }
@@ -17,7 +18,7 @@ ptrdiff_t memory::ProtectedRegion::size() const
     return range.size();
 }
 
-memory::protection::protection(const memory::handle& base, const size_t size, const DWORD protection)
+memory::Protection::Protection(const memory::Handle& base, const size_t size, const DWORD protection)
 {
     if (!base.raw())
     {
@@ -25,8 +26,8 @@ memory::protection::protection(const memory::handle& base, const size_t size, co
         return;
     }
 
-    memory::handle       current = base;
-    const memory::handle end     = base.add(size);
+    memory::Handle       current = base;
+    const memory::Handle end     = base.add(static_cast<std::ptrdiff_t>(size));
 
     while (current < end)
     {
@@ -37,8 +38,8 @@ memory::protection::protection(const memory::handle& base, const size_t size, co
             break;
         }
 
-        memory::handle regionStart(info.BaseAddress);
-        const auto     regionEnd = regionStart.add(info.RegionSize);
+        memory::Handle regionStart(info.BaseAddress);
+        const auto     regionEnd = regionStart.add(static_cast<std::ptrdiff_t>(info.RegionSize));
 
         if (info.State != MEM_COMMIT)
         {
@@ -60,18 +61,18 @@ memory::protection::protection(const memory::handle& base, const size_t size, co
             break;
         }
 
-        _regions.push_back({ range(protectionStart, protectionEnd), oldProtect });
+        _regions.push_back({ Range(protectionStart, protectionEnd), oldProtect });
         current = regionEnd;
     }
 }
 
-memory::protection::protection(const memory::range& range, const DWORD protection) : memory::protection(
+memory::Protection::Protection(const memory::Range& range, const DWORD protection) : memory::Protection(
     range.start(),
     range.size(),
     protection
 ) {}
 
-memory::protection::~protection()
+memory::Protection::~Protection()
 {
     for (auto& region : _regions)
     {
@@ -80,7 +81,7 @@ memory::protection::~protection()
     }
 }
 
-const std::vector<memory::ProtectedRegion>& memory::protection::regions() const
+const std::vector<memory::ProtectedRegion>& memory::Protection::regions() const
 {
     return _regions;
 }

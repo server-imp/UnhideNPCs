@@ -5,7 +5,7 @@
 
 namespace memory
 {
-    class hook
+    class Hook
     {
     protected:
         std::string _name {};
@@ -16,9 +16,9 @@ namespace memory
         void* _original {};
         void* _ownFunction {};
 
-        hook(std::string name, void* target, void* original, void* ownFunction);
+        Hook(std::string name, void* target, void* original, void* ownFunction);
 
-        ~hook() = default;
+        ~Hook() = default;
 
     public:
         [[nodiscard]] const std::string& name() const;
@@ -36,15 +36,15 @@ namespace memory
     };
 
     template <typename T>
-    T hook::original() const
+    T Hook::original() const
     {
         return reinterpret_cast<T>(_original);
     }
 
-    class detour final : public hook
+    class Detour final : public Hook
     {
     public:
-        detour(std::string name, void* target, void* ownFunction);
+        Detour(std::string name, void* target, void* ownFunction);
 
         bool enable() override;
 
