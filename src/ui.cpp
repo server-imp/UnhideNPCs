@@ -24,7 +24,9 @@ std::optional<memory::hooks::wndproc>                ui::wndProcHook {};
 void ui::tooltip(const char* text)
 {
     if (!ImGui::IsItemHovered())
+    {
         return;
+    }
 
     ImGui::BeginTooltip();
     ImGui::TextUnformatted(text);
@@ -112,7 +114,7 @@ bool ui::sliderFloat(
     return result;
 }
 
-void SeparatorText(const char* text)
+void ui::separatorText(const char* text)
 {
     const ImGuiStyle& style = ImGui::GetStyle();
 
@@ -121,7 +123,9 @@ void SeparatorText(const char* text)
 
     float lineWidth = (fullWidth - textWidth - style.ItemSpacing.x * 2.0f) * 0.5f;
     if (lineWidth < 1.0f)
+    {
         lineWidth = 1.0f;
+    }
 
     const ImVec2 cursor = ImGui::GetCursorScreenPos();
     ImDrawList*  draw   = ImGui::GetWindowDrawList();
@@ -143,7 +147,7 @@ void SeparatorText(const char* text)
     draw->AddLine(ImVec2(textEnd.x + style.ItemSpacing.x, y), ImVec2(cursor.x + fullWidth, y), color);
 }
 
-bool TextLink(const char* label, bool centered = false)
+bool ui::textLink(const char* label, const bool centered)
 {
     const ImVec2 textSize = ImGui::CalcTextSize(label);
     const float  startX   = ImGui::GetCursorPosX();
@@ -190,7 +194,7 @@ void ui::renderOptions()
         return;
     }
 
-    SeparatorText("Showing");
+    separatorText("Showing");
     ImGui::Indent();
     if (auto alwaysShowTarget = unpc::settings->getAlwaysShowTarget(); ui::checkbox(
         "Target",
@@ -251,7 +255,7 @@ void ui::renderOptions()
     }
     ImGui::Unindent();
 
-    SeparatorText("Hiding");
+    separatorText("Hiding");
     ImGui::Indent();
     if (auto hidePlayers = unpc::settings->getHidePlayers(); ui::checkbox(
         "Players",
@@ -382,7 +386,7 @@ void ui::renderOptions()
     }
     ImGui::Unindent();
 
-    SeparatorText("Misc");
+    separatorText("Misc");
     ImGui::Indent();
     if (auto forceConsole = unpc::settings->getForceConsole(); ui::checkbox(
         "Force Console",
@@ -413,17 +417,17 @@ void ui::renderOptions()
         "Forces all characters to be visible for the next frame\n"
         "Useful for \"resetting\" things after modifying any settings."
     );
-#ifndef BUILDING_ON_GITHUB
-    if (ImGui::Button("DBG", { LABEL_OFFSET + FIELD_WIDTH, 30 }))
-    {
 
-    }
+#ifndef BUILDING_ON_GITHUB
+    ImGui::Unindent();
+    separatorText("Debug");
+    re::debugMenu();
 #endif
     ImGui::Unindent();
 
     if (unpc::mode == unpc::eMode::Proxy || unpc::mode == unpc::eMode::Injected)
     {
-        SeparatorText("Overlay");
+        separatorText("Overlay");
         ImGui::Indent();
         if (auto disableOverlay = unpc::settings->getDisableOverlay(); ui::checkbox(
             "Disable Overlay",
@@ -465,7 +469,7 @@ void ui::renderOptions()
     ImGui::NewLine();
     ImGui::TextUnformatted("Report issues on");
     ImGui::SameLine();
-    if (TextLink("GitHub"))
+    if (textLink("GitHub"))
     {
         ShellExecuteA(nullptr, "open", "https://github.com/server-imp/UnhideNPCs/", nullptr, nullptr, SW_SHOWNORMAL);
     }
@@ -480,11 +484,17 @@ void ui::renderOptions()
 void ui::renderWindow()
 {
     if (unpc::exit)
+    {
         return;
+    }
     if (!unpc::settings || !unpc::settings->loaded())
+    {
         return;
+    }
     if (!unpc::logger)
+    {
         return;
+    }
 
     bool       open       = unpc::settings->getArcDPS_UIOpen();
     const bool startState = open;
@@ -497,7 +507,9 @@ void ui::renderWindow()
     }
 
     if (!open)
+    {
         return;
+    }
 
     ImGui::SetNextWindowSize(ImVec2 { 0, 0 }); // Auto size
     if (ImGui::Begin("UnhideNPCs [ ALT+SHIFT+U ]", &open, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize))
@@ -571,14 +583,18 @@ bool ui::wasKeyPressed(const int vKey)
 bool ui::wasComboPressed(const std::initializer_list<int>& combo)
 {
     if (combo.size() < 1)
+    {
         return false;
+    }
     auto it = combo.begin();
 
     // All keys except the last must be currently down
     for (const auto end = combo.end() - 1; it != end; ++it)
     {
         if (!(GetAsyncKeyState(*it) & 0x8000))
+        {
             return false;
+        }
     }
 
     // The last key must have just been pressed
@@ -587,10 +603,12 @@ bool ui::wasComboPressed(const std::initializer_list<int>& combo)
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND, UINT, WPARAM, LPARAM);
 
-bool ui::OnWndProc(HWND hWnd, const UINT msg, const WPARAM wParam, const LPARAM lParam)
+bool ui::onWndProc(HWND hWnd, const UINT msg, const WPARAM wParam, const LPARAM lParam)
 {
     if (unpc::exit)
+    {
         return false;
+    }
 
     if (msg == WM_KEYDOWN && wParam == VK_ESCAPE)
     {
@@ -641,7 +659,9 @@ bool ui::OnWndProc(HWND hWnd, const UINT msg, const WPARAM wParam, const LPARAM 
         case WM_CHAR:
         case WM_SYSCHAR: ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
             if (io.WantTextInput)
+            {
                 return true;
+            }
             break;
         default: break;
         }
@@ -655,7 +675,7 @@ bool ui::OnWndProc(HWND hWnd, const UINT msg, const WPARAM wParam, const LPARAM 
     return false;
 }
 
-void ui::OnD3DPresent()
+void ui::onD3DPresent()
 {
     ImGui_ImplDX11_NewFrame();
     ImGui_ImplWin32_NewFrame();
@@ -667,7 +687,7 @@ void ui::OnD3DPresent()
     ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 }
 
-void ui::OnD3DResizeBuffers(const memory::hooks::d3d11* hk, const bool pre)
+void ui::onD3DResizeBuffers(const memory::hooks::d3d11* hk, const bool pre)
 {
     LOG_DBG("OnD3DResizeBuffers");
 
@@ -795,7 +815,7 @@ void ApplyTheme()
     colors[ImGuiCol_ModalWindowDimBg]      = ImVec4(0, 0, 0, 0.6f);
 }
 
-bool ui::OnD3DStarted(const memory::hooks::d3d11* hk)
+bool ui::onD3DStarted(const memory::hooks::d3d11* hk)
 {
     LOG_DBG("OnD3DStarted");
 
@@ -823,7 +843,7 @@ bool ui::OnD3DStarted(const memory::hooks::d3d11* hk)
     ApplyTheme();
 
     wndProcHook.emplace(hk->hWnd());
-    wndProcHook->addCallback(OnWndProc);
+    wndProcHook->addCallback(onWndProc);
     if (!wndProcHook->enable())
     {
         wndProcHook.reset();
@@ -836,12 +856,14 @@ bool ui::OnD3DStarted(const memory::hooks::d3d11* hk)
     return true;
 }
 
-void ui::OnD3DShutdown(const memory::hooks::d3d11* hk)
+void ui::onD3DShutdown(const memory::hooks::d3d11* hk)
 {
     LOG_DBG("OnD3DShutdown");
 
     if (wndProcHook)
+    {
         wndProcHook.reset();
+    }
 
     ImGui_ImplDX11_Shutdown();
     ImGui_ImplWin32_Shutdown();

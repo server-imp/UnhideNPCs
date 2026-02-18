@@ -45,6 +45,9 @@ namespace ui
         float       labelOffset
     );
 
+    void separatorText(const char* text);
+    bool textLink(const char* label, bool centered = false);
+
     void renderOptions();
 
     void renderWindow();
@@ -53,15 +56,15 @@ namespace ui
 
     bool wasComboPressed(const std::initializer_list<int>& combo);
 
-    bool OnWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+    bool onWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-    void OnD3DPresent();
+    void onD3DPresent();
 
-    void OnD3DResizeBuffers(const memory::hooks::d3d11* hk, bool pre);
+    void onD3DResizeBuffers(const memory::hooks::d3d11* hk, bool pre);
 
-    bool OnD3DStarted(const memory::hooks::d3d11* hk);
+    bool onD3DStarted(const memory::hooks::d3d11* hk);
 
-    void OnD3DShutdown(const memory::hooks::d3d11* hk);
+    void onD3DShutdown(const memory::hooks::d3d11* hk);
 }
 
 #endif //UNHIDENPCS_UI_HPP
