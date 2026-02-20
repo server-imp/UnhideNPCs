@@ -16,7 +16,7 @@ private:
 
     // Hiding
     CONFIG_PROPERTY(bool, HidePlayers, false, "Hide all players (Not yourself)")
-    CONFIG_PROPERTY(bool, HidePlayerOwned, false, "Hide all characters owned by players, except yourself (pets, clones, minis etc")
+    CONFIG_PROPERTY(bool, HidePlayerOwned, false, "Hide all characters owned by players, except yourself (pets, clones, minis etc)")
     CONFIG_PROPERTY(bool, HideBlockedPlayers, false, "Hide any players that you have blocked")
     CONFIG_PROPERTY(bool, HideBlockedPlayersOwned, false, "Hide any characters that are owned by blocked players (pets, clones, minis etc)")
     CONFIG_PROPERTY(bool, HideNonGroupMembers, false, "Hide any players who are not in the same group as you")
