@@ -59,18 +59,17 @@ There are four different ways to use UnhideNPCs; only follow one of them.
 ## Configuration
 There is a config file at `<game folder>/addons/UnhideNPCs/config.cfg` with the following options:
 
-- `ForceConsole`: < true/false >
-  - Forces the creation of a console window when set to true.
-  - Note: If the console window is exited, then the game will exit as well.
-  - Default: false
-
 - `AlwaysShowTarget`: < true/false >
   - Always show the targeted character, even if it would be hidden.
   - Default: true
 
 - `PlayerOwned`: < true/false >
-  - NPCs that players own (pets, clones, minis, etc.) will also be unhidden.
+  - Characters that players own (pets, clones, minis, etc.) will also be unhidden.
   - Default: false
+
+- `UnhideNpcs`: < true/false >
+  - Unhide NPCs.
+  - Default: true
 
 - `MinimumRank`: < number >
   - Only NPCs that have at least this rank get unhidden.
@@ -84,66 +83,82 @@ There is a config file at `<game folder>/addons/UnhideNPCs/config.cfg` with the 
 - `Attackable`: < number >
   - Only NPCs that match this get unhidden.
   - `0`: Both
-  - `1`: Only attackable
-  - `2`: Only non-attackable
+  - `1`: Only Attackable
+  - `2`: Only Non-Attackable
+  - Default: 0
+
+- `MaximumDistance`: < number >
+  - Characters outside of this distance won't be unhidden. Set to `0` for unlimited.
   - Default: 0
 
 - `HidePlayers`: < true/false >
-  - Players will be hidden when this is enabled, useful for boosting performance.
-  - Their names are still visible, and you can still target them.
-  - Default: false
-
-- `MaxPlayersVisible`: < number >
-  - Maximum number of visible players. Set to 0 for no limit.
-  - Default: 0
-
-- `MaxPlayerOwnedVisible`: < number >
-  - Maximum number of visible player-owned NPCs (pets, clones, minis, etc.). Set to 0 for no limit.
-  - Default: 0
-
-- `HideNonGuildMembers`: < true/false >
-  - Hide any players that are not mutual guild members.
-  - Default: false
-
-- `HideNonGuildMembersOwned`: < true/false >
-  - Also hide their owned characters (pets, clones etc.).
-  - Default: false
-
-- `HideNonGroupMembers`: < true/false >
-  - Hide any players who are not in the same group as you (party, squad).
-  - Default: false
-
-- `HideNonGroupMembersOwned`: < true/false >
-  - Also hide their owned characters (pets, clones etc.).
+  - Hide all players (not yourself).
   - Default: false
 
 - `HidePlayerOwned`: < true/false >
-  - NPCs that are owned by players (pets, clones, minis, etc.) will be hidden.
+  - Hide all characters owned by players, except your own (pets, clones, minis, etc.).
+  - Default: false
+
+- `HideBlockedPlayers`: < true/false >
+  - Hide any players that you have blocked.
+  - Default: false
+
+- `HideBlockedPlayersOwned`: < true/false >
+  - Hide any characters that are owned by blocked players (pets, clones, minis, etc.).
+  - Default: false
+
+- `HideNonGroupMembers`: < true/false >
+  - Hide any players who are not in the same group as you.
+  - Default: false
+
+- `HideNonGroupMembersOwned`: < true/false >
+  - Hide any characters that are owned by non-group members (pets, clones, minis, etc.).
+  - Default: false
+
+- `HideNonGuildMembers`: < true/false >
+  - Hide any players that aren't guild members.
+  - Default: false
+
+- `HideNonGuildMembersOwned`: < true/false >
+  - Hide any characters that are owned by non-guild members (pets, clones, minis, etc.).
+  - Default: false
+
+- `HideNonFriends`: < true/false >
+  - Hide any players that aren't friends.
+  - Default: false
+
+- `HideNonFriendsOwned`: < true/false >
+  - Hide any characters that are owned by non-friend players (pets, clones, minis, etc.).
   - Default: false
 
 - `HidePlayerOwnedSelf`: < true/false >
-  - Also hide NPCs that you own.
+  - Hide characters that are owned by you.
   - Default: false
+
+- `MaxPlayersVisible`: < number >
+  - Maximum number of visible players. Set to `0` for no limit.
+  - Default: 0
+
+- `MaxPlayerOwnedVisible`: < number >
+  - Maximum number of visible player-owned characters. Set to `0` for no limit.
+  - Default: 0
+
+- `MaxNpcs`: < number >
+  - Maximum number of visible NPCs. Set to `0` for no limit.
+  - Default: 0
 
 - `DisableHidingInInstances`: < true/false >
   - Disables the hiding options while in an instance (Fractals, Dungeons, etc.).
   - Default: false
 
-- `MaximumDistance`: < number >
-  - NPCs within this distance will be unhidden. Set to `0` for no distance check.
-  - Default: 0
+- `ForceConsole`: < true/false >
+  - Create a console window.
+  - Note: If the console window is exited, then the game will exit as well.
+  - Default: false
 
 - `LoadScreenBoost`: < true/false >
   - Speed up loading screens by temporarily limiting number of characters to `0` when one is triggered.
   - Note: Characters will start loading after the loading screen is finished, which can cause brief invisibility after loading.
-  - Default: false
-
-- `ArcDPS_UIOpen`: < true/false >
-  - ArcDPS UI opened/closed state.
-  - Default: true
-
-- `DisableOverlay`: < true/false >
-  - Disable the built-in overlay when using Injection or Proxy mode.
   - Default: false
 
 - `CloseOnEscape`: < true/false >
@@ -151,9 +166,17 @@ There is a config file at `<game folder>/addons/UnhideNPCs/config.cfg` with the 
   - Default: true
 
 - `OverlayFontSize`: < number >
-  - Font size used for the overlay.
+  - The font size used for the overlay.
   - Requires restart/reload to reflect changes.
   - Default: 14.0
+
+- `DisableOverlay`: < true/false >
+  - Disable the built-in overlay when using Injection or Proxy mode.
+  - Default: false
+
+- `OverlayOpen`: < true/false >
+  - Overlay opened/closed state.
+  - Default: true
 
 ## License
 
