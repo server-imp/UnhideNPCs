@@ -19,12 +19,12 @@ This add-on includes an in-game configuration interface.
 ### Nexus Version
 When installed via **Nexus**, the configuration is available directly in the Nexus UI:
 
-<img src="https://github.com/user-attachments/assets/c50332b7-3217-47f0-869c-f35f5dcfbb5e" width="25%">
+<img src="https://github.com/user-attachments/assets/c50332b7-3217-47f0-869c-f35f5dcfbb5e" width="33%">
 
 ### ArcDPS / Proxy / Injection Version
 When using **ArcDPS**, **Proxy** or **Injection**, the configuration appears in its own separate window:
 
-<img src="https://github.com/user-attachments/assets/5a5d718d-de0f-4718-838f-42718b10b3aa" width="25%">
+<img src="https://github.com/user-attachments/assets/5a5d718d-de0f-4718-838f-42718b10b3aa" width="33%">
 
 ## Installation
 There are four different ways to use UnhideNPCs; only follow one of them.
