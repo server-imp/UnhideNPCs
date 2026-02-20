@@ -14,6 +14,11 @@ const std::string& property::comment() const noexcept
     return _comment;
 }
 
+void property::setComment(const std::string& comment) noexcept
+{
+    _comment = comment;
+}
+
 const std::string& property::key() const noexcept
 {
     return _key;

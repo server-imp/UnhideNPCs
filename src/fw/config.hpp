@@ -35,6 +35,7 @@ public:
     property& operator=(property&&) noexcept = default;
 
     [[nodiscard]] const std::string& comment() const noexcept;
+    void                             setComment(const std::string& comment) noexcept;
 
     [[nodiscard]] const std::string& key() const noexcept;
 
@@ -111,7 +112,7 @@ T property::get(const T& defaultValue) const
         if constexpr (std::is_signed_v<T>)
         {
             long long              tmp = 0;
-            std::from_chars_result r{};
+            std::from_chars_result r {};
             if (base == 16)
             {
                 unsigned long long utmp = 0;
@@ -234,7 +235,12 @@ T Config::get(const std::string_view key, const T& defaultValue, std::string com
         std::lock_guard lock(_mutex);
         if (const auto it = _index.find(nkey); it != _index.end())
         {
-            const property& p = _properties[it->second];
+            property& p = _properties[it->second];
+            if (!comment.empty() && p.comment() != comment)
+            {
+                p.setComment(comment);
+                _needSave = true;
+            }
             return p.get<T>(defaultValue);
         }
     }
