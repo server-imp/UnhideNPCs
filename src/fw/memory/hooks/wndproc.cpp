@@ -40,7 +40,7 @@ bool memory::hooks::WndProc::disable(bool uninitialize)
     return true;
 }
 
-void memory::hooks::WndProc::addCallback(const std::function<bool(HWND, UINT, WPARAM, LPARAM)>& callback)
+void memory::hooks::WndProc::addCallback(const std::function<uintptr_t(HWND, UINT, WPARAM, LPARAM)>& callback)
 {
     _callbacks.push_back(callback);
 }
@@ -51,7 +51,7 @@ LRESULT memory::hooks::WndProc::internalWndProc(HWND hWnd, const UINT msg, const
 
     for (const auto& callback : _callbacks)
     {
-        if (callback(hWnd, msg, wParam, lParam))
+        if (callback(hWnd, msg, wParam, lParam) == 0)
         {
             callOriginal = false;
         }

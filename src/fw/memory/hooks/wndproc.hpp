@@ -12,7 +12,7 @@ namespace memory::hooks
         HWND            _hWnd {};
         WNDPROC         _originalWndProc {};
 
-        std::vector<std::function<bool(HWND, UINT, WPARAM, LPARAM)>> _callbacks {};
+        std::vector<std::function<uintptr_t(HWND, UINT, WPARAM, LPARAM)>> _callbacks {};
 
     public:
         explicit WndProc(HWND hWnd);
@@ -23,7 +23,7 @@ namespace memory::hooks
 
         virtual bool disable(bool uninitialize);
 
-        void addCallback(const std::function<bool(HWND, UINT, WPARAM, LPARAM)>& callback);
+        void addCallback(const std::function<uintptr_t(HWND, UINT, WPARAM, LPARAM)>& callback);
 
     private:
         LRESULT CALLBACK internalWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) const;
