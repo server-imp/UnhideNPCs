@@ -26,9 +26,6 @@ When installed via **Nexus**, the configuration is available directly in the Nex
 ### ArcDPS / Proxy / Injection Version
 When using **ArcDPS**, **Proxy** or **Injection**, the configuration appears in its own separate window:
 <img width="301" height="534" alt="image" src="https://github.com/user-attachments/assets/5a5d718d-de0f-4718-838f-42718b10b3aa" />
-> **Note:** The "Overlay" section's settings shown in the image are only functional when using **Proxy** or **Injection** mode.
-> If you tick "Disable Overlay", it will immediately unload the window, and if you want it back, you need to edit the config file
-> and set DisableOverlay to false.
 
 ## Installation
 There are four different ways to use UnhideNPCs; only follow one of them.
