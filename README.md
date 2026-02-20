@@ -19,18 +19,14 @@ This add-on includes an in-game configuration interface.
 ### Nexus Version
 When installed via **Nexus**, the configuration is available directly in the Nexus UI:
 
-<img width="275" height="437" alt="Nexus configuration UI" src="https://github.com/user-attachments/assets/61df3622-7c4f-4256-8de5-826a243e891a" />
+<img width="300" height="504" alt="image" src="https://github.com/user-attachments/assets/c50332b7-3217-47f0-869c-f35f5dcfbb5e" />
 
 ---
 
 ### ArcDPS / Proxy / Injection Version
-When using **ArcDPS**, **Proxy or **Injection**, the configuration appears in its own separate window:
-
-<img width="304" height="451" alt="image" src="https://github.com/user-attachments/assets/efe630e7-2b7b-4d98-baa8-cb0e052474d1" />
-
-
+When using **ArcDPS**, **Proxy** or **Injection**, the configuration appears in its own separate window:
+<img width="301" height="534" alt="image" src="https://github.com/user-attachments/assets/5a5d718d-de0f-4718-838f-42718b10b3aa" />
 > **Note:** The "Overlay" section's settings shown in the image are only functional when using **Proxy** or **Injection** mode.
-
 > If you tick "Disable Overlay", it will immediately unload the window, and if you want it back, you need to edit the config file
 > and set DisableOverlay to false.
 
