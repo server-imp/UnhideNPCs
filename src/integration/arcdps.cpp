@@ -21,10 +21,12 @@ arcdps_exports* mod_init()
 {
     memset(&arc_exports, 0, sizeof(arcdps_exports));
     arc_exports.sig       = unpc::SIGNATURE;
-    arc_exports.imguivers = 18000; // placeholder, ImGui not used
+    arc_exports.imguivers = 18000;
     arc_exports.size      = sizeof(arcdps_exports);
     arc_exports.out_name  = "UnhideNPCs";
     arc_exports.out_build = unpc::version::STRING;
+    //arc_exports.wnd_filter = reinterpret_cast<void*>(ui::onWndProc);
+    arc_exports.wnd_nofilter = reinterpret_cast<void*>(ui::onWndProc);
 
     if (unpc::nexusPresent || unpc::hProxyModule || unpc::injected)
     {
