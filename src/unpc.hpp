@@ -43,6 +43,7 @@ namespace unpc
 
     extern uint32_t numPlayersVisible;
     extern uint32_t numPlayerOwnedVisible;
+    extern uint32_t numNpcsVisible;
 
     extern bool unloadOverlay;
 
@@ -58,10 +59,13 @@ namespace unpc
         uint8_t rank,
         float   distance,
         float   maxDistance,
+        bool    isFriend,
+        bool    isBlocked,
         bool    isActiveGuildMember,
         bool    isGuildMember,
         bool    isPartyMember,
-        bool    isSquadMember
+        bool    isSquadMember,
+        bool    isMounted
     );
 
     // This function is called first, returning true means the character will be forced visible
@@ -75,10 +79,13 @@ namespace unpc
         uint8_t rank,
         float   distance,
         float   maxDistance,
+        bool    isFriend,
+        bool    isBlocked,
         bool    isActiveGuildMember,
         bool    isGuildMember,
         bool    isPartyMember,
-        bool    isSquadMember
+        bool    isSquadMember,
+        bool    isMounted
     );
 
     void start();

@@ -19,6 +19,7 @@ int32_t*    unpc::loadingScreenActive {};
 
 uint32_t unpc::numPlayersVisible {};
 uint32_t unpc::numPlayerOwnedVisible {};
+uint32_t unpc::numNpcsVisible {};
 
 bool unpc::unloadOverlay {};
 
@@ -198,14 +199,7 @@ void unpc::onHookTick()
 
         if (!ui::d3dHook && (mode == EMode::Proxy || mode == EMode::Injected))
         {
-            ui::d3dHook = hooks::D3D11::create(
-                "ArenaNet_Gr_Window_Class",
-                "",
-                ui::onD3DPresent,
-                ui::onD3DResizeBuffers,
-                ui::onD3DStarted,
-                ui::onD3DShutdown
-            );
+            ui::d3dHook = hooks::D3D11::create("ArenaNet_Gr_Window_Class", "", ui::onD3DPresent, ui::onD3DResizeBuffers, ui::onD3DStarted, ui::onD3DShutdown);
 
             if (!ui::d3dHook || !ui::d3dHook.value()->enable())
             {
@@ -228,13 +222,16 @@ bool unpc::shouldHide(
     const uint8_t rank,
     const float   distance,
     const float   maxDistance,
-    const bool isActiveGuildMember,
-    const bool isGuildMember,
-    const bool isPartyMember,
-    const bool isSquadMember
+    const bool    isFriend,
+    const bool    isBlocked,
+    const bool    isActiveGuildMember,
+    const bool    isGuildMember,
+    const bool    isPartyMember,
+    const bool    isSquadMember,
+    const bool    isMounted
 )
 {
-    if (unpc::settings->getDisableHidingInInstances() && unpc::mumbleLink->getContext().mapType == MapType::Instances)
+    if (unpc::settings->getDisableHidingInInstances() && unpc::mumbleLink && unpc::mumbleLink->getContext().mapType == MapType::Instances)
     {
         return false;
     }
@@ -253,6 +250,16 @@ bool unpc::shouldHide(
         }
 
         if (unpc::settings->getHidePlayers())
+        {
+            return true;
+        }
+
+        if (unpc::settings->getHideNonFriends() && !isFriend)
+        {
+            return true;
+        }
+
+        if (unpc::settings->getHideBlockedPlayers() && isBlocked)
         {
             return true;
         }
@@ -280,29 +287,45 @@ bool unpc::shouldHide(
             return true;
         }
 
-        if (isOwnerLocalPlayer && !unpc::settings->getHidePlayerOwnedSelf())
-        {
-            return false;
-        }
-
-        if (unpc::settings->getHidePlayerOwned())
+        if (isOwnerLocalPlayer && unpc::settings->getHidePlayerOwnedSelf())
         {
             return true;
         }
 
-        bool guild = isActiveGuildMember || isGuildMember;
+        if (unpc::settings->getHidePlayerOwned() && !isOwnerLocalPlayer)
+        {
+            return true;
+        }
+
+        if (unpc::settings->getHideNonFriendsOwned() && !isFriend)
+        {
+            return true;
+        }
+
+        if (unpc::settings->getHideBlockedPlayersOwned() && isBlocked)
+        {
+            return true;
+        }
+
+        const bool guild = isActiveGuildMember || isGuildMember;
         if (unpc::settings->getHideNonGuildMembersOwned() && !guild)
         {
             return true;
         }
 
-        bool group = isPartyMember || isSquadMember;
+        const bool group = isPartyMember || isSquadMember;
         if (unpc::settings->getHideNonGroupMembersOwned() && !group)
         {
             return true;
         }
 
         return false;
+    }
+
+    const auto maxNpcs = unpc::settings->getMaxNpcs();
+    if (maxNpcs > 0 && unpc::numNpcsVisible >= maxNpcs)
+    {
+        return true;
     }
 
     return false;
@@ -317,10 +340,13 @@ bool unpc::shouldShow(
     const uint8_t rank,
     const float   distance,
     const float   maxDistance,
-    const bool isActiveGuildMember,
-    const bool isGuildMember,
-    const bool isPartyMember,
-    const bool isSquadMember
+    const bool    isFriend,
+    const bool    isBlocked,
+    const bool    isActiveGuildMember,
+    const bool    isGuildMember,
+    const bool    isPartyMember,
+    const bool    isSquadMember,
+    const bool    isMounted
 )
 {
     if (isTarget && unpc::settings->getAlwaysShowTarget())
@@ -340,6 +366,12 @@ bool unpc::shouldShow(
             return false;
         }
 
+        const auto maxPlayerOwnedVisible = unpc::settings->getMaxPlayerOwnedVisible();
+        if (maxPlayerOwnedVisible > 0 && unpc::numPlayerOwnedVisible >= maxPlayerOwnedVisible)
+        {
+            return false;
+        }
+
         if (unpc::settings->getHidePlayerOwned())
         {
             if (isOwnerLocalPlayer && !unpc::settings->getHidePlayerOwnedSelf())
@@ -349,13 +381,40 @@ bool unpc::shouldShow(
             return false;
         }
 
-        const auto maxPlayerOwnedVisible = unpc::settings->getMaxPlayerOwnedVisible();
-        if (maxPlayerOwnedVisible > 0 && unpc::numPlayerOwnedVisible >= maxPlayerOwnedVisible)
+        if (unpc::settings->getHideNonFriendsOwned() && !isFriend)
+        {
+            return false;
+        }
+
+        if (unpc::settings->getHideBlockedPlayersOwned() && isBlocked)
+        {
+            return false;
+        }
+
+        const bool guild = isActiveGuildMember || isGuildMember;
+        if (unpc::settings->getHideNonGuildMembersOwned() && !guild)
+        {
+            return false;
+        }
+
+        bool group = isPartyMember || isSquadMember;
+        if (unpc::settings->getHideNonGroupMembersOwned() && !group)
         {
             return false;
         }
 
         return true;
+    }
+
+    if (!unpc::settings->getUnhideNpcs())
+    {
+        return false;
+    }
+
+    const auto maxNpcs = unpc::settings->getMaxNpcs();
+    if (maxNpcs > 0 && unpc::numNpcsVisible >= maxNpcs)
+    {
+        return false;
     }
 
     const auto minRank = static_cast<re::gw2::ECharacterRank>(unpc::settings->getMinimumRank());
@@ -392,7 +451,7 @@ void unpc::start()
 #ifdef BUILDING_ON_GITHUB
     auto logLevel = logging::LogLevel::Info;
 #else
-    auto logLevel = logging::LogLevel::Debug;
+    auto logLevel = logging::LogLevel::Info;
 #endif
 
     logger.emplace("UnhideNPCs", std::filesystem::current_path() / "addons" / "UnhideNPCs" / "log.txt", logLevel);
