@@ -11,7 +11,7 @@ namespace ui
 
     void tooltip(const char* text);
 
-    bool checkbox(const char* label, const char* id, bool& value, const char* tip, float labelOffset);
+    bool checkbox(const char* label, const char* id, bool& value, const char* tip);
 
     bool combo(
         const char*        label,
@@ -19,8 +19,7 @@ namespace ui
         int&               value,
         const char* const* items,
         int                count,
-        const char*        tip,
-        float              labelOffset
+        const char*        tip
     );
 
     bool sliderInt(
@@ -30,8 +29,7 @@ namespace ui
         int32_t     min,
         int32_t     max,
         const char* fmt,
-        const char* tip,
-        float       labelOffset
+        const char* tip
     );
 
     bool sliderFloat(
@@ -41,11 +39,13 @@ namespace ui
         float       min,
         float       max,
         const char* fmt,
-        const char* tip,
-        float       labelOffset
+        const char* tip
     );
 
+    bool button(const char* label);
+
     void separatorText(const char* text);
+
     bool textLink(const char* label, bool centered = false);
 
     void renderOptions();
@@ -56,7 +56,7 @@ namespace ui
 
     bool wasComboPressed(const std::initializer_list<int>& combo);
 
-    bool onWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+    uintptr_t onWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
     void onD3DPresent();
 

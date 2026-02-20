@@ -15,8 +15,8 @@
 
 #include "imgui_internal.h"
 
-constexpr auto LABEL_OFFSET = 272.0f;
-constexpr auto FIELD_WIDTH  = 230.0f;
+float labelOffset = -1;
+float fieldWidth  = -1;
 
 std::optional<std::unique_ptr<memory::hooks::D3D11>> ui::d3dHook {};
 std::optional<memory::hooks::WndProc>                ui::wndProcHook {};
@@ -33,13 +33,7 @@ void ui::tooltip(const char* text)
     ImGui::EndTooltip();
 }
 
-bool ui::checkbox(
-    const char* label,
-    const char* id,
-    bool&       value,
-    const char* tip,
-    const float labelOffset = LABEL_OFFSET
-)
+bool ui::checkbox(const char* label, const char* id, bool& value, const char* tip)
 {
     const float initialCursorX = ImGui::GetCursorPosX();
     ImGui::Text("%s", label);
@@ -49,69 +43,48 @@ bool ui::checkbox(
     return ImGui::Checkbox(id, &value);
 }
 
-bool ui::combo(
-    const char*        label,
-    const char*        id,
-    int&               value,
-    const char* const* items,
-    const int          count,
-    const char*        tip,
-    const float        labelOffset = LABEL_OFFSET
-)
+bool ui::combo(const char* label, const char* id, int& value, const char* const* items, int count, const char* tip)
 {
     const float initialCursorX = ImGui::GetCursorPosX();
     ImGui::Text("%s", label);
     tooltip(tip);
     ImGui::SameLine();
     ImGui::SetCursorPosX(initialCursorX + labelOffset);
-    ImGui::PushItemWidth(FIELD_WIDTH);
+    ImGui::PushItemWidth(fieldWidth);
     const bool result = ImGui::Combo(id, &value, items, count);
     ImGui::PopItemWidth();
     return result;
 }
 
-bool ui::sliderInt(
-    const char*   label,
-    const char*   id,
-    int32_t&      value,
-    const int32_t min,
-    const int32_t max,
-    const char*   fmt,
-    const char*   tip,
-    const float   labelOffset = LABEL_OFFSET
-)
+bool ui::sliderInt(const char* label, const char* id, int32_t& value, const int32_t min, const int32_t max, const char* fmt, const char* tip)
 {
     const float initialCursorX = ImGui::GetCursorPosX();
     ImGui::Text("%s", label);
     tooltip(tip);
     ImGui::SameLine();
     ImGui::SetCursorPosX(initialCursorX + labelOffset);
-    ImGui::PushItemWidth(FIELD_WIDTH);
+    ImGui::PushItemWidth(fieldWidth);
     const bool result = ImGui::SliderInt(id, &value, min, max, fmt);
     ImGui::PopItemWidth();
     return result;
 }
 
-bool ui::sliderFloat(
-    const char* label,
-    const char* id,
-    float&      value,
-    const float min,
-    const float max,
-    const char* fmt,
-    const char* tip,
-    const float labelOffset = LABEL_OFFSET
-)
+bool ui::sliderFloat(const char* label, const char* id, float& value, const float min, const float max, const char* fmt, const char* tip)
 {
     const float initialCursorX = ImGui::GetCursorPosX();
     ImGui::Text("%s", label);
     tooltip(tip);
     ImGui::SameLine();
     ImGui::SetCursorPosX(initialCursorX + labelOffset);
-    ImGui::PushItemWidth(FIELD_WIDTH);
+    ImGui::PushItemWidth(fieldWidth);
     const bool result = ImGui::SliderFloat(id, &value, min, max, fmt);
     ImGui::PopItemWidth();
     return result;
+}
+
+bool ui::button(const char* label)
+{
+    return ImGui::Button(label, { labelOffset + fieldWidth, 30 });
 }
 
 void ui::separatorText(const char* text)
@@ -170,15 +143,98 @@ bool ui::textLink(const char* label, const bool centered)
 
     if (hovered)
     {
-        ImGui::GetWindowDrawList()->AddLine(
-            ImVec2(pos.x, pos.y + textSize.y),
-            ImVec2(pos.x + textSize.x, pos.y + textSize.y),
-            color,
-            1.0f
-        );
+        ImGui::GetWindowDrawList()->AddLine(ImVec2(pos.x, pos.y + textSize.y), ImVec2(pos.x + textSize.x, pos.y + textSize.y), color, 1.0f);
     }
 
     return clicked;
+}
+
+struct CheckboxGroupEntry
+{
+    const char* label {};
+    const char* tooltip {};
+    bool*       value {};
+    bool*       changed {};
+
+    CheckboxGroupEntry(const char* label, const char* tooltip, bool* value, bool* changed) : label(label), tooltip(tooltip), value(value), changed(changed) {}
+};
+
+bool checkboxGroup(const char* label, const char* tooltip, const std::vector<CheckboxGroupEntry>& items)
+{
+    const size_t count = items.size();
+
+    if (count == 0)
+    {
+        return false;
+    }
+
+    char id[32];
+    if (count == 1)
+    {
+        snprintf(id, sizeof(id), "##%p", static_cast<void*>(items[0].value));
+        auto result = ui::checkbox(items[0].label, id, *items[0].value, items[0].tooltip);
+        if (result)
+        {
+            *items[0].changed = true;
+        }
+        return result;
+    }
+
+    const ImVec2 initialCursorPos = ImGui::GetCursorPos();
+    const ImVec2 spacing          = ImGui::GetStyle().ItemSpacing;
+    const float  checkBoxSize     = ImGui::GetFrameHeight();
+    const float  rowHeight        = spacing.y + checkBoxSize;
+
+    if (label)
+    {
+        ImGui::TextUnformatted(label);
+        if (tooltip)
+        {
+            ui::tooltip(tooltip);
+        }
+    }
+
+    bool result = false;
+
+    for (size_t i = 0; i < count; ++i)
+    {
+        const bool   isOdd = (i & 1) != 0;
+        const size_t row   = i >> 1;
+
+        const auto& item = items[i];
+
+        const float y = initialCursorPos.y + static_cast<float>(row) * rowHeight;
+        const float x = initialCursorPos.x + (isOdd ? 2.0f : 1.0f) * labelOffset;
+
+        if (item.label)
+        {
+            const ImVec2 labelSize = ImGui::CalcTextSize(item.label);
+            const float  labelX    = x - spacing.x - labelSize.x;
+
+            ImGui::SetCursorPos(ImVec2(labelX, y + ImGui::GetStyle().FramePadding.y));
+            ImGui::TextUnformatted(item.label);
+            if (item.tooltip)
+            {
+                ui::tooltip(item.tooltip);
+            }
+        }
+
+        ImGui::SetCursorPos(ImVec2(x, y));
+        char id[32];
+        snprintf(id, sizeof(id), "##%p", static_cast<void*>(item.value));
+
+        if (ImGui::Checkbox(id, item.value))
+        {
+            *item.changed = true;
+            result        = true;
+        }
+    }
+
+    // Move cursor below entire group
+    const size_t totalRows = (count + 1) >> 1;
+    ImGui::SetCursorPos(ImVec2(initialCursorPos.x, initialCursorPos.y + static_cast<float>(totalRows) * rowHeight));
+
+    return result;
 }
 
 const char* ranks[] = { "Normal", "Veteran", "Elite", "Champion", "Legendary" };
@@ -194,26 +250,56 @@ void ui::renderOptions()
         return;
     }
 
-    separatorText("Showing");
-    ImGui::Indent();
-    if (auto alwaysShowTarget = unpc::settings->getAlwaysShowTarget(); ui::checkbox(
-        "Target",
-        "##AlwaysShowTarget",
-        alwaysShowTarget,
-        unpc::settings->getCommentAlwaysShowTarget().c_str()
-    ))
+    if (labelOffset < 0)
     {
-        unpc::settings->setAlwaysShowTarget(alwaysShowTarget);
-        ++re::forceVisibility;
+        const auto fontSize = ImGui::GetFontSize();
+
+        labelOffset = fontSize * 12;
+
+        fieldWidth = labelOffset + ImGui::GetFrameHeight();
     }
-    if (auto playerOwned = unpc::settings->getPlayerOwned(); ui::checkbox(
-        "Player Owned",
-        "##PlayerOwned",
-        playerOwned,
-        unpc::settings->getCommentPlayerOwned().c_str()
+
+    separatorText("Show");
+    bool alwaysShowTarget = unpc::settings->getAlwaysShowTarget();
+    bool playerOwned      = unpc::settings->getPlayerOwned();
+    bool unhideNpcs       = unpc::settings->getUnhideNpcs();
+    bool alwaysShowTargetChanged {}, playerOwnedChanged {}, unhideNpcsChanged {};
+
+    if (checkboxGroup(
+        "Unhide",
+        "The selected will be unhidden",
+        std::vector<CheckboxGroupEntry> {
+            { "NPCs", unpc::settings->getCommentUnhideNpcs().c_str(), &unhideNpcs, &unhideNpcsChanged },
+            { "Player-Owned", unpc::settings->getCommentPlayerOwned().c_str(), &playerOwned, &playerOwnedChanged },
+            { "Target", unpc::settings->getCommentAlwaysShowTarget().c_str(), &alwaysShowTarget, &alwaysShowTargetChanged }
+        }
     ))
     {
-        unpc::settings->setPlayerOwned(playerOwned);
+        if (alwaysShowTargetChanged)
+        {
+            unpc::settings->setAlwaysShowTarget(alwaysShowTarget);
+        }
+        else if (playerOwnedChanged)
+        {
+            unpc::settings->setPlayerOwned(playerOwned);
+        }
+        else if (unhideNpcsChanged)
+        {
+            unpc::settings->setUnhideNpcs(unhideNpcs);
+        }
+    }
+    ImGui::NewLine();
+    if (auto maxDistance = static_cast<int32_t>(unpc::settings->getMaximumDistance()); ui::sliderInt(
+        "Max Distance",
+        "##maxDistance",
+        maxDistance,
+        0,
+        1000,
+        maxDistance == 0 ? "Unlimited" : "%d meters",
+        unpc::settings->getCommentMaximumDistance().c_str()
+    ))
+    {
+        unpc::settings->setMaximumDistance(static_cast<float>(maxDistance));
         ++re::forceVisibility;
     }
     if (auto minRank = unpc::settings->getMinimumRank(); ui::combo(
@@ -240,87 +326,101 @@ void ui::renderOptions()
         unpc::settings->setAttackable(attackable);
         ++re::forceVisibility;
     }
-    if (auto maxDistance = static_cast<int32_t>(unpc::settings->getMaximumDistance()); ui::sliderInt(
-        "Max Distance",
-        "##maxDistance",
-        maxDistance,
-        0,
-        1000,
-        maxDistance == 0 ? "Unlimited" : "%d meters",
-        unpc::settings->getCommentMaximumDistance().c_str()
-    ))
-    {
-        unpc::settings->setMaximumDistance(static_cast<float>(maxDistance));
-        ++re::forceVisibility;
-    }
-    ImGui::Unindent();
 
-    separatorText("Hiding");
-    ImGui::Indent();
-    if (auto hidePlayers = unpc::settings->getHidePlayers(); ui::checkbox(
+    ui::separatorText("Hide");
+    bool hideAllPlayers       = unpc::settings->getHidePlayers();
+    bool hideBlockedPlayers   = unpc::settings->getHideBlockedPlayers();
+    bool hideNonGroupPlayers  = unpc::settings->getHideNonGroupMembers();
+    bool hideNonGuildPlayers  = unpc::settings->getHideNonGuildMembers();
+    bool hideNonFriendPlayers = unpc::settings->getHideNonFriends();
+    bool hideAllPlayersChanged {}, hideBlockedPlayersChanged {}, hideNonGroupPlayersChanged {}, hideNonGuildPlayersChanged {}, hideNonFriendPlayersChanged {};
+
+    if (checkboxGroup(
         "Players",
-        "##HidePlayers",
-        hidePlayers,
-        unpc::settings->getCommentHidePlayers().c_str()
-    ))
-    {
-        unpc::settings->setHidePlayers(hidePlayers);
-        ++re::forceVisibility;
-    }
-    bool hideNonGuildMembers = unpc::settings->getHideNonGuildMembers();
-    if (ui::checkbox(
-        "Non-Guild Players",
-        "##NonGuildMembers",
-        hideNonGuildMembers,
-        unpc::settings->getCommentHideNonGuildMembers().c_str()
-    ))
-    {
-        unpc::settings->setHideNonGuildMembers(hideNonGuildMembers);
-        ++re::forceVisibility;
-    }
-    if (hideNonGuildMembers)
-    {
-        ImGui::SameLine();
-        const float offset = LABEL_OFFSET + ImGui::GetFontSize() * 1.5f;
-        ImGui::Indent(offset);
-        ImGui::Text("Pets Too");
-        tooltip(unpc::settings->getCommentHideNonGuildMembersOwned().c_str());
-        ImGui::SameLine();
-        auto hideNonGuildMembersSelf = unpc::settings->getHideNonGuildMembersOwned();
-        if (ImGui::Checkbox("##NonGuildMembersOwned", &hideNonGuildMembersSelf))
-        {
-            unpc::settings->setHideNonGuildMembersOwned(hideNonGuildMembersSelf);
-            ++re::forceVisibility;
+        "Players that match the selected critera will be hidden",
+        std::vector<CheckboxGroupEntry> {
+            { "All", unpc::settings->getCommentHidePlayers().c_str(), &hideAllPlayers, &hideAllPlayersChanged },
+            { "Blocked", unpc::settings->getCommentHideBlockedPlayers().c_str(), &hideBlockedPlayers, &hideBlockedPlayersChanged },
+            { "Non-Group", unpc::settings->getCommentHideNonGroupMembers().c_str(), &hideNonGroupPlayers, &hideNonGroupPlayersChanged },
+            { "Non-Guild", unpc::settings->getCommentHideNonGuildMembers().c_str(), &hideNonGuildPlayers, &hideNonGuildPlayersChanged },
+            { "Non-Friends", unpc::settings->getCommentHideNonFriends().c_str(), &hideNonFriendPlayers, &hideNonFriendPlayersChanged }
         }
-        ImGui::Unindent(offset);
-    }
-    bool hideNonGroupMembers = unpc::settings->getHideNonGroupMembers();
-    if (ui::checkbox(
-        "Non-Group Players",
-        "##NonGroupMembers",
-        hideNonGroupMembers,
-        unpc::settings->getCommentHideNonGroupMembers().c_str()
     ))
     {
-        unpc::settings->setHideNonGroupMembers(hideNonGroupMembers);
+        if (hideAllPlayersChanged)
+        {
+            unpc::settings->setHidePlayers(hideAllPlayers);
+        }
+        else if (hideBlockedPlayersChanged)
+        {
+            unpc::settings->setHideBlockedPlayers(hideBlockedPlayers);
+        }
+        else if (hideNonGroupPlayersChanged)
+        {
+            unpc::settings->setHideNonGroupMembers(hideNonGroupPlayers);
+        }
+        else if (hideNonGuildPlayersChanged)
+        {
+            unpc::settings->setHideNonGuildMembers(hideNonGuildPlayers);
+        }
+        else if (hideNonFriendPlayersChanged)
+        {
+            unpc::settings->setHideNonFriends(hideNonFriendPlayers);
+        }
         ++re::forceVisibility;
     }
-    if (hideNonGroupMembers)
-    {
-        ImGui::SameLine();
-        const float offset = LABEL_OFFSET + ImGui::GetFontSize() * 1.5f;
-        ImGui::Indent(offset);
-        ImGui::Text("Pets Too");
-        tooltip(unpc::settings->getCommentHideNonGroupMembersOwned().c_str());
-        ImGui::SameLine();
-        auto hideNonGroupMembersSelf = unpc::settings->getHideNonGroupMembersOwned();
-        if (ImGui::Checkbox("##NonGroupMembersOwned", &hideNonGroupMembersSelf))
-        {
-            unpc::settings->setHideNonGroupMembersOwned(hideNonGroupMembersSelf);
-            ++re::forceVisibility;
+    ImGui::NewLine();
+
+    bool hideAllPlayerOwned = unpc::settings->getHidePlayerOwned();
+    bool hideBlockedPlayerOwned = unpc::settings->getHideBlockedPlayersOwned();
+    bool hideNonGroupPlayerOwned = unpc::settings->getHideNonGroupMembersOwned();
+    bool hideNonGuildPlayerOwned = unpc::settings->getHideNonGuildMembersOwned();
+    bool hideNonFriendPlayerOwned = unpc::settings->getHideNonFriendsOwned();
+    bool hideMyOwned = unpc::settings->getHidePlayerOwnedSelf();
+    bool hideAllPlayerOwnedChanged {}, hideBlockedPlayerOwnedChanged {}, hideNonGroupPlayerOwnedChanged {}, hideNonGuildPlayerOwnedChanged {},
+         hideNonFriendPlayerOwnedChanged {}, hideMyOwnedChanged;
+
+    if (checkboxGroup(
+        "Player-Owned",
+        "Characters that are owned by the selected type of players will be hidden",
+        std::vector<CheckboxGroupEntry> {
+            { "All", unpc::settings->getCommentHidePlayerOwned().c_str(), &hideAllPlayerOwned, &hideAllPlayerOwnedChanged },
+            { "Blocked", unpc::settings->getCommentHideBlockedPlayersOwned().c_str(), &hideBlockedPlayerOwned, &hideBlockedPlayerOwnedChanged },
+            { "Non-Group", unpc::settings->getCommentHideNonGroupMembersOwned().c_str(), &hideNonGroupPlayerOwned, &hideNonGroupPlayerOwnedChanged },
+            { "Non-Guild", unpc::settings->getCommentHideNonGuildMembersOwned().c_str(), &hideNonGuildPlayerOwned, &hideNonGuildPlayerOwnedChanged },
+            { "Non-Friends", unpc::settings->getCommentHideNonFriendsOwned().c_str(), &hideNonFriendPlayerOwned, &hideNonFriendPlayerOwnedChanged },
+            { "Mine", unpc::settings->getCommentHidePlayerOwnedSelf().c_str(), &hideMyOwned, &hideMyOwnedChanged }
         }
-        ImGui::Unindent(offset);
+    ))
+    {
+        if (hideAllPlayerOwnedChanged)
+        {
+            unpc::settings->setHidePlayerOwned(hideAllPlayerOwned);
+        }
+        else if (hideBlockedPlayerOwnedChanged)
+        {
+            unpc::settings->setHideBlockedPlayersOwned(hideBlockedPlayerOwned);
+        }
+        else if (hideNonGroupPlayerOwnedChanged)
+        {
+            unpc::settings->setHideNonGroupMembersOwned(hideNonGroupPlayerOwned);
+        }
+        else if (hideNonGuildPlayerOwnedChanged)
+        {
+            unpc::settings->setHideNonGuildMembersOwned(hideNonGuildPlayerOwned);
+        }
+        else if (hideNonFriendPlayerOwnedChanged)
+        {
+            unpc::settings->setHideNonFriendsOwned(hideNonFriendPlayerOwned);
+        }
+        else if (hideMyOwnedChanged)
+        {
+            unpc::settings->setHidePlayerOwnedSelf(hideMyOwned);
+        }
+        ++re::forceVisibility;
     }
+    ImGui::NewLine();
+
     if (auto maxPlayersVisible = unpc::settings->getMaxPlayersVisible(); ui::sliderInt(
         "Max Players",
         "##MaxPlayersVisible",
@@ -335,7 +435,7 @@ void ui::renderOptions()
         ++re::forceVisibility;
     }
     if (auto maxPlayerOwnedVisible = unpc::settings->getMaxPlayerOwnedVisible(); ui::sliderInt(
-        "Max Player Owned",
+        "Max Player-Owned",
         "##MaxPlayerOwnedVisible",
         maxPlayerOwnedVisible,
         0,
@@ -347,33 +447,20 @@ void ui::renderOptions()
         unpc::settings->setMaxPlayerOwnedVisible(maxPlayerOwnedVisible);
         ++re::forceVisibility;
     }
-    auto hidePlayerOwned = unpc::settings->getHidePlayerOwned();
-    if (ui::checkbox(
-        "Player Owned",
-        "##HidePlayerOwned",
-        hidePlayerOwned,
-        unpc::settings->getCommentHidePlayerOwned().c_str()
+    if (auto maxNpcs = unpc::settings->getMaxNpcs(); ui::sliderInt(
+        "Max NPCs",
+        "##maxNpcs",
+        maxNpcs,
+        0,
+        1000,
+        maxNpcs == 0 ? "Unlimited" : "%d",
+        unpc::settings->getCommentMaxNpcs().c_str()
     ))
     {
-        unpc::settings->setHidePlayerOwned(hidePlayerOwned);
+        unpc::settings->setMaxNpcs(maxNpcs);
         ++re::forceVisibility;
     }
-    if (hidePlayerOwned)
-    {
-        ImGui::SameLine();
-        const float offset = LABEL_OFFSET + ImGui::GetFontSize() * 1.5f;
-        ImGui::Indent(offset);
-        ImGui::Text("Mine Too");
-        tooltip(unpc::settings->getCommentHidePlayerOwnedSelf().c_str());
-        ImGui::SameLine();
-        auto hidePlayerOwnedSelf = unpc::settings->getHidePlayerOwnedSelf();
-        if (ImGui::Checkbox("##HidePlayerOwnedSelf", &hidePlayerOwnedSelf))
-        {
-            unpc::settings->setHidePlayerOwnedSelf(hidePlayerOwnedSelf);
-            ++re::forceVisibility;
-        }
-        ImGui::Unindent(offset);
-    }
+    ImGui::NewLine();
     if (auto disableInInstances = unpc::settings->getDisableHidingInInstances(); ui::checkbox(
         "Disable in Instances",
         "##DisableInInstances",
@@ -384,57 +471,48 @@ void ui::renderOptions()
         unpc::settings->setDisableHidingInInstances(disableInInstances);
         ++re::forceVisibility;
     }
-    ImGui::Unindent();
 
     separatorText("Misc");
-    ImGui::Indent();
-    if (auto forceConsole = unpc::settings->getForceConsole(); ui::checkbox(
-        "Force Console",
-        "##ForceConsole",
-        forceConsole,
-        unpc::settings->getCommentForceConsole().c_str()
-    ))
+    std::vector<CheckboxGroupEntry> entries {};
+
+    bool forceConsole    = unpc::settings->getForceConsole();
+    bool loadScreenBoost = unpc::settings->getLoadScreenBoost();
+    bool disableOverlay  = unpc::settings->getDisableOverlay();
+    bool closeOnEscape   = unpc::settings->getCloseOnEscape();
+    bool forceConsoleChanged {}, loadScreenBoostChanged {}, disableOverlayChanged {}, closeOnEscapeChanged {};
+
+    entries.emplace_back("Console", unpc::settings->getCommentForceConsole().c_str(), &forceConsole, &forceConsoleChanged);
+    entries.emplace_back("Loading Boost", unpc::settings->getCommentLoadScreenBoost().c_str(), &loadScreenBoost, &loadScreenBoostChanged);
+
+    if (unpc::mode == unpc::EMode::Nexus)
     {
-        unpc::settings->setForceConsole(forceConsole);
-        unpc::logger->setConsole(forceConsole);
+        goto footer;
     }
 
-    if (auto loadScreenBoost = unpc::settings->getLoadScreenBoost(); ui::checkbox(
-        "Loading Screen Boost",
-        "##LoadScreenBoost",
-        loadScreenBoost,
-        unpc::settings->getCommentLoadScreenBoost().c_str()
-    ))
-    {
-        unpc::settings->setLoadScreenBoost(loadScreenBoost);
-    }
-
-    if (ImGui::Button("Force Visibility", { LABEL_OFFSET + FIELD_WIDTH, 30 }))
-    {
-        ++re::forceVisibility;
-    }
-    tooltip(
-        "Forces all characters to be visible for the next frame\n"
-        "Useful for \"resetting\" things after modifying any settings."
-    );
-
-#ifndef BUILDING_ON_GITHUB
-    ImGui::Unindent();
-    separatorText("Debug");
-    re::debugMenu();
-#endif
-    ImGui::Unindent();
+    entries.emplace_back("Esc To Close", unpc::settings->getCommentCloseOnEscape().c_str(), &closeOnEscape, &closeOnEscapeChanged);
 
     if (unpc::mode == unpc::EMode::Proxy || unpc::mode == unpc::EMode::Injected)
     {
-        separatorText("Overlay");
-        ImGui::Indent();
-        if (auto disableOverlay = unpc::settings->getDisableOverlay(); ui::checkbox(
-            "Disable Overlay",
-            "##DisableOverlay",
-            disableOverlay,
-            unpc::settings->getCommentDisableOverlay().c_str()
-        ))
+        entries.emplace_back("Disable Overlay", unpc::settings->getCommentDisableOverlay().c_str(), &disableOverlay, &disableOverlayChanged);
+    }
+
+footer:
+    if (checkboxGroup(nullptr, nullptr, entries))
+    {
+        if (forceConsoleChanged)
+        {
+            unpc::settings->setForceConsole(forceConsole);
+            unpc::logger->setConsole(forceConsole);
+        }
+        else if (loadScreenBoostChanged)
+        {
+            unpc::settings->setLoadScreenBoost(loadScreenBoost);
+        }
+        else if (closeOnEscapeChanged)
+        {
+            unpc::settings->setCloseOnEscape(closeOnEscape);
+        }
+        else if (disableOverlayChanged)
         {
             unpc::settings->setDisableOverlay(disableOverlay);
             if (disableOverlay)
@@ -442,15 +520,11 @@ void ui::renderOptions()
                 unpc::unloadOverlay = true;
             }
         }
-        if (auto closeOnEscape = unpc::settings->getCloseOnEscape(); ui::checkbox(
-            "Close On Escape",
-            "##CloseOnEscape",
-            closeOnEscape,
-            unpc::settings->getCommentCloseOnEscape().c_str()
-        ))
-        {
-            unpc::settings->setCloseOnEscape(closeOnEscape);
-        }
+    }
+    ImGui::NewLine();
+
+    if (unpc::mode == unpc::EMode::Proxy || unpc::mode == unpc::EMode::Injected)
+    {
         if (float overlayFontSize = unpc::settings->getOverlayFontSize(); ui::sliderFloat(
             "Font Size",
             "##OverlayFontSize",
@@ -463,8 +537,18 @@ void ui::renderOptions()
         {
             unpc::settings->setOverlayFontSize(std::roundf(overlayFontSize));
         }
-        ImGui::Unindent();
     }
+
+    if (ImGui::Button("Force Visibility", { labelOffset + fieldWidth, 30 }))
+    {
+        ++re::forceVisibility;
+    }
+    tooltip("Forces all characters to be visible for the next frame\n" "Useful for \"resetting\" things after modifying any settings.");
+
+#ifndef BUILDING_ON_GITHUB
+    separatorText("Debug");
+    re::debugMenu();
+#endif
 
     ImGui::NewLine();
     ImGui::TextUnformatted("Report issues on");
@@ -496,13 +580,13 @@ void ui::renderWindow()
         return;
     }
 
-    bool       open       = unpc::settings->getArcDPS_UIOpen();
+    bool       open       = unpc::settings->getOverlayOpen();
     const bool startState = open;
 
     if (wasComboPressed({ VK_LMENU, VK_LSHIFT, 'U' }))
     {
         open = !open;
-        unpc::settings->setArcDPS_UIOpen(open);
+        unpc::settings->setOverlayOpen(open);
         return;
     }
 
@@ -519,7 +603,7 @@ void ui::renderWindow()
             if (tmp)
             {
                 ImGui::GetCurrentContext()->MovingWindow = tmp;
-                tmp = nullptr;
+                tmp                                      = nullptr;
             }
 
             auto& io     = ImGui::GetIO();
@@ -566,7 +650,7 @@ void ui::renderWindow()
 
     if (startState != open)
     {
-        unpc::settings->setArcDPS_UIOpen(open);
+        unpc::settings->setOverlayOpen(open);
     }
 }
 
@@ -603,76 +687,89 @@ bool ui::wasComboPressed(const std::initializer_list<int>& combo)
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND, UINT, WPARAM, LPARAM);
 
-bool ui::onWndProc(HWND hWnd, const UINT msg, const WPARAM wParam, const LPARAM lParam)
+uintptr_t ui::onWndProc(HWND hWnd, const UINT msg, const WPARAM wParam, const LPARAM lParam)
 {
     if (unpc::exit)
     {
-        return false;
+        return msg;
+    }
+
+    if (!unpc::settings || !unpc::settings->loaded())
+    {
+        return msg;
+    }
+
+    if (!ImGui::GetCurrentContext())
+    {
+        return msg;
     }
 
     if (msg == WM_KEYDOWN && wParam == VK_ESCAPE)
     {
-        if (unpc::settings->getArcDPS_UIOpen() && unpc::settings->getCloseOnEscape())
+        if (unpc::settings->getOverlayOpen() && unpc::settings->getCloseOnEscape())
         {
-            unpc::settings->setArcDPS_UIOpen(false);
-            return true;
+            unpc::settings->setOverlayOpen(false);
+            return 0;
         }
     }
 
-    auto& io = ImGui::GetIO();
-
-    if (msg == WM_MOUSEMOVE)
+    if (unpc::mode == unpc::EMode::Proxy || unpc::mode == unpc::EMode::Injected)
     {
-        io.MousePos = ImVec2 { static_cast<float>(LOWORD(lParam)), static_cast<float>(HIWORD(lParam)) };
-    }
+        auto& io = ImGui::GetIO();
 
-    if (io.WantCaptureMouse)
-    {
-        switch (msg)
+        if (msg == WM_MOUSEMOVE)
         {
-        case WM_LBUTTONDOWN:
-        case WM_LBUTTONDBLCLK:
-        case WM_RBUTTONDOWN:
-        case WM_RBUTTONDBLCLK:
-        case WM_MBUTTONDOWN:
-        case WM_MBUTTONDBLCLK:
-        case WM_XBUTTONDOWN:
-        case WM_XBUTTONDBLCLK:
-        case WM_LBUTTONUP:
-        case WM_RBUTTONUP:
-        case WM_MBUTTONUP:
-        case WM_XBUTTONUP:
-        case WM_MOUSEWHEEL:
-        case WM_MOUSEHWHEEL:
-        case WM_SETCURSOR: ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
-            return true;
-        default: break;
+            io.MousePos = ImVec2 { static_cast<float>(LOWORD(lParam)), static_cast<float>(HIWORD(lParam)) };
         }
-    }
 
-    if (io.WantCaptureKeyboard || io.WantTextInput)
-    {
-        switch (msg)
+        if (io.WantCaptureMouse)
         {
-        case WM_KEYDOWN:
-        case WM_SYSKEYDOWN:
-        case WM_CHAR:
-        case WM_SYSCHAR: ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
-            if (io.WantTextInput)
+            switch (msg)
             {
-                return true;
+            case WM_LBUTTONDOWN:
+            case WM_LBUTTONDBLCLK:
+            case WM_RBUTTONDOWN:
+            case WM_RBUTTONDBLCLK:
+            case WM_MBUTTONDOWN:
+            case WM_MBUTTONDBLCLK:
+            case WM_XBUTTONDOWN:
+            case WM_XBUTTONDBLCLK:
+            case WM_LBUTTONUP:
+            case WM_RBUTTONUP:
+            case WM_MBUTTONUP:
+            case WM_XBUTTONUP:
+            case WM_MOUSEWHEEL:
+            case WM_MOUSEHWHEEL:
+            case WM_SETCURSOR: ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
+                return 0;
+            default: break;
             }
-            break;
-        default: break;
+        }
+
+        if (io.WantCaptureKeyboard || io.WantTextInput)
+        {
+            switch (msg)
+            {
+            case WM_KEYDOWN:
+            case WM_SYSKEYDOWN:
+            case WM_CHAR:
+            case WM_SYSCHAR: ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
+                if (io.WantTextInput)
+                {
+                    return 0;
+                }
+                break;
+            default: break;
+            }
+        }
+
+        if (msg == WM_KEYUP || msg == WM_SYSKEYUP)
+        {
+            ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
         }
     }
 
-    if (msg == WM_KEYUP || msg == WM_SYSKEYUP)
-    {
-        ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
-    }
-
-    return false;
+    return msg;
 }
 
 void ui::onD3DPresent()
