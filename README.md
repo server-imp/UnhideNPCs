@@ -14,7 +14,9 @@ Tested on Windows 11 25H2 and Fedora Linux 43 (GE-Proton10-30).
 
 This add-on includes an in-game configuration interface.
 
-> **Note:** The images below may or may not show an older version of the plugin
+> **Note:** You can CTRL+Click the sliders if you prefer typing the numbers.
+> 
+> The images below may or may not show an older version of the plugin
 
 ### Nexus Version
 When installed via **Nexus**, the configuration is available directly in the Nexus UI:
