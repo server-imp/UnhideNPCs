@@ -742,7 +742,11 @@ uintptr_t ui::onWndProc(HWND hWnd, const UINT msg, const WPARAM wParam, const LP
         return msg;
     }
 
-    if (unpc::hotkeyManager.isCapturing())
+    if (!unpc::hotkeyManager.onWndProc(hWnd, msg, wParam, lParam))
+    {
+        return 0;
+    }
+    /*if (unpc::hotkeyManager.isCapturing())
     {
         if (msg == WM_KEYDOWN && wParam == VK_ESCAPE)
         {
@@ -751,7 +755,7 @@ uintptr_t ui::onWndProc(HWND hWnd, const UINT msg, const WPARAM wParam, const LP
         }
 
         return 0;
-    }
+    }*/
 
     if (msg == WM_KEYDOWN && wParam == VK_ESCAPE)
     {
