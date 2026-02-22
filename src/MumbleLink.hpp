@@ -2,6 +2,7 @@
 #define UNHIDENPCS_MUMBLELINK_HPP
 #pragma once
 #include "pch.hpp"
+#include "nlohmann/json.hpp"
 
 enum class MapType : uint32_t
 {
@@ -91,22 +92,47 @@ struct MumbleLink
 {
     uint32_t uiVersion;
     uint32_t uiTick;
-    float    fAvatarPosition[3];
-    float    fAvatarFront[3];
-    float    fAvatarTop[3];
-    wchar_t  name[256];
-    float    fCameraPosition[3];
-    float    fCameraFront[3];
-    float    fCameraTop[3];
-    wchar_t  identity[256];
-    uint32_t contextLen;
-    // Despite the actual context containing more data, this value is currently 48. See "context" section below.
+    float fAvatarPosition[3];
+    float fAvatarFront[3];
+    float fAvatarTop[3];
+    wchar_t name[256];
+    float fCameraPosition[3];
+    float fCameraFront[3];
+    float fCameraTop[3];
+    wchar_t identity[256];
+    uint32_t context_len; // Despite the actual context containing more data, this value is currently 48. See "context" section below.
     unsigned char context[256];
-    wchar_t       description[2048];
+    wchar_t description[2048];
 
     const MumbleContext& getContext()
     {
         return *reinterpret_cast<MumbleContext*>(&context);
+    }
+
+    [[nodiscard]] nlohmann::json getIdentity() const
+    {
+        auto string = util::wstringToString(identity);
+        return nlohmann::json::parse(string);
+    }
+
+    [[nodiscard]] float getFov() const
+    {
+        static float cachedFov = 1.222f;
+        static u64 lastUpdate {};
+
+        if (GetTickCount64() - lastUpdate < 1000)
+        {
+            return cachedFov;
+        }
+
+        lastUpdate = GetTickCount64();
+        auto json = getIdentity();
+        if (json.contains("fov") && json["fov"].is_number())
+        {
+            cachedFov = json["fov"].get<float>();
+        }
+
+        return cachedFov;
     }
 };
 #pragma pack(pop)
