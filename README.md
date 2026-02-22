@@ -52,6 +52,8 @@ There are four different ways to use UnhideNPCs; only follow one of them.
     - Press `END` to unload the plugin so it can be reloaded without restarting the game.
 
 ## Configuration
+There are configurable hotkeys in the interface, they are saved at `<game folder>/addons/UnhideNPCs/hotkeys.json`
+
 There is a config file at `<game folder>/addons/UnhideNPCs/config.cfg` with the following options:
 
 - `AlwaysShowTarget`: < true/false >
