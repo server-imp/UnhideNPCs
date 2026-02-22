@@ -128,6 +128,14 @@ There is a config file at `<game folder>/addons/UnhideNPCs/config.cfg` with the 
   - Hide characters that are owned by you.
   - Default: false
 
+- `HidePlayersInCombat`: < true/false >
+  - Hide players when you are in combat.
+  - Default: false
+
+- `HidePlayerOwnedInCombat`: < true/false >
+  - Hide player-owned characters when you are in combat.
+  - Default: false
+
 - `MaxPlayersVisible`: < number >
   - Maximum number of visible players. Set to `0` for no limit.
   - Default: 0
