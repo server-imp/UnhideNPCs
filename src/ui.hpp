@@ -6,6 +6,9 @@
 
 namespace ui
 {
+    extern float labelOffset;
+    extern float fieldWidth;
+
     extern std::optional<std::unique_ptr<memory::hooks::D3D11>> d3dHook;
     extern std::optional<memory::hooks::WndProc>                wndProcHook;
 
@@ -57,6 +60,8 @@ namespace ui
     bool wasComboPressed(const std::initializer_list<int>& combo);
 
     uintptr_t onWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+    uint32_t onWndProcNexus(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
     void onD3DPresent();
 

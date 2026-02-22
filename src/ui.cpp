@@ -15,8 +15,8 @@
 
 #include "imgui_internal.h"
 
-float labelOffset = -1;
-float fieldWidth  = -1;
+float ui::labelOffset = -1;
+float ui::fieldWidth  = -1;
 
 std::optional<std::unique_ptr<memory::hooks::D3D11>> ui::d3dHook {};
 std::optional<memory::hooks::WndProc>                ui::wndProcHook {};
@@ -204,7 +204,7 @@ bool checkboxGroup(const char* label, const char* tooltip, const std::vector<Che
         const auto& item = items[i];
 
         const float y = initialCursorPos.y + static_cast<float>(row) * rowHeight;
-        const float x = initialCursorPos.x + (isOdd ? 2.0f : 1.0f) * labelOffset;
+        const float x = initialCursorPos.x + (isOdd ? 2.0f : 1.0f) * ui::labelOffset;
 
         if (item.label)
         {
@@ -260,10 +260,10 @@ void ui::renderOptions()
     }
 
     separatorText("Show");
-    bool alwaysShowTarget = unpc::settings->getAlwaysShowTarget();
-    bool playerOwned      = unpc::settings->getPlayerOwned();
     bool unhideNpcs       = unpc::settings->getUnhideNpcs();
-    bool alwaysShowTargetChanged {}, playerOwnedChanged {}, unhideNpcsChanged {};
+    bool playerOwned      = unpc::settings->getPlayerOwned();
+    bool alwaysShowTarget = unpc::settings->getAlwaysShowTarget();
+    bool unhideNpcsChanged {}, playerOwnedChanged {}, alwaysShowTargetChanged {};
 
     if (checkboxGroup(
         "Unhide",
@@ -275,18 +275,20 @@ void ui::renderOptions()
         }
     ))
     {
-        if (alwaysShowTargetChanged)
+        if (unhideNpcsChanged)
         {
-            unpc::settings->setAlwaysShowTarget(alwaysShowTarget);
+            unpc::settings->setUnhideNpcs(unhideNpcs);
         }
         else if (playerOwnedChanged)
         {
             unpc::settings->setPlayerOwned(playerOwned);
         }
-        else if (unhideNpcsChanged)
+        else if (alwaysShowTargetChanged)
         {
-            unpc::settings->setUnhideNpcs(unhideNpcs);
+            unpc::settings->setAlwaysShowTarget(alwaysShowTarget);
         }
+
+        ++re::forceVisibility;
     }
     ImGui::NewLine();
     if (auto maxDistance = static_cast<int32_t>(unpc::settings->getMaximumDistance()); ui::sliderInt(
@@ -421,6 +423,30 @@ void ui::renderOptions()
     }
     ImGui::NewLine();
 
+    bool hidePlayersInCombat     = unpc::settings->getHidePlayersInCombat();
+    bool hidePlayerOwnedInCombat = unpc::settings->getHidePlayerOwnedInCombat();
+    bool hidePlayersInCombatChanged {}, hidePlayerOwnedInCombatChanged {};
+    if (checkboxGroup(
+        "In Combat",
+        nullptr,
+        std::vector<CheckboxGroupEntry> {
+            { "Players", unpc::settings->getCommentHidePlayersInCombat().c_str(), &hidePlayersInCombat, &hidePlayersInCombatChanged },
+            { "Player-Owned", unpc::settings->getCommentHidePlayerOwnedInCombat().c_str(), &hidePlayerOwnedInCombat, &hidePlayerOwnedInCombatChanged }
+        }
+    ))
+    {
+        if (hidePlayersInCombatChanged)
+        {
+            unpc::settings->setHidePlayersInCombat(hidePlayersInCombat);
+        }
+        else if (hidePlayerOwnedInCombatChanged)
+        {
+            unpc::settings->setHidePlayerOwnedInCombat(hidePlayerOwnedInCombat);
+        }
+        ++re::forceVisibility;
+    }
+
+    ImGui::NewLine();
     if (auto maxPlayersVisible = unpc::settings->getMaxPlayersVisible(); ui::sliderInt(
         "Max Players",
         "##MaxPlayersVisible",
@@ -471,7 +497,6 @@ void ui::renderOptions()
         unpc::settings->setDisableHidingInInstances(disableInInstances);
         ++re::forceVisibility;
     }
-
     separatorText("Misc");
     std::vector<CheckboxGroupEntry> entries {};
 
@@ -483,13 +508,12 @@ void ui::renderOptions()
 
     entries.emplace_back("Console", unpc::settings->getCommentForceConsole().c_str(), &forceConsole, &forceConsoleChanged);
     entries.emplace_back("Loading Boost", unpc::settings->getCommentLoadScreenBoost().c_str(), &loadScreenBoost, &loadScreenBoostChanged);
+    entries.emplace_back("Esc To Close", unpc::settings->getCommentCloseOnEscape().c_str(), &closeOnEscape, &closeOnEscapeChanged);
 
     if (unpc::mode == unpc::EMode::Nexus)
     {
         goto footer;
     }
-
-    entries.emplace_back("Esc To Close", unpc::settings->getCommentCloseOnEscape().c_str(), &closeOnEscape, &closeOnEscapeChanged);
 
     if (unpc::mode == unpc::EMode::Proxy || unpc::mode == unpc::EMode::Injected)
     {
@@ -545,8 +569,18 @@ footer:
     }
     tooltip("Forces all characters to be visible for the next frame\n" "Useful for \"resetting\" things after modifying any settings.");
 
+    if (ImGui::TreeNodeEx("Hotkeys", ImGuiTreeNodeFlags_NoTreePushOnOpen))
+    {
+        unpc::hotkeyManager.renderHotkeys();
+        ImGui::TreePop();
+    }
+    else
+    {
+        unpc::hotkeyManager.stopCapturing();
+    }
+
 #ifndef BUILDING_ON_GITHUB
-    separatorText("Debug");
+    ui::separatorText("Debug");
     re::debugMenu();
 #endif
 
@@ -587,6 +621,10 @@ void ui::renderWindow()
     {
         open = !open;
         unpc::settings->setOverlayOpen(open);
+        if (!open)
+        {
+            unpc::hotkeyManager.stopCapturing();
+        }
         return;
     }
 
@@ -704,6 +742,17 @@ uintptr_t ui::onWndProc(HWND hWnd, const UINT msg, const WPARAM wParam, const LP
         return msg;
     }
 
+    if (unpc::hotkeyManager.isCapturing())
+    {
+        if (msg == WM_KEYDOWN && wParam == VK_ESCAPE)
+        {
+            unpc::hotkeyManager.stopCapturing(true);
+            return 0;
+        }
+
+        return 0;
+    }
+
     if (msg == WM_KEYDOWN && wParam == VK_ESCAPE)
     {
         if (unpc::settings->getOverlayOpen() && unpc::settings->getCloseOnEscape())
@@ -770,6 +819,11 @@ uintptr_t ui::onWndProc(HWND hWnd, const UINT msg, const WPARAM wParam, const LP
     }
 
     return msg;
+}
+
+u32 ui::onWndProcNexus(HWND hWnd, const UINT msg, const WPARAM wParam, const LPARAM lParam)
+{
+    return onWndProc(hWnd, msg, wParam, lParam);
 }
 
 void ui::onD3DPresent()
