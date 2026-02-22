@@ -71,6 +71,91 @@ HotkeyManager::HotkeyManager(const std::string& requiredWndClassName, std::files
     _filePath = std::move(filePath);
 }
 
+uintptr_t HotkeyManager::onWndProc(HWND hWnd, const UINT msg, const WPARAM wParam, LPARAM lParam)
+{
+    if (msg != WM_KEYDOWN)
+    {
+        return msg;
+    }
+
+    if (wParam == VK_ESCAPE)
+    {
+        unpc::hotkeyManager.stopCapturing(true);
+        return 0;
+    }
+
+    const auto vkCode = wParam;
+
+    if (vkCode == VK_LBUTTON || vkCode == VK_RBUTTON || vkCode == VK_MBUTTON || vkCode == VK_XBUTTON1 || vkCode == VK_XBUTTON2 || vkCode == VK_BACK || vkCode ==
+        VK_TAB || vkCode == VK_RETURN || vkCode == VK_PAUSE || vkCode == VK_CAPITAL || vkCode == VK_NONAME)
+    {
+        return msg;
+    }
+
+    if (vkCode == VK_CONTROL || vkCode == VK_LCONTROL || vkCode == VK_RCONTROL || vkCode == VK_SHIFT || vkCode == VK_LSHIFT || vkCode == VK_RSHIFT || vkCode ==
+        VK_MENU || vkCode == VK_LMENU || vkCode == VK_RMENU)
+    {
+        return msg;
+    }
+
+    const bool ctrl  = (GetKeyState(VK_CONTROL) & 0x8000) != 0;
+    const bool shift = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
+    const bool alt   = (GetKeyState(VK_MENU) & 0x8000) != 0;
+
+    static char name[64];
+    const UINT  scan = MapVirtualKey(vkCode, MAPVK_VK_TO_VSC);
+    GetKeyNameTextA(scan << 16, name, 64);
+    LOG_INFO("onWndProc: {} [{}, {}, {}]", name, ctrl, shift, alt);
+
+    if (!_hotkeyCapturing.empty())
+    {
+        const auto hotkey = getHotkey(_hotkeyCapturing);
+        if (!hotkey)
+        {
+            _hotkeyCapturing = "";
+            return 0;
+        }
+
+        LOG_INFO("Updated hotkey \"{}\" to {}", _hotkeyCapturing, hotkey->toString());
+        hotkey->vkCode = vkCode;
+        hotkey->ctrl   = ctrl;
+        hotkey->shift  = shift;
+        hotkey->alt    = alt;
+        hotkey->active   = true; // prevent it from activating immediately
+        _hotkeyCapturing = "";
+        _needSave        = true;
+
+        return 0;
+    }
+
+    for (auto& [id, hotkey] : _hotkeys)
+    {
+        if (hotkey.vkCode != vkCode)
+        {
+            continue;
+        }
+
+        if (hotkey.ctrl && !ctrl)
+        {
+            continue;
+        }
+
+        if (hotkey.shift && !shift)
+        {
+            continue;
+        }
+
+        if (hotkey.alt && !alt)
+        {
+            continue;
+        }
+
+        triggerCallbacks(id);
+    }
+
+    return msg;
+}
+
 void HotkeyManager::setRequiredWndClassName(const std::string& className)
 {
     _requiredWndClassName = className;
@@ -117,15 +202,7 @@ void HotkeyManager::registerCallback(const std::function<void(const std::string&
 
 void HotkeyManager::tick()
 {
-    for (int vk = 0; vk < 256; vk++)
-    {
-        const SHORT state = GetAsyncKeyState(vk);
-
-        _keyStates.down[vk]    = (state & 0x8000) != 0;
-        _keyStates.pressed[vk] = (state & 1) != 0;
-    }
-
-    if (!_requiredWndClassName.empty())
+    /*if (!_requiredWndClassName.empty())
     {
         auto hWnd = GetForegroundWindow();
         if (!hWnd)
@@ -144,6 +221,19 @@ void HotkeyManager::tick()
                 _wndClassActive = strcmp(className, _requiredWndClassName.c_str()) == 0;
             }
         }
+    }
+
+    if (!_wndClassActive)
+    {
+        return;
+    }
+
+    for (int vk = 0; vk < 256; vk++)
+    {
+        const SHORT state = GetAsyncKeyState(vk);
+
+        _keyStates.down[vk]    = (state & 0x8000) != 0;
+        _keyStates.pressed[vk] = (state & 1) != 0;
     }
 
     if (!unpc::settings)
@@ -174,7 +264,7 @@ void HotkeyManager::tick()
 
             LOG_INFO("Hotkey \"{}\" [{}] triggered", id, hotkey.toString());
         }
-    }
+    }*/
 
     if (_needSave)
     {

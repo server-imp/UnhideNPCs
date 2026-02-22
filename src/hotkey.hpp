@@ -47,6 +47,8 @@ private:
 public:
     explicit HotkeyManager(const std::string& requiredWndClassName = "", std::filesystem::path filePath = "");
 
+    uintptr_t onWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
     void setRequiredWndClassName(const std::string& className);
     void registerHotkey(const std::string& id, const std::string& label);
     void unregisterHotkey(const std::string& id);
@@ -58,7 +60,6 @@ public:
     void renderHotkeys();
     void stopCapturing(bool clearHotkey = false);
     [[nodiscard]] bool isCapturing() const;
-
     [[nodiscard]] Hotkey* getHotkey(const std::string& id);
 
     void save();
