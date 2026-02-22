@@ -40,6 +40,8 @@ private:
     std::filesystem::path _filePath;
     bool _needSave = false;
 
+    std::mutex _mutex {};
+
     bool isHotkeyPressed(Hotkey& hotkey) const;
 
 public:

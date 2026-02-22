@@ -184,6 +184,8 @@ void HotkeyManager::tick()
 
 bool HotkeyManager::captureHotkey(Hotkey& hotkey)
 {
+    std::lock_guard lock(_mutex);
+
     if (!_wndClassActive)
     {
         return false;
@@ -234,6 +236,8 @@ bool HotkeyManager::captureHotkey(Hotkey& hotkey)
 
 void HotkeyManager::renderHotkey(const std::string& id, Hotkey& hotkey)
 {
+    std::lock_guard lock(_mutex);
+
     ImGui::TableSetColumnIndex(0);
     ImGui::AlignTextToFramePadding();
     bool capturing = _hotkeyCapturing == id;
@@ -281,13 +285,15 @@ void HotkeyManager::renderHotkeys()
     }
 }
 
-void HotkeyManager::stopCapturing(bool clearHotkey)
+void HotkeyManager::stopCapturing(const bool clearHotkey)
 {
+    std::lock_guard lock(_mutex);
+
     if (!_hotkeyCapturing.empty())
     {
         if (clearHotkey)
         {
-            auto hotkey = getHotkey(_hotkeyCapturing);
+            const auto hotkey = getHotkey(_hotkeyCapturing);
             if (hotkey)
             {
                 hotkey->vkCode = 0;
