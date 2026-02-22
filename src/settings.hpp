@@ -10,6 +10,7 @@ private:
     CONFIG_PROPERTY(bool, AlwaysShowTarget, true, "Always show the targeted character, even if it would be hidden.")
     CONFIG_PROPERTY(bool, PlayerOwned, false, "Characters that players own (pets, clones, minis etc) will also be unhidden.")
     CONFIG_PROPERTY(bool, UnhideNpcs, true, "Unhide NPCs")
+
     CONFIG_PROPERTY(int32_t, MinimumRank, 0, "Only NPCs that have at least this rank get unhidden.")
     CONFIG_PROPERTY(int32_t, Attackable, 0, "Only NPCs that match this get unhidden.\n0: Both\n1: Only Attackable\n2: Only Non-Attackable")
     CONFIG_PROPERTY(float, MaximumDistance, 0, "Characters outside of this distance won't be unhidden. (0=unlimited)")
@@ -26,6 +27,8 @@ private:
     CONFIG_PROPERTY(bool, HideNonFriends, false, "Hide any players that aren't friends")
     CONFIG_PROPERTY(bool, HideNonFriendsOwned, false, "Hide any characters that are owned by non-friend players (pets, clones, minis etc)")
     CONFIG_PROPERTY(bool, HidePlayerOwnedSelf, false, "Hide characters that are owned by you")
+    CONFIG_PROPERTY(bool, HidePlayersInCombat, false, "Hide players when you are in combat")
+    CONFIG_PROPERTY(bool, HidePlayerOwnedInCombat, false, "Hide player-owned characters when you are in combat")
     CONFIG_PROPERTY(int32_t, MaxPlayersVisible, 0, "Maximum number of visible players. (0=unlimited)")
     CONFIG_PROPERTY(int32_t, MaxPlayerOwnedVisible, 0, "Maximum number of visible player-owned characters. (0=unlimited)")
     CONFIG_PROPERTY(int32_t, MaxNpcs, 0, "Maximum number of visible NPCs. (0=unlimited)")
