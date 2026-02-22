@@ -4,6 +4,7 @@
 #include "fw/logger.hpp"
 #include "fw/memory/memory.hpp"
 #include "gw2.hpp"
+#include "hotkey.hpp"
 #include "MumbleLink.hpp"
 #include "settings.hpp"
 #include "version.hpp"
@@ -31,6 +32,7 @@ namespace unpc
     extern std::optional<logging::Logger> logger;
     extern std::optional<Settings>        settings;
     extern std::optional<memory::Detour>  npcHook;
+    extern HotkeyManager                  hotkeyManager;
 
     extern HANDLE      hMutex;
     extern HMODULE     hModule;

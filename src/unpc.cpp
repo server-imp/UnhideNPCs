@@ -1,6 +1,7 @@
 #include "unpc.hpp"
 
 #include "hook.hpp"
+#include "hotkey.hpp"
 #include "ui.hpp"
 #include "integration/nexus.hpp"
 
@@ -9,9 +10,20 @@ using namespace memory;
 
 using namespace unpc;
 
-HANDLE      unpc::hMutex {};
-HMODULE     unpc::hModule {};
-HANDLE      unpc::hThread {};
+std::atomic_bool               unpc::nexusPresent {};
+std::atomic_bool               unpc::arcDpsPresent {};
+std::atomic_bool               unpc::injected {};
+std::atomic_bool               unpc::exit {};
+std::optional<logging::Logger> unpc::logger;
+std::optional<Settings>        unpc::settings;
+std::optional<Detour>          unpc::npcHook {};
+
+HotkeyManager unpc::hotkeyManager("ArenaNet_Gr_Window_Class", std::filesystem::current_path() / "addons" / "UnhideNPCs" / "hotkeys.json");
+HANDLE        unpc::hMutex {};
+HMODULE       unpc::hModule {};
+
+HANDLE unpc::hThread {};
+
 std::string unpc::proxyModuleName {};
 HMODULE     unpc::hProxyModule {};
 MumbleLink* unpc::mumbleLink {};
@@ -20,19 +32,137 @@ int32_t*    unpc::loadingScreenActive {};
 uint32_t unpc::numPlayersVisible {};
 uint32_t unpc::numPlayerOwnedVisible {};
 uint32_t unpc::numNpcsVisible {};
-
-bool unpc::unloadOverlay {};
-
-std::atomic_bool unpc::nexusPresent {};
-std::atomic_bool unpc::arcDpsPresent {};
-std::atomic_bool unpc::injected {};
-std::atomic_bool unpc::exit {};
-
-std::optional<logging::Logger> unpc::logger;
-std::optional<Settings>        unpc::settings;
-std::optional<Detour>          unpc::npcHook {};
+bool     unpc::unloadOverlay {};
 
 #include "re.hpp"
+
+void hotkeyCallback(const std::string& id)
+{
+    if (!unpc::settings)
+    {
+        return;
+    }
+
+    if (id == "ToggleUnhideNPCs")
+    {
+        const auto current = unpc::settings->getUnhideNpcs();
+        unpc::settings->setUnhideNpcs(!current);
+    }
+    else if (id == "ToggleUnhidePlayerOwned")
+    {
+        const auto current = unpc::settings->getPlayerOwned();
+        unpc::settings->setPlayerOwned(!current);
+    }
+    else if (id == "ToggleUnhideTarget")
+    {
+        const auto current = unpc::settings->getAlwaysShowTarget();
+        unpc::settings->setAlwaysShowTarget(!current);
+    }
+    else if (id == "ToggleHidePlayers")
+    {
+        const auto current = unpc::settings->getHidePlayers();
+        unpc::settings->setHidePlayers(!current);
+    }
+    else if (id == "ToggleHideBlocked")
+    {
+        const auto current = unpc::settings->getHideBlockedPlayers();
+        unpc::settings->setHideBlockedPlayers(!current);
+    }
+    else if (id == "ToggleHideNonGroup")
+    {
+        const auto current = unpc::settings->getHideNonGroupMembers();
+        unpc::settings->setHideNonGroupMembers(!current);
+    }
+    else if (id == "ToggleHideNonGuild")
+    {
+        const auto current = unpc::settings->getHideNonGuildMembers();
+        unpc::settings->setHideNonGuildMembers(!current);
+    }
+    else if (id == "ToggleHideNonFriends")
+    {
+        const auto current = unpc::settings->getHideNonFriends();
+        unpc::settings->setHideNonFriends(!current);
+    }
+    else if (id == "ToggleHideAllOwned")
+    {
+        const auto current = unpc::settings->getHidePlayerOwned();
+        unpc::settings->setHidePlayerOwned(!current);
+    }
+    else if (id == "ToggleHideBlockedOwned")
+    {
+        const auto current = unpc::settings->getHideBlockedPlayersOwned();
+        unpc::settings->setHideBlockedPlayersOwned(!current);
+    }
+    else if (id == "ToggleHideNonGroupOwned")
+    {
+        const auto current = unpc::settings->getHideNonGroupMembersOwned();
+        unpc::settings->setHideNonGroupMembersOwned(!current);
+    }
+    else if (id == "ToggleHideNonGuildOwned")
+    {
+        const auto current = unpc::settings->getHideNonGuildMembersOwned();
+        unpc::settings->setHideNonGuildMembersOwned(!current);
+    }
+    else if (id == "ToggleHideNonFriendsOwned")
+    {
+        const auto current = unpc::settings->getHideNonFriendsOwned();
+        unpc::settings->setHideNonFriendsOwned(!current);
+    }
+    else if (id == "ToggleHideSelfOwned")
+    {
+        const auto current = unpc::settings->getHidePlayerOwnedSelf();
+        unpc::settings->setHidePlayerOwnedSelf(!current);
+    }
+    else if (id == "ToggleHidePlayersInCombat")
+    {
+        const auto current = unpc::settings->getHidePlayersInCombat();
+        unpc::settings->setHidePlayersInCombat(!current);
+    }
+    else if (id == "ToggleHidePlayerOwnedInCombat")
+    {
+        const auto current = unpc::settings->getHidePlayerOwnedInCombat();
+        unpc::settings->setHidePlayerOwnedInCombat(!current);
+    }
+    else if (id == "ToggleDisableInInstances")
+    {
+        const auto current = unpc::settings->getDisableHidingInInstances();
+        unpc::settings->setDisableHidingInInstances(!current);
+    }
+    else if (id == "ForceVisibility")
+    {
+        ++re::forceVisibility;
+    }
+    else
+    {
+        LOG_WARN("Unknown hotkey: {}", id);
+    }
+}
+
+void initializeHotkeys()
+{
+    hotkeyManager.registerHotkey("ToggleUnhideNPCs", "Unhide NPCs");
+    hotkeyManager.registerHotkey("ToggleUnhidePlayerOwned", "Unhide Player-Owned");
+    hotkeyManager.registerHotkey("ToggleUnhideTarget", "Unhide Target");
+    hotkeyManager.registerHotkey("ToggleHidePlayers", "Hide All Player");
+    hotkeyManager.registerHotkey("ToggleHideBlocked", "Hide Blocked Player");
+    hotkeyManager.registerHotkey("ToggleHideNonGroup", "Hide Non-Group Player");
+    hotkeyManager.registerHotkey("ToggleHideNonGuild", "Hide Non-Guild Player");
+    hotkeyManager.registerHotkey("ToggleHideNonFriends", "Hide Non-Friends Player");
+    hotkeyManager.registerHotkey("ToggleHideAllOwned", "Hide All Owned");
+    hotkeyManager.registerHotkey("ToggleHideBlockedOwned", "Hide Blocked Owned");
+    hotkeyManager.registerHotkey("ToggleHideNonGroupOwned", "Hide Non-Group Owned");
+    hotkeyManager.registerHotkey("ToggleHideNonGuildOwned", "Hide Non-Guild Owned");
+    hotkeyManager.registerHotkey("ToggleHideNonFriendsOwned", "Hide Non-Friends Owned");
+    hotkeyManager.registerHotkey("ToggleHideSelfOwned", "Hide Self Owned");
+    hotkeyManager.registerHotkey("ToggleHidePlayersInCombat", "Hide Players in Combat");
+    hotkeyManager.registerHotkey("ToggleHidePlayerOwnedInCombat", "Hide Player-Owned in Combat");
+    hotkeyManager.registerHotkey("ToggleDisableInInstances", "Disable in Instances");
+    hotkeyManager.registerHotkey("ForceVisibility", "Force Visibility");
+
+    hotkeyManager.registerCallback(hotkeyCallback);
+
+    hotkeyManager.load();
+}
 
 bool initialize()
 {
@@ -158,6 +288,8 @@ bool initialize()
     }
     LOG_INFO("Hook OK");
 
+    initializeHotkeys();
+
     return true;
 }
 
@@ -173,6 +305,8 @@ void unpc::onHookTick()
         ui::d3dHook.reset();
         unloadOverlay = false;
     }
+
+    hotkeyManager.tick();
 
     if (mode != EMode::Injected && mode != EMode::Proxy)
     {
@@ -276,6 +410,11 @@ bool unpc::shouldHide(
             return true;
         }
 
+        if (unpc::mumbleLink && unpc::mumbleLink->getContext().isInCombat() && unpc::settings->getHidePlayersInCombat())
+        {
+            return true;
+        }
+
         return false;
     }
 
@@ -319,6 +458,11 @@ bool unpc::shouldHide(
             return true;
         }
 
+        if (unpc::mumbleLink && unpc::mumbleLink->getContext().isInCombat() && unpc::settings->getHidePlayerOwnedInCombat())
+        {
+            return true;
+        }
+
         return false;
     }
 
@@ -356,7 +500,45 @@ bool unpc::shouldShow(
 
     if (isPlayer)
     {
-        return false;
+        const auto maxPlayersVisible = unpc::settings->getMaxPlayersVisible();
+        if (maxPlayersVisible > 0 && unpc::numPlayersVisible >= maxPlayersVisible)
+        {
+            return false;
+        }
+
+        if (unpc::settings->getHidePlayers())
+        {
+            return false;
+        }
+
+        if (unpc::settings->getHideNonFriends() && !isFriend)
+        {
+            return false;
+        }
+
+        if (unpc::settings->getHideBlockedPlayers() && isBlocked)
+        {
+            return false;
+        }
+
+        const bool guild = isActiveGuildMember || isGuildMember;
+        if (unpc::settings->getHideNonGuildMembers() && !guild)
+        {
+            return false;
+        }
+
+        const bool group = isPartyMember || isSquadMember;
+        if (unpc::settings->getHideNonGroupMembers() && !group)
+        {
+            return false;
+        }
+
+        if (unpc::mumbleLink && unpc::mumbleLink->getContext().isInCombat() && unpc::settings->getHidePlayersInCombat())
+        {
+            return false;
+        }
+
+        return true;
     }
 
     if (isPlayerOwned)
@@ -399,6 +581,11 @@ bool unpc::shouldShow(
 
         bool group = isPartyMember || isSquadMember;
         if (unpc::settings->getHideNonGroupMembersOwned() && !group)
+        {
+            return false;
+        }
+
+        if (unpc::mumbleLink && unpc::mumbleLink->getContext().isInCombat() && unpc::settings->getHidePlayerOwnedInCombat())
         {
             return false;
         }
