@@ -25,8 +25,6 @@ arcdps_exports* mod_init()
     arc_exports.size      = sizeof(arcdps_exports);
     arc_exports.out_name  = "UnhideNPCs";
     arc_exports.out_build = unpc::version::STRING;
-    //arc_exports.wnd_filter = reinterpret_cast<void*>(ui::onWndProc);
-    arc_exports.wnd_nofilter = reinterpret_cast<void*>(ui::onWndProc);
 
     if (unpc::nexusPresent || unpc::hProxyModule || unpc::injected)
     {
@@ -34,6 +32,7 @@ arcdps_exports* mod_init()
     }
 
     arc_exports.imgui = reinterpret_cast<void*>(reinterpret_cast<std::uintptr_t>(ui::renderWindow));
+    arc_exports.wnd_nofilter = reinterpret_cast<void*>(ui::onWndProc);
 
     unpc::start();
     return &arc_exports;
