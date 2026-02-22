@@ -428,7 +428,7 @@ void ui::renderOptions()
     bool hidePlayersInCombatChanged {}, hidePlayerOwnedInCombatChanged {};
     if (checkboxGroup(
         "In Combat",
-        nullptr,
+        "When in combat, hide the following",
         std::vector<CheckboxGroupEntry> {
             { "Players", unpc::settings->getCommentHidePlayersInCombat().c_str(), &hidePlayersInCombat, &hidePlayersInCombatChanged },
             { "Player-Owned", unpc::settings->getCommentHidePlayerOwnedInCombat().c_str(), &hidePlayerOwnedInCombat, &hidePlayerOwnedInCombatChanged }
