@@ -410,7 +410,7 @@ bool unpc::shouldHide(
             return true;
         }
 
-        if (unpc::mumbleLink && unpc::mumbleLink->getContext().isInCombat() && unpc::settings->getHidePlayersInCombat())
+        if (!isOwnerLocalPlayer && unpc::mumbleLink && unpc::mumbleLink->getContext().isInCombat() && unpc::settings->getHidePlayersInCombat())
         {
             return true;
         }
