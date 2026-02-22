@@ -77,7 +77,38 @@ namespace nexus
             return;
         }
 
-        ui::renderOptions();
+        auto open = unpc::settings->getOverlayOpen();
+        if (ImGui::Button(open ? "Close Settings" : "Open Settings"))
+        {
+            open = !open;
+            unpc::settings->setOverlayOpen(open);
+            if (!open)
+            {
+                unpc::hotkeyManager.stopCapturing();
+            }
+        }
+    }
+
+    void render()
+    {
+        if (unpc::exit)
+        {
+            return;
+        }
+        if (!unpc::settings || !unpc::settings->loaded())
+        {
+            return;
+        }
+        if (!unpc::logger)
+        {
+            return;
+        }
+        if (unpc::hProxyModule || unpc::injected)
+        {
+            return;
+        }
+
+        ui::renderWindow();
     }
 
     void onLoad(AddonAPI* aApi)
@@ -95,6 +126,8 @@ namespace nexus
         ImGui::SetAllocatorFunctions(a, f);
 
         APIDefs->Renderer.Register(ERenderType_OptionsRender, options);
+        APIDefs->Renderer.Register(ERenderType_Render, render);
+        APIDefs->WndProc.Register(ui::onWndProcNexus);
 
         unpc::start();
     }
@@ -107,6 +140,8 @@ namespace nexus
         }
 
         APIDefs->Renderer.Deregister(options);
+        APIDefs->Renderer.Deregister(render);
+        APIDefs->WndProc.Deregister(ui::onWndProcNexus);
 
         unpc::stop();
 
