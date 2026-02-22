@@ -104,6 +104,15 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(Nexus)
 
+FetchContent_Declare(
+        json
+        GIT_REPOSITORY "https://github.com/nlohmann/json.git"
+        GIT_TAG "55f93686c01528224f448c19128836e7df245f72" # 3.12.0
+        GIT_SHALLOW TRUE
+        GIT_PROGRESS TRUE
+)
+FetchContent_MakeAvailable(json)
+
 file(GLOB_RECURSE PROJECT_SOURCES
         "src/**.cpp"
 )
@@ -135,6 +144,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
         "${minhook_SOURCE_DIR}"
         "${nexus_SOURCE_DIR}"
         "${CMAKE_CURRENT_BINARY_DIR}"
+        "${json_SOURCE_DIR}/single_include"
 )
 
 if (BUILDING_ON_GITHUB)
@@ -155,7 +165,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
         d3dcompiler
         xinput
         gdi32
-        user32)
+        user32
+)
 
 #add_executable(Injector src/injector.cpp)
 
