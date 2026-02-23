@@ -306,7 +306,7 @@ void unpc::onHookTick()
         unloadOverlay = false;
     }
 
-    hotkeyManager.tick();
+    hotkeyManager.update();
 
     if (mode != EMode::Injected && mode != EMode::Proxy)
     {
