@@ -132,6 +132,18 @@ void hotkeyCallback(const std::string& id)
     {
         ++re::forceVisibility;
     }
+    else if (id == "ToggleOverlay")
+    {
+        auto open = unpc::settings->getOverlayOpen();
+        if (open)
+        {
+            if (hotkeyManager.isCapturing())
+            {
+                hotkeyManager.stopCapturing();
+            }
+        }
+        unpc::settings->setOverlayOpen(!open);
+    }
     else
     {
         LOG_WARN("Unknown hotkey: {}", id);
@@ -158,6 +170,7 @@ void initializeHotkeys()
     hotkeyManager.registerHotkey("ToggleHidePlayerOwnedInCombat", "Hide Player-Owned in Combat");
     hotkeyManager.registerHotkey("ToggleDisableInInstances", "Disable in Instances");
     hotkeyManager.registerHotkey("ForceVisibility", "Force Visibility");
+    hotkeyManager.registerHotkey("ToggleOverlay", "Alt. Overlay Toggle");
 
     hotkeyManager.registerCallback(hotkeyCallback);
 
