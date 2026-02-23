@@ -78,6 +78,20 @@ uintptr_t HotkeyManager::onWndProc(HWND hWnd, const UINT msg, const WPARAM wPara
         return msg;
     }
 
+    if (unpc::mumbleLink && unpc::mumbleLink->getContext().isTextboxFocused())
+    {
+        return msg;
+    }
+
+    if (ImGui::GetCurrentContext())
+    {
+        const auto& io = ImGui::GetIO();
+        if (io.WantCaptureKeyboard || io.WantTextInput)
+        {
+            return msg;
+        }
+    }
+
     if (wParam == VK_ESCAPE && isCapturing())
     {
         stopCapturing(true);
