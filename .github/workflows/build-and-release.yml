@@ -16,7 +16,7 @@ jobs:
       - name: Install MinGW toolchain
         run: |
           sudo apt-get update
-          sudo apt-get install -y mingw-w64
+          sudo apt-get install -y mingw-w64 ninja-build
 
       - name: Configure git for private fetch
         run: |
@@ -36,12 +36,18 @@ jobs:
       - name: Build
         run: cmake --build build --config RelWithDebInfo
 
+      - name: Read version.txt
+        id: version
+        run: |
+          VERSION=$(cat build/version.txt)
+          echo "VERSION=v${VERSION}" >> $GITHUB_OUTPUT
+
       - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@v1
         with:
-          tag_name: ${{ github.ref_name }}
-          release_name: Release ${{ github.ref_name }}
+          tag_name: ${{ steps.version.outputs.VERSION }}
+          release_name: ${{ steps.version.outputs.VERSION }}
           draft: true
           prerelease: false
         env:
