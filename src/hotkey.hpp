@@ -54,8 +54,7 @@ public:
     void unregisterHotkey(const std::string& id);
     void triggerCallbacks(const std::string& id) const;
     void registerCallback(const std::function<void(const std::string&)>& callback);
-    void tick();
-    bool captureHotkey(Hotkey& hotkey);
+    void update();
     void renderHotkey(const std::string& id, Hotkey& hotkey);
     void renderHotkeys();
     void stopCapturing(bool clearHotkey = false);

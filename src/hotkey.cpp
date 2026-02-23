@@ -80,7 +80,7 @@ uintptr_t HotkeyManager::onWndProc(HWND hWnd, const UINT msg, const WPARAM wPara
 
     if (wParam == VK_ESCAPE && isCapturing())
     {
-        unpc::hotkeyManager.stopCapturing(true);
+        stopCapturing(true);
         return 0;
     }
 
@@ -117,10 +117,10 @@ uintptr_t HotkeyManager::onWndProc(HWND hWnd, const UINT msg, const WPARAM wPara
         }
 
         LOG_INFO("Updated hotkey \"{}\" to {}", _hotkeyCapturing, hotkey->toString());
-        hotkey->vkCode = vkCode;
-        hotkey->ctrl   = ctrl;
-        hotkey->shift  = shift;
-        hotkey->alt    = alt;
+        hotkey->vkCode   = vkCode;
+        hotkey->ctrl     = ctrl;
+        hotkey->shift    = shift;
+        hotkey->alt      = alt;
         hotkey->active   = true; // prevent it from activating immediately
         _hotkeyCapturing = "";
         _needSave        = true;
@@ -200,128 +200,12 @@ void HotkeyManager::registerCallback(const std::function<void(const std::string&
     _callbacks.push_back(callback);
 }
 
-void HotkeyManager::tick()
+void HotkeyManager::update()
 {
-    /*if (!_requiredWndClassName.empty())
-    {
-        auto hWnd = GetForegroundWindow();
-        if (!hWnd)
-        {
-            _wndClassActive = false;
-        }
-        else
-        {
-            char className[256] {};
-            if (!GetClassNameA(hWnd, className, sizeof(className)))
-            {
-                _wndClassActive = false;
-            }
-            else
-            {
-                _wndClassActive = strcmp(className, _requiredWndClassName.c_str()) == 0;
-            }
-        }
-    }
-
-    if (!_wndClassActive)
-    {
-        return;
-    }
-
-    for (int vk = 0; vk < 256; vk++)
-    {
-        const SHORT state = GetAsyncKeyState(vk);
-
-        _keyStates.down[vk]    = (state & 0x8000) != 0;
-        _keyStates.pressed[vk] = (state & 1) != 0;
-    }
-
-    if (!unpc::settings)
-    {
-        return;
-    }
-
-    if (!_hotkeyCapturing.empty())
-    {
-        const auto hotkey = getHotkey(_hotkeyCapturing);
-        if (hotkey)
-        {
-            if (captureHotkey(*hotkey))
-            {
-                LOG_INFO("Updated hotkey \"{}\" to {}", _hotkeyCapturing, hotkey->toString());
-                _hotkeyCapturing = "";
-                hotkey->active   = true; // prevent it from activating immediately
-                _needSave        = true;
-            }
-        }
-    }
-
-    for (auto& [id, hotkey] : _hotkeys)
-    {
-        if (isHotkeyPressed(hotkey))
-        {
-            triggerCallbacks(id);
-
-            LOG_INFO("Hotkey \"{}\" [{}] triggered", id, hotkey.toString());
-        }
-    }*/
-
     if (_needSave)
     {
         save();
     }
-}
-
-bool HotkeyManager::captureHotkey(Hotkey& hotkey)
-{
-    std::lock_guard lock(_mutex);
-
-    if (!_wndClassActive)
-    {
-        return false;
-    }
-
-    if (_captureJustStarted)
-    {
-        _captureJustStarted = false;
-        return false;
-    }
-
-    for (int vk = 1; vk < 256; vk++)
-    {
-        if (!_keyStates.down[vk])
-        {
-            continue;
-        }
-
-        if (vk == VK_LBUTTON || vk == VK_RBUTTON || vk == VK_MBUTTON || vk == VK_XBUTTON1 || vk == VK_XBUTTON2 || vk == VK_BACK || vk == VK_TAB || vk ==
-            VK_RETURN || vk == VK_PAUSE || vk == VK_CAPITAL || vk == VK_NONAME)
-        {
-            continue;
-        }
-
-        if (vk == VK_CONTROL || vk == VK_LCONTROL || vk == VK_RCONTROL || vk == VK_SHIFT || vk == VK_LSHIFT || vk == VK_RSHIFT || vk == VK_MENU || vk ==
-            VK_LMENU || vk == VK_RMENU)
-        {
-            continue;
-        }
-
-        const bool ctrl = _keyStates.down[VK_LCONTROL] || _keyStates.down[VK_RCONTROL];
-
-        const bool shift = _keyStates.down[VK_LSHIFT] || _keyStates.down[VK_RSHIFT];
-
-        const bool alt = _keyStates.down[VK_LMENU] || _keyStates.down[VK_RMENU];
-
-        hotkey.vkCode = vk;
-        hotkey.ctrl   = ctrl;
-        hotkey.shift  = shift;
-        hotkey.alt    = alt;
-
-        LOG_INFO("Captured hotkey: {} [{}]", hotkey.toString(), vk);
-        return true;
-    }
-
-    return false;
 }
 
 void HotkeyManager::renderHotkey(const std::string& id, Hotkey& hotkey)
@@ -330,7 +214,7 @@ void HotkeyManager::renderHotkey(const std::string& id, Hotkey& hotkey)
 
     ImGui::TableSetColumnIndex(0);
     ImGui::AlignTextToFramePadding();
-    bool capturing = _hotkeyCapturing == id;
+    const bool capturing = _hotkeyCapturing == id;
     ImGui::TextUnformatted(capturing ? "Esc to cancel" : hotkey.label.c_str());
     ImGui::TableSetColumnIndex(1);
 
@@ -377,8 +261,6 @@ void HotkeyManager::renderHotkeys()
 
 void HotkeyManager::stopCapturing(const bool clearHotkey)
 {
-    std::lock_guard lock(_mutex);
-
     if (!_hotkeyCapturing.empty())
     {
         if (clearHotkey)
@@ -387,6 +269,7 @@ void HotkeyManager::stopCapturing(const bool clearHotkey)
             if (hotkey)
             {
                 hotkey->vkCode = 0;
+                _needSave      = true;
             }
         }
 
