@@ -78,7 +78,7 @@ uintptr_t HotkeyManager::onWndProc(HWND hWnd, const UINT msg, const WPARAM wPara
         return msg;
     }
 
-    if (wParam == VK_ESCAPE)
+    if (wParam == VK_ESCAPE && isCapturing())
     {
         unpc::hotkeyManager.stopCapturing(true);
         return 0;
