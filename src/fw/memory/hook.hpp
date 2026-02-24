@@ -50,6 +50,13 @@ namespace memory
 
         bool disable(bool uninitialize) override;
     };
+
+    struct HookScope {
+        std::atomic_uint32_t& counter;
+
+        explicit HookScope(std::atomic_uint32_t& counter);
+        ~HookScope();
+    };
 }
 
 #endif //UNHIDENPCS_HOOK_HPP

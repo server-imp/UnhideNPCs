@@ -134,3 +134,14 @@ bool memory::Detour::disable(const bool uninitialize)
     _enabled = false;
     return true;
 }
+
+memory::HookScope::HookScope(std::atomic_uint32_t& counter)
+    : counter(counter)
+{
+    counter.fetch_add(1, std::memory_order_acq_rel);
+}
+
+memory::HookScope::~HookScope()
+{
+    counter.fetch_sub(1, std::memory_order_acq_rel);
+}
