@@ -33,6 +33,8 @@ int32_t*    unpc::loadingScreenActive {};
 uint32_t unpc::numPlayersVisible {};
 uint32_t unpc::numPlayerOwnedVisible {};
 uint32_t unpc::numNpcsVisible {};
+uint32_t unpc::numPlayersInArea {};
+
 bool     unpc::unloadOverlay {};
 
 #include "re.hpp"
@@ -291,6 +293,14 @@ bool initialize()
     }
     re::gw2::getAvContext = reinterpret_cast<re::gw2::GetAvContextFn>(pointer.add(12).resolve_relative_call().raw());
     LOG_INFO("Pattern 5 OK");
+
+    /*if (!game.findPattern(re::pattern6, pointer))
+    {
+        LOG_ERR("Unable to find pattern 6");
+        return false;
+    }
+    re::gw2::getUIContext = reinterpret_cast<re::gw2::GetUIContextFn>(pointer.add(9).rip().raw());
+    LOG_INFO("Pattern 6 OK");*/
 
     if (!npcHook->enable())
     {
@@ -716,7 +726,7 @@ void unpc::start()
 #ifdef BUILDING_ON_GITHUB
     auto logLevel = logging::LogLevel::Info;
 #else
-    auto logLevel = logging::LogLevel::Info;
+    auto logLevel = logging::LogLevel::Debug;
 #endif
 
     logger.emplace("UnhideNPCs", std::filesystem::current_path() / "addons" / "UnhideNPCs" / "log.txt", logLevel);

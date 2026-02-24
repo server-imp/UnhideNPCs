@@ -47,6 +47,7 @@ namespace unpc
     extern uint32_t numPlayersVisible;
     extern uint32_t numPlayerOwnedVisible;
     extern uint32_t numNpcsVisible;
+    extern uint32_t numPlayersInArea;
 
     extern bool unloadOverlay;
 
