@@ -394,7 +394,7 @@ void ui::renderOptions()
             { "All", unpc::settings->getCommentHidePlayerOwned().c_str(), &unpc::current_settings::hidePlayerOwned, &hideAllPlayerOwnedChanged },
             { "Blocked", unpc::settings->getCommentHideBlockedPlayersOwned().c_str(), &unpc::current_settings::hideBlockedPlayersOwned, &hideBlockedPlayerOwnedChanged },
             { "Non-Group", unpc::settings->getCommentHideNonGroupMembersOwned().c_str(), &unpc::current_settings::hideNonGroupMembersOwned, &hideNonGroupPlayerOwnedChanged },
-            { "Non-Guild", unpc::settings->getCommentHideNonGuildMembersOwned().c_str(), &unpc::current_settings::hideNonGuildMembers, &hideNonGuildPlayerOwnedChanged },
+            { "Non-Guild", unpc::settings->getCommentHideNonGuildMembersOwned().c_str(), &unpc::current_settings::hideNonGuildMembersOwned, &hideNonGuildPlayerOwnedChanged },
             { "Non-Friends", unpc::settings->getCommentHideNonFriendsOwned().c_str(), &unpc::current_settings::hideNonFriendsOwned, &hideNonFriendPlayerOwnedChanged },
             { "Mine", unpc::settings->getCommentHidePlayerOwnedSelf().c_str(), &unpc::current_settings::hidePlayerOwnedSelf, &hideMyOwnedChanged }
         }
