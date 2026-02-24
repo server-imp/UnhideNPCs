@@ -221,10 +221,10 @@ public:
     template <typename T>
     void set(std::string_view key, const T& value);
 
-    bool needs_save() const noexcept;
+    bool needsSave() const noexcept;
     bool loaded() const noexcept;
 
-    const std::filesystem::path& file_path() const noexcept;
+    const std::filesystem::path& filePath() const noexcept;
 };
 
 template <typename T>
@@ -292,11 +292,12 @@ type get##name() const\
 return _##name;\
 }\
 \
-void set##name(const type value)\
+type set##name(const type value)\
 {\
 _##name = value;\
 this->set<type>(#name, value);\
 this->save();\
+return _##name;\
 }
 
 #endif //UNHIDENPCS_CFG_HPP

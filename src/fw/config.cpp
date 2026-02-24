@@ -170,6 +170,7 @@ bool Config::save()
     return true;
 }
 
+std::string commentNone{};
 const std::string& Config::getComment(const std::string_view key) const
 {
     const std::string nkey = normalizeKey(key);
@@ -179,10 +180,10 @@ const std::string& Config::getComment(const std::string_view key) const
         return _properties[it->second].comment();
     }
 
-    return "";
+    return commentNone;
 }
 
-bool Config::needs_save() const noexcept
+bool Config::needsSave() const noexcept
 {
     return _needSave;
 }
@@ -192,7 +193,7 @@ bool Config::loaded() const noexcept
     return _loaded;
 }
 
-const std::filesystem::path& Config::file_path() const noexcept
+const std::filesystem::path& Config::filePath() const noexcept
 {
     return _filePath;
 }
