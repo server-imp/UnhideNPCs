@@ -28,7 +28,7 @@ std::string Hotkey::toString() const
     }
 
     static char name[64];
-    const UINT  scan = MapVirtualKey(vkCode, MAPVK_VK_TO_VSC);
+    const auto  scan = MapVirtualKey(vkCode, MAPVK_VK_TO_VSC);
     GetKeyNameTextA(scan << 16, name, 64);
 
     s += name;
@@ -100,26 +100,35 @@ uintptr_t HotkeyManager::onWndProc(HWND hWnd, const UINT msg, const WPARAM wPara
 
     const auto vkCode = wParam;
 
-    if (vkCode == VK_LBUTTON || vkCode == VK_RBUTTON || vkCode == VK_MBUTTON || vkCode == VK_XBUTTON1 || vkCode == VK_XBUTTON2 || vkCode == VK_BACK || vkCode ==
-        VK_TAB || vkCode == VK_RETURN || vkCode == VK_PAUSE || vkCode == VK_CAPITAL || vkCode == VK_NONAME)
+    switch (vkCode)
     {
-        return msg;
-    }
-
-    if (vkCode == VK_CONTROL || vkCode == VK_LCONTROL || vkCode == VK_RCONTROL || vkCode == VK_SHIFT || vkCode == VK_LSHIFT || vkCode == VK_RSHIFT || vkCode ==
-        VK_MENU || vkCode == VK_LMENU || vkCode == VK_RMENU)
-    {
-        return msg;
+    case 0:
+    case VK_LBUTTON:
+    case VK_RBUTTON:
+    case VK_MBUTTON:
+    case VK_XBUTTON1:
+    case VK_XBUTTON2:
+    case VK_BACK:
+    case VK_TAB:
+    case VK_RETURN:
+    case VK_PAUSE:
+    case VK_CAPITAL:
+    case VK_NONAME:
+    case VK_CONTROL:
+    case VK_LCONTROL:
+    case VK_RCONTROL:
+    case VK_SHIFT:
+    case VK_LSHIFT:
+    case VK_RSHIFT:
+    case VK_MENU:
+    case VK_LMENU:
+    case VK_RMENU: return msg;
+    default: break;
     }
 
     const bool ctrl  = (GetKeyState(VK_CONTROL) & 0x8000) != 0;
     const bool shift = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
     const bool alt   = (GetKeyState(VK_MENU) & 0x8000) != 0;
-
-    static char name[64];
-    const UINT  scan = MapVirtualKey(vkCode, MAPVK_VK_TO_VSC);
-    GetKeyNameTextA(scan << 16, name, 64);
-    LOG_INFO("onWndProc: {} [{}, {}, {}]", name, ctrl, shift, alt);
 
     if (!_hotkeyCapturing.empty())
     {
@@ -144,6 +153,11 @@ uintptr_t HotkeyManager::onWndProc(HWND hWnd, const UINT msg, const WPARAM wPara
 
     for (auto& [id, hotkey] : _hotkeys)
     {
+        if (hotkey.vkCode == 0)
+        {
+            continue;
+        }
+
         if (hotkey.vkCode != vkCode)
         {
             continue;

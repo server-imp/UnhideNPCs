@@ -6,7 +6,7 @@
 struct Hotkey
 {
     std::string label {};
-    int32_t vkCode {};
+    uint32_t vkCode {};
 
     bool ctrl {};
     bool shift {};
