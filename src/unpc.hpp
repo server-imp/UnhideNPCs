@@ -28,6 +28,7 @@ namespace unpc
     extern std::atomic_bool arcDpsPresent;
     extern std::atomic_bool injected;
     extern std::atomic_bool exit;
+    extern std::atomic_bool stopping;
 
     extern std::optional<logging::Logger> logger;
     extern std::optional<Settings>        settings;
@@ -49,6 +50,47 @@ namespace unpc
 
     extern bool unloadOverlay;
 
+    namespace current_settings
+    {
+        extern std::mutex mutex;
+
+        extern bool    unhideNpcs;
+        extern bool    unhidePlayers;
+        extern bool    playerOwned;
+        extern bool    alwaysShowTarget;
+        extern bool    unhideLowQuality;
+        extern int32_t minimumRank;
+        extern int32_t attackable;
+        extern float   maximumDistance;
+
+        extern bool    hidePlayers;
+        extern bool    hidePlayerOwned;
+        extern bool    hideBlockedPlayers;
+        extern bool    hideBlockedPlayersOwned;
+        extern bool    hideNonGroupMembers;
+        extern bool    hideNonGroupMembersOwned;
+        extern bool    hideNonGuildMembers;
+        extern bool    hideNonGuildMembersOwned;
+        extern bool    hideNonFriends;
+        extern bool    hideNonFriendsOwned;
+        extern bool    hidePlayerOwnedSelf;
+        extern bool    hidePlayersInCombat;
+        extern bool    hidePlayerOwnedInCombat;
+        extern int32_t maxPlayersVisible;
+        extern int32_t maxPlayerOwnedVisible;
+        extern int32_t maxNpcs;
+        extern bool    disableHidingInInstances;
+
+        extern bool  forceConsole;
+        extern bool  loadScreenBoost;
+        extern bool  closeOnEscape;
+        extern float overlayFontSize;
+        extern bool  disableOverlay;
+        extern bool  overlayOpen;
+
+        void update();
+    }
+
     void onHookTick();
 
     // This function may be called second, returning true means the character will be forced invisible
@@ -60,14 +102,12 @@ namespace unpc
         bool    isAttackable,
         uint8_t rank,
         float   distance,
-        float   maxDistance,
         bool    isFriend,
         bool    isBlocked,
         bool    isActiveGuildMember,
         bool    isGuildMember,
         bool    isPartyMember,
-        bool    isSquadMember,
-        bool    isMounted
+        bool    isSquadMember
     );
 
     // This function is called first, returning true means the character will be forced visible
@@ -80,14 +120,12 @@ namespace unpc
         bool    isAttackable,
         uint8_t rank,
         float   distance,
-        float   maxDistance,
         bool    isFriend,
         bool    isBlocked,
         bool    isActiveGuildMember,
         bool    isGuildMember,
         bool    isPartyMember,
-        bool    isSquadMember,
-        bool    isMounted
+        bool    isSquadMember
     );
 
     void start();
