@@ -332,14 +332,7 @@ void ui::renderOptions()
         unpc::settings->setMinimumRank(unpc::current_settings::minimumRank);
         ++re::forceVisibility;
     }
-    if (ui::combo(
-        "Attackable",
-        "##attackable",
-        unpc::current_settings::attackable,
-        modes,
-        IM_ARRAYSIZE(modes),
-        unpc::settings->getCommentAttackable().c_str()
-    ))
+    if (ui::combo("Attackable", "##attackable", unpc::current_settings::attackable, modes, IM_ARRAYSIZE(modes), unpc::settings->getCommentAttackable().c_str()))
     {
         unpc::settings->setAttackable(unpc::current_settings::attackable);
         ++re::forceVisibility;
@@ -392,10 +385,30 @@ void ui::renderOptions()
         "Characters that are owned by the selected type of players will be hidden",
         std::vector<CheckboxGroupEntry> {
             { "All", unpc::settings->getCommentHidePlayerOwned().c_str(), &unpc::current_settings::hidePlayerOwned, &hideAllPlayerOwnedChanged },
-            { "Blocked", unpc::settings->getCommentHideBlockedPlayersOwned().c_str(), &unpc::current_settings::hideBlockedPlayersOwned, &hideBlockedPlayerOwnedChanged },
-            { "Non-Group", unpc::settings->getCommentHideNonGroupMembersOwned().c_str(), &unpc::current_settings::hideNonGroupMembersOwned, &hideNonGroupPlayerOwnedChanged },
-            { "Non-Guild", unpc::settings->getCommentHideNonGuildMembersOwned().c_str(), &unpc::current_settings::hideNonGuildMembersOwned, &hideNonGuildPlayerOwnedChanged },
-            { "Non-Friends", unpc::settings->getCommentHideNonFriendsOwned().c_str(), &unpc::current_settings::hideNonFriendsOwned, &hideNonFriendPlayerOwnedChanged },
+            {
+                "Blocked",
+                unpc::settings->getCommentHideBlockedPlayersOwned().c_str(),
+                &unpc::current_settings::hideBlockedPlayersOwned,
+                &hideBlockedPlayerOwnedChanged
+            },
+            {
+                "Non-Group",
+                unpc::settings->getCommentHideNonGroupMembersOwned().c_str(),
+                &unpc::current_settings::hideNonGroupMembersOwned,
+                &hideNonGroupPlayerOwnedChanged
+            },
+            {
+                "Non-Guild",
+                unpc::settings->getCommentHideNonGuildMembersOwned().c_str(),
+                &unpc::current_settings::hideNonGuildMembersOwned,
+                &hideNonGuildPlayerOwnedChanged
+            },
+            {
+                "Non-Friends",
+                unpc::settings->getCommentHideNonFriendsOwned().c_str(),
+                &unpc::current_settings::hideNonFriendsOwned,
+                &hideNonFriendPlayerOwnedChanged
+            },
             { "Mine", unpc::settings->getCommentHidePlayerOwnedSelf().c_str(), &unpc::current_settings::hidePlayerOwnedSelf, &hideMyOwnedChanged }
         }
     ))
@@ -434,7 +447,12 @@ void ui::renderOptions()
         "When in combat, hide the following",
         std::vector<CheckboxGroupEntry> {
             { "Players", unpc::settings->getCommentHidePlayersInCombat().c_str(), &unpc::current_settings::hidePlayersInCombat, &hidePlayersInCombatChanged },
-            { "Player-Owned", unpc::settings->getCommentHidePlayerOwnedInCombat().c_str(), &unpc::current_settings::hidePlayerOwnedInCombat, &hidePlayerOwnedInCombatChanged }
+            {
+                "Player-Owned",
+                unpc::settings->getCommentHidePlayerOwnedInCombat().c_str(),
+                &unpc::current_settings::hidePlayerOwnedInCombat,
+                &hidePlayerOwnedInCombatChanged
+            }
         }
     ))
     {
@@ -490,6 +508,7 @@ void ui::renderOptions()
         ++re::forceVisibility;
     }
     ImGui::NewLine();
+
     if (ui::checkbox(
         "Disable in Instances",
         "##DisableInInstances",
@@ -506,7 +525,12 @@ void ui::renderOptions()
     bool forceConsoleChanged {}, loadScreenBoostChanged {}, disableOverlayChanged {}, closeOnEscapeChanged {};
 
     entries.emplace_back("Console", unpc::settings->getCommentForceConsole().c_str(), &unpc::current_settings::forceConsole, &forceConsoleChanged);
-    entries.emplace_back("Loading Boost", unpc::settings->getCommentLoadScreenBoost().c_str(), &unpc::current_settings::loadScreenBoost, &loadScreenBoostChanged);
+    entries.emplace_back(
+        "Loading Boost",
+        unpc::settings->getCommentLoadScreenBoost().c_str(),
+        &unpc::current_settings::loadScreenBoost,
+        &loadScreenBoostChanged
+    );
     entries.emplace_back("Esc To Close", unpc::settings->getCommentCloseOnEscape().c_str(), &unpc::current_settings::closeOnEscape, &closeOnEscapeChanged);
 
     if (unpc::mode == unpc::EMode::Nexus)
@@ -516,7 +540,12 @@ void ui::renderOptions()
 
     if (unpc::mode == unpc::EMode::Proxy || unpc::mode == unpc::EMode::Injected)
     {
-        entries.emplace_back("Disable Overlay", unpc::settings->getCommentDisableOverlay().c_str(), &unpc::current_settings::disableOverlay, &disableOverlayChanged);
+        entries.emplace_back(
+            "Disable Overlay",
+            unpc::settings->getCommentDisableOverlay().c_str(),
+            &unpc::current_settings::disableOverlay,
+            &disableOverlayChanged
+        );
     }
 
 footer:
