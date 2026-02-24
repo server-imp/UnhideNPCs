@@ -78,6 +78,12 @@ uintptr_t HotkeyManager::onWndProc(HWND hWnd, const UINT msg, const WPARAM wPara
         return msg;
     }
 
+    const bool justPressed = (lParam & (1 << 30)) == 0;
+    if (!justPressed)
+    {
+        return msg;
+    }
+
     if (unpc::mumbleLink && unpc::mumbleLink->getContext().isTextboxFocused())
     {
         return msg;
@@ -139,12 +145,14 @@ uintptr_t HotkeyManager::onWndProc(HWND hWnd, const UINT msg, const WPARAM wPara
             return 0;
         }
 
-        LOG_INFO("Updated hotkey \"{}\" to {}", _hotkeyCapturing, hotkey->toString());
         hotkey->vkCode   = vkCode;
         hotkey->ctrl     = ctrl;
         hotkey->shift    = shift;
         hotkey->alt      = alt;
         hotkey->active   = true; // prevent it from activating immediately
+
+        LOG_INFO("Updated hotkey \"{}\" to {}", _hotkeyCapturing, hotkey->toString());
+
         _hotkeyCapturing = "";
         _needSave        = true;
 
