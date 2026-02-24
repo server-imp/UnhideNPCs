@@ -7,10 +7,12 @@ class Settings : public Config
 {
 private:
     // Showing
-    CONFIG_PROPERTY(bool, AlwaysShowTarget, true, "Always show the targeted character, even if it would be hidden.")
-    CONFIG_PROPERTY(bool, PlayerOwned, false, "Characters that players own (pets, clones, minis etc) will also be unhidden.")
     CONFIG_PROPERTY(bool, UnhideNpcs, true, "Unhide NPCs")
+    CONFIG_PROPERTY(bool, UnhidePlayers, false, "Unhide players")
+    CONFIG_PROPERTY(bool, PlayerOwned, false, "Characters that players own (pets, clones, minis etc) will also be unhidden.")
+    CONFIG_PROPERTY(bool, AlwaysShowTarget, true, "Always show the targeted character, even if it would be hidden.")
 
+    CONFIG_PROPERTY(bool, UnhideLowQuality, false, "Use low quality models when unhiding characters")
     CONFIG_PROPERTY(int32_t, MinimumRank, 0, "Only NPCs that have at least this rank get unhidden.")
     CONFIG_PROPERTY(int32_t, Attackable, 0, "Only NPCs that match this get unhidden.\n0: Both\n1: Only Attackable\n2: Only Non-Attackable")
     CONFIG_PROPERTY(float, MaximumDistance, 0, "Characters outside of this distance won't be unhidden. (0=unlimited)")
@@ -36,14 +38,7 @@ private:
 
     // Misc
     CONFIG_PROPERTY(bool, ForceConsole, false, "Create a console window.\n" "Note: If the console window is exited, then the game will exit as well.")
-    CONFIG_PROPERTY(
-        bool,
-        LoadScreenBoost,
-        false,
-        "Speed up loading screens by temporarily limiting number of characters to 0 when one is triggered.\n"
-        "Note: This will cause characters to start loading after the loading screen is finished,\n"
-        "meaning there will be invisible characters for a bit after loading."
-    )
+    CONFIG_PROPERTY(bool,LoadScreenBoost,false,"Speed up loading screens by temporarily limiting number of characters to 0 when one is triggered.\n""Note: This will cause characters to start loading after the loading screen is finished,\n""meaning there will be invisible characters for a bit after loading.")
     CONFIG_PROPERTY(bool, CloseOnEscape, true, "Close the overlay when Escape is pressed")
     CONFIG_PROPERTY(float, OverlayFontSize, 14.0f, "The font size used for the overlay\nRequires a restart/reload to reflect changes")
     CONFIG_PROPERTY(bool, DisableOverlay, false, "Disable the built in overlay when using Injection or Proxy mode")
