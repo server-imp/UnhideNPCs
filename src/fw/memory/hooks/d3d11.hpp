@@ -31,7 +31,7 @@ namespace memory::hooks
 
         std::mutex _mutex;
 
-        bool _shuttingDown {};
+        std::atomic_bool _shuttingDown {};
 
         D3D11(
             HWND                                     hWnd,
@@ -42,6 +42,9 @@ namespace memory::hooks
             const std::function<bool(D3D11*)>&       cbStarted,
             const std::function<void(D3D11*)>&       cbShutdown
         );
+
+        std::atomic_uint32_t _presentInFlight {};
+        std::atomic_uint32_t _resizeBuffersInFlight {};
 
     public:
         ~D3D11();

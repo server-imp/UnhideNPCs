@@ -62,7 +62,7 @@ bool memory::hooks::D3D11::enable()
 
 bool memory::hooks::D3D11::disable(bool uninitialize)
 {
-    _shuttingDown = true;
+    _shuttingDown.store(true, std::memory_order_release);
 
     if (_cbShutdown)
     {
@@ -72,10 +72,18 @@ bool memory::hooks::D3D11::disable(bool uninitialize)
     if (_hkPresent->enabled())
     {
         _hkPresent->disable(false);
+        while (_presentInFlight.load(std::memory_order_acquire) != 0)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
     }
     if (_hkResizeBuffers->enabled())
     {
         _hkResizeBuffers->disable(false);
+        while (_resizeBuffersInFlight.load(std::memory_order_acquire) != 0)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
     }
 
     destroyRenderTarget();
@@ -308,7 +316,9 @@ void memory::hooks::D3D11::destroyRenderTarget()
 
 HRESULT memory::hooks::D3D11::internalPresent(IDXGISwapChain* swapChain, const UINT syncInterval, const UINT flags)
 {
-    if (_shuttingDown)
+    HookScope scope(_presentInFlight);
+
+    if (_shuttingDown.load(std::memory_order_acquire))
     {
         return _hkPresent->original<decltype(&present)>()(swapChain, syncInterval, flags);
     }
@@ -357,7 +367,9 @@ HRESULT memory::hooks::D3D11::internalResizeBuffers(
     const UINT        swapChainFlags
 )
 {
-    if (_shuttingDown)
+    HookScope scope(_resizeBuffersInFlight);
+
+    if (_shuttingDown.load(std::memory_order_acquire))
     {
         return _hkResizeBuffers->original<decltype(&resizeBuffers)>()(
             swapChain,
