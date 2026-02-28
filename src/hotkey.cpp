@@ -27,7 +27,7 @@ std::string Hotkey::toString() const
         s += "Alt + ";
     }
 
-    static char name[64];
+    char name[64];
     const auto  scan = MapVirtualKey(vkCode, MAPVK_VK_TO_VSC);
     GetKeyNameTextA(scan << 16, name, 64);
 
