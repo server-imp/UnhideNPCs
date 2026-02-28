@@ -4,7 +4,7 @@
 #include "pch.hpp"
 #include "nlohmann/json.hpp"
 
-enum class MapType : uint32_t
+enum class EMapType : uint32_t
 {
     Redirect,
     CharacterCreation,
@@ -32,7 +32,7 @@ struct MumbleContext
 {
     unsigned char serverAddress[28]; // contains sockaddr_in or sockaddr_in6
     uint32_t      mapId;
-    MapType       mapType;
+    EMapType       mapType;
     uint32_t      shardId;
     uint32_t      instance;
     uint32_t      buildId;
