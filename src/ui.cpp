@@ -240,6 +240,8 @@ bool checkboxGroup(const char* label, const char* tooltip, const std::vector<Che
 const char* ranks[] = { "Normal", "Veteran", "Elite", "Champion", "Legendary" };
 const char* modes[] = { "Both", "Attackable", "Non-Attackable" };
 
+const char* instanceModes[] = { "Unchanged", "Disabled", "Enabled" };
+
 void ui::renderOptions()
 {
     if (!unpc::mumbleLink || unpc::mumbleLink->getContext().isCompetitiveMode())
@@ -339,7 +341,8 @@ void ui::renderOptions()
     }
 
     ui::separatorText("Hide");
-    bool hideAllPlayersChanged {}, hideBlockedPlayersChanged {}, hideNonGroupPlayersChanged {}, hideNonGuildPlayersChanged {}, hideNonFriendPlayersChanged {};
+    bool hideAllPlayersChanged {}, hideBlockedPlayersChanged {}, hideNonPartyPlayersChanged {}, hideNonSquadPlayersChanged {}, hideStrangersChanged {},
+         hideNonGuildPlayersChanged {}, hideNonFriendPlayersChanged {};
 
     if (checkboxGroup(
         "Players",
@@ -347,7 +350,9 @@ void ui::renderOptions()
         std::vector<CheckboxGroupEntry> {
             { "All", unpc::settings->getCommentHidePlayers().c_str(), &unpc::current_settings::hidePlayers, &hideAllPlayersChanged },
             { "Blocked", unpc::settings->getCommentHideBlockedPlayers().c_str(), &unpc::current_settings::hideBlockedPlayers, &hideBlockedPlayersChanged },
-            { "Non-Group", unpc::settings->getCommentHideNonGroupMembers().c_str(), &unpc::current_settings::hideNonGroupMembers, &hideNonGroupPlayersChanged },
+            { "Non-Party", unpc::settings->getCommentHideNonPartyMembers().c_str(), &unpc::current_settings::hideNonPartyMembers, &hideNonPartyPlayersChanged },
+            { "Non-Squad", unpc::settings->getCommentHideNonSquadMembers().c_str(), &unpc::current_settings::hideNonSquadMembers, &hideNonSquadPlayersChanged },
+            { "Strangers", unpc::settings->getCommentHideStrangers().c_str(), &unpc::current_settings::hideStrangers, &hideStrangersChanged },
             { "Non-Guild", unpc::settings->getCommentHideNonGuildMembers().c_str(), &unpc::current_settings::hideNonGuildMembers, &hideNonGuildPlayersChanged },
             { "Non-Friends", unpc::settings->getCommentHideNonFriends().c_str(), &unpc::current_settings::hideNonFriends, &hideNonFriendPlayersChanged }
         }
@@ -361,9 +366,17 @@ void ui::renderOptions()
         {
             unpc::settings->setHideBlockedPlayers(unpc::current_settings::hideBlockedPlayers);
         }
-        else if (hideNonGroupPlayersChanged)
+        else if (hideNonPartyPlayersChanged)
         {
-            unpc::settings->setHideNonGroupMembers(unpc::current_settings::hideNonGroupMembers);
+            unpc::settings->setHideNonPartyMembers(unpc::current_settings::hideNonPartyMembers);
+        }
+        else if (hideNonSquadPlayersChanged)
+        {
+            unpc::settings->setHideNonSquadMembers(unpc::current_settings::hideNonSquadMembers);
+        }
+        else if (hideStrangersChanged)
+        {
+            unpc::settings->setHideStrangers(unpc::current_settings::hideStrangers);
         }
         else if (hideNonGuildPlayersChanged)
         {
@@ -377,8 +390,8 @@ void ui::renderOptions()
     }
     ImGui::NewLine();
 
-    bool hideAllPlayerOwnedChanged {}, hideBlockedPlayerOwnedChanged {}, hideNonGroupPlayerOwnedChanged {}, hideNonGuildPlayerOwnedChanged {},
-         hideNonFriendPlayerOwnedChanged {}, hideMyOwnedChanged;
+    bool hideAllPlayerOwnedChanged {}, hideBlockedPlayerOwnedChanged {}, hideNonPartyPlayerOwnedChanged {}, hideNonSquadPlayerOwnedChanged {},
+         hideStrangersOwnedChanged {}, hideNonGuildPlayerOwnedChanged {}, hideNonFriendPlayerOwnedChanged {}, hideMyOwnedChanged;
 
     if (checkboxGroup(
         "Player-Owned",
@@ -392,10 +405,22 @@ void ui::renderOptions()
                 &hideBlockedPlayerOwnedChanged
             },
             {
-                "Non-Group",
-                unpc::settings->getCommentHideNonGroupMembersOwned().c_str(),
-                &unpc::current_settings::hideNonGroupMembersOwned,
-                &hideNonGroupPlayerOwnedChanged
+                "Non-Party",
+                unpc::settings->getCommentHideNonPartyMembersOwned().c_str(),
+                &unpc::current_settings::hideNonPartyMembersOwned,
+                &hideNonPartyPlayerOwnedChanged
+            },
+            {
+                "Non-Squad",
+                unpc::settings->getCommentHideNonSquadMembersOwned().c_str(),
+                &unpc::current_settings::hideNonSquadMembersOwned,
+                &hideNonSquadPlayerOwnedChanged
+            },
+            {
+                "Strangers",
+                unpc::settings->getCommentHideStrangersOwned().c_str(),
+                &unpc::current_settings::hideStrangersOwned,
+                &hideStrangersOwnedChanged
             },
             {
                 "Non-Guild",
@@ -421,9 +446,17 @@ void ui::renderOptions()
         {
             unpc::settings->setHideBlockedPlayersOwned(unpc::current_settings::hideBlockedPlayersOwned);
         }
-        else if (hideNonGroupPlayerOwnedChanged)
+        else if (hideNonPartyPlayerOwnedChanged)
         {
-            unpc::settings->setHideNonGroupMembersOwned(unpc::current_settings::hideNonGroupMembersOwned);
+            unpc::settings->setHideNonPartyMembersOwned(unpc::current_settings::hideNonPartyMembersOwned);
+        }
+        else if (hideNonSquadPlayerOwnedChanged)
+        {
+            unpc::settings->setHideNonSquadMembersOwned(unpc::current_settings::hideNonSquadMembersOwned);
+        }
+        else if (hideStrangersOwnedChanged)
+        {
+            unpc::settings->setHideStrangersOwned(unpc::current_settings::hideStrangersOwned);
         }
         else if (hideNonGuildPlayerOwnedChanged)
         {
@@ -509,14 +542,16 @@ void ui::renderOptions()
     }
     ImGui::NewLine();
 
-    if (ui::checkbox(
-        "Disable in Instances",
-        "##DisableInInstances",
-        unpc::current_settings::disableHidingInInstances,
-        unpc::settings->getCommentDisableHidingInInstances().c_str()
+    if (ui::combo(
+        "Instances",
+        "##instances",
+        unpc::current_settings::instanceBehaviour,
+        instanceModes,
+        IM_ARRAYSIZE(instanceModes),
+        unpc::settings->getCommentInstanceBehaviour().c_str()
     ))
     {
-        unpc::settings->setDisableHidingInInstances(unpc::current_settings::disableHidingInInstances);
+        unpc::settings->setInstanceBehaviour(unpc::current_settings::instanceBehaviour);
         ++re::forceVisibility;
     }
     separatorText("Misc");
