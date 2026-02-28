@@ -82,6 +82,7 @@ FetchContent_Declare(
         GIT_REPOSITORY https://github.com/ocornut/imgui.git
         GIT_TAG v1.80
         GIT_SHALLOW TRUE
+        PATCH_COMMAND git apply --ignore-whitespace "${CMAKE_SOURCE_DIR}/patches/imgui-xinput-lowercase.patch" || true
 )
 FetchContent_MakeAvailable(imgui)
 add_library(imgui STATIC
@@ -94,12 +95,6 @@ add_library(imgui STATIC
         ${imgui_SOURCE_DIR}/backends/imgui_impl_win32.cpp
 )
 target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR})
-
-# change XInput to xinput because Linux is case sensitive and MingW provides xinput not XInput
-set(IMGUI_WIN32_BACKEND "${imgui_SOURCE_DIR}/backends/imgui_impl_win32.cpp")
-file(READ "${IMGUI_WIN32_BACKEND}" IMGUI_WIN32_CONTENT)
-string(REPLACE "#include <XInput.h>" "#include <xinput.h>" IMGUI_WIN32_CONTENT "${IMGUI_WIN32_CONTENT}")
-file(WRITE "${IMGUI_WIN32_BACKEND}" "${IMGUI_WIN32_CONTENT}")
 
 FetchContent_Declare(
         Nexus
