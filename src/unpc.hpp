@@ -68,8 +68,12 @@ namespace unpc
         extern bool    hidePlayerOwned;
         extern bool    hideBlockedPlayers;
         extern bool    hideBlockedPlayersOwned;
-        extern bool    hideNonGroupMembers;
-        extern bool    hideNonGroupMembersOwned;
+        extern bool    hideNonPartyMembers;
+        extern bool    hideNonPartyMembersOwned;
+        extern bool    hideNonSquadMembers;
+        extern bool    hideNonSquadMembersOwned;
+        extern bool    hideStrangers;
+        extern bool    hideStrangersOwned;
         extern bool    hideNonGuildMembers;
         extern bool    hideNonGuildMembersOwned;
         extern bool    hideNonFriends;
@@ -80,7 +84,7 @@ namespace unpc
         extern int32_t maxPlayersVisible;
         extern int32_t maxPlayerOwnedVisible;
         extern int32_t maxNpcs;
-        extern bool    disableHidingInInstances;
+        extern int32_t instanceBehaviour;
 
         extern bool  forceConsole;
         extern bool  loadScreenBoost;
