@@ -240,7 +240,7 @@ bool checkboxGroup(const char* label, const char* tooltip, const std::vector<Che
 const char* ranks[] = { "Normal", "Veteran", "Elite", "Champion", "Legendary" };
 const char* modes[] = { "Both", "Attackable", "Non-Attackable" };
 
-const char* instanceModes[] = { "Unchanged", "Disabled", "Enabled" };
+const char* instanceModes[] = { "Always On", "Disabled in instances", "Instances only" };
 
 void ui::renderOptions()
 {
@@ -391,7 +391,7 @@ void ui::renderOptions()
     ImGui::NewLine();
 
     bool hideAllPlayerOwnedChanged {}, hideBlockedPlayerOwnedChanged {}, hideNonPartyPlayerOwnedChanged {}, hideNonSquadPlayerOwnedChanged {},
-         hideStrangersOwnedChanged {}, hideNonGuildPlayerOwnedChanged {}, hideNonFriendPlayerOwnedChanged {}, hideMyOwnedChanged;
+         hideStrangersOwnedChanged {}, hideNonGuildPlayerOwnedChanged {}, hideNonFriendPlayerOwnedChanged {}, hideMyOwnedChanged {};
 
     if (checkboxGroup(
         "Player-Owned",
@@ -416,12 +416,7 @@ void ui::renderOptions()
                 &unpc::current_settings::hideNonSquadMembersOwned,
                 &hideNonSquadPlayerOwnedChanged
             },
-            {
-                "Strangers",
-                unpc::settings->getCommentHideStrangersOwned().c_str(),
-                &unpc::current_settings::hideStrangersOwned,
-                &hideStrangersOwnedChanged
-            },
+            { "Strangers", unpc::settings->getCommentHideStrangersOwned().c_str(), &unpc::current_settings::hideStrangersOwned, &hideStrangersOwnedChanged },
             {
                 "Non-Guild",
                 unpc::settings->getCommentHideNonGuildMembersOwned().c_str(),
@@ -543,7 +538,7 @@ void ui::renderOptions()
     ImGui::NewLine();
 
     if (ui::combo(
-        "Instances",
+        "Instance Behaviour",
         "##instances",
         unpc::current_settings::instanceBehaviour,
         instanceModes,
