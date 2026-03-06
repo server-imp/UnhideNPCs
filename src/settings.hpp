@@ -30,7 +30,7 @@ private:
     CONFIG_PROPERTY(bool, HideNonGuildMembersOwned, false, "Hide any characters that are owned by non-guild members (pets, clones, minis etc)")
     CONFIG_PROPERTY(bool, HideNonFriends, false, "Hide any players that aren't friends")
     CONFIG_PROPERTY(bool, HideNonFriendsOwned, false, "Hide any characters that are owned by non-friend players (pets, clones, minis etc)")
-    CONFIG_PROPERTY(bool, HideStrangers, false, "Hide any players who are not: friends, guild or group members")
+    CONFIG_PROPERTY(bool, HideStrangers, false, "Hide any players who are not: friends, guild, party or squad members")
     CONFIG_PROPERTY(bool, HideStrangersOwned, false, "Hide any characters that are owned by strangers (pets, clones, minis etc)")
     CONFIG_PROPERTY(bool, HidePlayerOwnedSelf, false, "Hide characters that are owned by you")
     CONFIG_PROPERTY(bool, HidePlayersInCombat, false, "Hide players when you are in combat")
@@ -38,7 +38,7 @@ private:
     CONFIG_PROPERTY(int32_t, MaxPlayersVisible, 0, "Maximum number of visible players. (0=unlimited)")
     CONFIG_PROPERTY(int32_t, MaxPlayerOwnedVisible, 0, "Maximum number of visible player-owned characters. (0=unlimited)")
     CONFIG_PROPERTY(int32_t, MaxNpcs, 0, "Maximum number of visible NPCs. (0=unlimited)")
-    CONFIG_PROPERTY(int32_t, InstanceBehaviour, 0, "How to behave inside of instances:\n0: Unchanged\n1: Disabled\n2: Enabled")
+    CONFIG_PROPERTY(int32_t, InstanceBehaviour, 0, "0: Always On\n1: Disabled in instances\n2: Instances only")
 
     // Misc
     CONFIG_PROPERTY(bool, ForceConsole, false, "Create a console window.\n" "Note: If the console window is exited, then the game will exit as well.")
