@@ -68,10 +68,8 @@ namespace unpc
         extern bool    hidePlayerOwned;
         extern bool    hideBlockedPlayers;
         extern bool    hideBlockedPlayersOwned;
-        extern bool    hideNonPartyMembers;
-        extern bool    hideNonPartyMembersOwned;
-        extern bool    hideNonSquadMembers;
-        extern bool    hideNonSquadMembersOwned;
+        extern bool    hideNonGroupMembers;
+        extern bool    hideNonGroupMembersOwned;
         extern bool    hideStrangers;
         extern bool    hideStrangersOwned;
         extern bool    hideNonGuildMembers;

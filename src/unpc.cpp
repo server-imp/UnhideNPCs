@@ -82,13 +82,9 @@ void hotkeyCallback(const std::string& id)
     {
         unpc::settings->setHideBlockedPlayers(toggle(current_settings::hideBlockedPlayers));
     }
-    else if (id == "ToggleHideNonParty")
+    else if (id == "ToggleHideNonGroup")
     {
-        unpc::settings->setHideNonPartyMembers(toggle(current_settings::hideNonPartyMembers));
-    }
-    else if (id == "ToggleHideNonSquad")
-    {
-        unpc::settings->setHideNonSquadMembers(toggle(current_settings::hideNonSquadMembers));
+        unpc::settings->setHideNonGroupMembers(toggle(current_settings::hideNonGroupMembers));
     }
     else if (id == "ToggleHideStrangers")
     {
@@ -110,13 +106,9 @@ void hotkeyCallback(const std::string& id)
     {
         unpc::settings->setHideBlockedPlayersOwned(toggle(current_settings::hideBlockedPlayersOwned));
     }
-    else if (id == "ToggleHideNonPartyOwned")
+    else if (id == "ToggleHideNonGroupOwned")
     {
-        unpc::settings->setHideNonPartyMembersOwned(toggle(current_settings::hideNonPartyMembersOwned));
-    }
-    else if (id == "ToggleHideNonSquadOwned")
-    {
-        unpc::settings->setHideNonSquadMembersOwned(toggle(current_settings::hideNonSquadMembersOwned));
+        unpc::settings->setHideNonGroupMembersOwned(toggle(current_settings::hideNonGroupMembersOwned));
     }
     else if (id == "ToggleHideStrangersOwned")
     {
@@ -170,15 +162,13 @@ void initializeHotkeys()
     hotkeyManager.registerHotkey("ToggleUnhideLowQuality", "Low Quality Models");
     hotkeyManager.registerHotkey("ToggleHidePlayers", "Hide All Player");
     hotkeyManager.registerHotkey("ToggleHideBlocked", "Hide Blocked Player");
-    hotkeyManager.registerHotkey("ToggleHideNonParty", "Hide Non-Party Player");
-    hotkeyManager.registerHotkey("ToggleHideNonSquad", "Hide Non-Squad Player");
+    hotkeyManager.registerHotkey("ToggleHideNonGroup", "Hide Non-Group Player");
     hotkeyManager.registerHotkey("ToggleHideStrangers", "Hide Strangers");
     hotkeyManager.registerHotkey("ToggleHideNonGuild", "Hide Non-Guild Player");
     hotkeyManager.registerHotkey("ToggleHideNonFriends", "Hide Non-Friends Player");
     hotkeyManager.registerHotkey("ToggleHideAllOwned", "Hide All Owned");
     hotkeyManager.registerHotkey("ToggleHideBlockedOwned", "Hide Blocked Owned");
-    hotkeyManager.registerHotkey("ToggleHideNonPartyOwned", "Hide Non-Party Owned");
-    hotkeyManager.registerHotkey("ToggleHideNonSquadOwned", "Hide Non-Squad Owned");
+    hotkeyManager.registerHotkey("ToggleHideNonGroupOwned", "Hide Non-Group Owned");
     hotkeyManager.registerHotkey("ToggleHideStrangersOwned", "Hide Stranger Owned");
     hotkeyManager.registerHotkey("ToggleHideNonGuildOwned", "Hide Non-Guild Owned");
     hotkeyManager.registerHotkey("ToggleHideNonFriendsOwned", "Hide Non-Friends Owned");
@@ -348,10 +338,8 @@ bool current_settings::hidePlayers {};
 bool current_settings::hidePlayerOwned {};
 bool current_settings::hideBlockedPlayers {};
 bool current_settings::hideBlockedPlayersOwned {};
-bool current_settings::hideNonPartyMembers {};
-bool current_settings::hideNonPartyMembersOwned {};
-bool current_settings::hideNonSquadMembers {};
-bool current_settings::hideNonSquadMembersOwned {};
+bool current_settings::hideNonGroupMembers {};
+bool current_settings::hideNonGroupMembersOwned {};
 bool current_settings::hideStrangers {};
 bool current_settings::hideStrangersOwned {};
 
@@ -396,10 +384,8 @@ void current_settings::update()
     hidePlayerOwned          = unpc::settings->getHidePlayerOwned();
     hideBlockedPlayers       = unpc::settings->getHideBlockedPlayers();
     hideBlockedPlayersOwned  = unpc::settings->getHideBlockedPlayersOwned();
-    hideNonPartyMembers      = unpc::settings->getHideNonPartyMembers();
-    hideNonPartyMembersOwned = unpc::settings->getHideNonPartyMembersOwned();
-    hideNonSquadMembers      = unpc::settings->getHideNonSquadMembers();
-    hideNonSquadMembersOwned = unpc::settings->getHideNonSquadMembersOwned();
+    hideNonGroupMembers      = unpc::settings->getHideNonGroupMembers();
+    hideNonGroupMembersOwned = unpc::settings->getHideNonGroupMembersOwned();
     hideStrangers            = unpc::settings->getHideStrangers();
     hideStrangersOwned       = unpc::settings->getHideStrangersOwned();
     hideNonGuildMembers      = unpc::settings->getHideNonGuildMembers();
@@ -525,12 +511,8 @@ bool unpc::shouldHide(
             return true;
         }
 
-        if (current_settings::hideNonPartyMembers && !isPartyMember)
-        {
-            return true;
-        }
-
-        if (current_settings::hideNonSquadMembers && !isSquadMember)
+        const bool groupMember = isPartyMember || isSquadMember;
+        if (current_settings::hideNonGroupMembers && !groupMember)
         {
             return true;
         }
@@ -580,12 +562,8 @@ bool unpc::shouldHide(
             return true;
         }
 
-        if (current_settings::hideNonPartyMembersOwned && !isPartyMember)
-        {
-            return true;
-        }
-
-        if (current_settings::hideNonSquadMembersOwned && !isSquadMember)
+        const bool groupMember = isPartyMember || isSquadMember;
+        if (current_settings::hideNonGroupMembersOwned && !groupMember)
         {
             return true;
         }
@@ -664,12 +642,8 @@ bool unpc::shouldShow(
             return false;
         }
 
-        if (current_settings::hideNonPartyMembers && !isPartyMember)
-        {
-            return false;
-        }
-
-        if (current_settings::hideNonSquadMembers && !isSquadMember)
+        const bool groupMember = isPartyMember || isSquadMember;
+        if (current_settings::hideNonGroupMembers && !groupMember)
         {
             return false;
         }
@@ -724,12 +698,8 @@ bool unpc::shouldShow(
             return false;
         }
 
-        if (current_settings::hideNonPartyMembersOwned && !isPartyMember)
-        {
-            return false;
-        }
-
-        if (current_settings::hideNonSquadMembersOwned && !isSquadMember)
+        const bool groupMember = isPartyMember || isSquadMember;
+        if (current_settings::hideNonGroupMembersOwned && !groupMember)
         {
             return false;
         }
