@@ -83,6 +83,14 @@ There is a config file at `<game folder>/addons/UnhideNPCs/config.cfg` with the 
   - Hide any characters that are owned by non-friend players (pets, clones, minis, etc.).
   - Default: false
 
+- `HideStrangers`: < true/false >
+  - Hide any players who are not: friends, guild, party or squad members.
+  - Default: false
+
+- `HideStrangersOwned`: < true/false >
+  - Hide any characters that are owned by strangers (pets, clones, minis, etc.).
+  - Default: false
+
 - `HidePlayerOwnedSelf`: < true/false >
   - Hide characters that are owned by you.
   - Default: false
@@ -107,9 +115,12 @@ There is a config file at `<game folder>/addons/UnhideNPCs/config.cfg` with the 
   - Maximum number of visible NPCs. Set to `0` for no limit.
   - Default: 0
 
-- `DisableHidingInInstances`: < true/false >
-  - Disables the hiding options while in an instance (Fractals, Dungeons, etc.).
-  - Default: false
+- `InstanceBehaviour`: < number >
+  - Controls whether hiding is active in instances.
+  - `0`: Always On
+  - `1`: Disabled in instances
+  - `2`: Instances only
+  - Default: 0
 
 - `ForceConsole`: < true/false >
   - Create a console window.
