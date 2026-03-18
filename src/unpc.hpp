@@ -51,49 +51,6 @@ namespace unpc
 
     extern bool unloadOverlay;
 
-    namespace current_settings
-    {
-        extern std::mutex mutex;
-
-        extern bool    unhideNpcs;
-        extern bool    unhidePlayers;
-        extern bool    playerOwned;
-        extern bool    alwaysShowTarget;
-        extern bool    unhideLowQuality;
-        extern int32_t minimumRank;
-        extern int32_t attackable;
-        extern float   maximumDistance;
-
-        extern bool    hidePlayers;
-        extern bool    hidePlayerOwned;
-        extern bool    hideBlockedPlayers;
-        extern bool    hideBlockedPlayersOwned;
-        extern bool    hideNonGroupMembers;
-        extern bool    hideNonGroupMembersOwned;
-        extern bool    hideStrangers;
-        extern bool    hideStrangersOwned;
-        extern bool    hideNonGuildMembers;
-        extern bool    hideNonGuildMembersOwned;
-        extern bool    hideNonFriends;
-        extern bool    hideNonFriendsOwned;
-        extern bool    hidePlayerOwnedSelf;
-        extern bool    hidePlayersInCombat;
-        extern bool    hidePlayerOwnedInCombat;
-        extern int32_t maxPlayersVisible;
-        extern int32_t maxPlayerOwnedVisible;
-        extern int32_t maxNpcs;
-        extern int32_t instanceBehaviour;
-
-        extern bool  forceConsole;
-        extern bool  loadScreenBoost;
-        extern bool  closeOnEscape;
-        extern float overlayFontSize;
-        extern bool  disableOverlay;
-        extern bool  overlayOpen;
-
-        void update();
-    }
-
     void onHookTick();
 
     // This function may be called second, returning true means the character will be forced invisible
