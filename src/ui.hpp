@@ -47,6 +47,10 @@ namespace ui
 
     bool button(const char* label);
 
+    bool textbox(const char* tag, char* buffer, const size_t bufferSize);
+
+    bool textboxbutton(const char* tag, const char* hint, char* buffer, size_t bufferSize, const char* buttonText);
+
     void separatorText(const char* text);
 
     bool textLink(const char* label, bool centered = false);
