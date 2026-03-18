@@ -44,11 +44,10 @@ There are four different ways to use UnhideNPCs; only follow one of them.
     - Press `END` to unload the plugin so it can be reloaded without restarting the game.
 
 ## Configuration
-Configuration options are documented in [CONFIGURATION.md](CONFIGURATION.md).
 
 Hotkeys are saved at `<game folder>/addons/UnhideNPCs/hotkeys.json`.
 
-Config values are saved at `<game folder>/addons/UnhideNPCs/config.cfg`.
+Settings are saved at `<game folder>/addons/UnhideNPCs/settings.json`.
 
 ## License
 
