@@ -154,6 +154,7 @@ void fw::Settings::load()
 {
     std::lock_guard lock(_mutex);
 
+    _loaded = false;
     if (_owner && _owner != this)
     {
         _owner->load();
@@ -165,6 +166,13 @@ void fw::Settings::load()
     ifs >> json;
     deserialize(json);
     LOG_INFO("Loaded settings");
+    _loaded = true;
+}
+
+bool fw::Settings::loaded()
+{
+    std::lock_guard lock(_mutex);
+    return _loaded;
 }
 
 const std::string& fw::Settings::name() const

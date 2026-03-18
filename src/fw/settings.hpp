@@ -69,13 +69,13 @@ namespace fw
         std::vector<SettingVariant>            _settings {};
         std::vector<std::unique_ptr<Settings>> _children {};
 
-        std::mutex _mutex {};
-        bool       _needSave = false;
-
+        std::mutex            _mutex {};
+        bool                  _needSave = false;
+        bool                  _loaded   = false;
         std::filesystem::path _filePath;
 
-        nlohmann::ordered_json serialize() const;
-        void deserialize(const nlohmann::ordered_json& json);
+        [[nodiscard]] nlohmann::ordered_json serialize() const;
+        void                                 deserialize(const nlohmann::ordered_json& json);
 
         template <typename T, typename... Args>
         Setting<T>& add(Args&&... args)
@@ -109,8 +109,10 @@ namespace fw
         void save(bool force = false);
         void load();
 
-        const std::string& name() const;
-        void setName(const std::string& name);
+        bool loaded();
+
+        const std::string&                      name() const;
+        void                                    setName(const std::string& name);
         std::vector<SettingVariant>&            settings();
         std::vector<std::unique_ptr<Settings>>& children();
     };

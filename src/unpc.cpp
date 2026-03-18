@@ -156,6 +156,12 @@ bool initialize()
     LOG_INFO("MumbleLink OK");
 
     settings.emplace(std::filesystem::current_path() / "addons" / "UnhideNPCs" / "settings.json");
+    if (!settings->loaded())
+    {
+        LOG_ERR("Settings Failed");
+        return false;
+    }
+    LOG_INFO("Settings OK");
 
     if (unpc::settings->ForceConsole.get())
     {

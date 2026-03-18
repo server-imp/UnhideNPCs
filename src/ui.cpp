@@ -368,7 +368,7 @@ void renderProfileOptions()
 
 void ui::renderOptions()
 {
-    if (!unpc::settings)
+    if (!unpc::settings || !unpc::settings->loaded())
     {
         return;
     }
@@ -825,7 +825,7 @@ void ui::renderWindow()
     {
         return;
     }
-    if (!unpc::settings)
+    if (!unpc::settings || !unpc::settings->loaded())
     {
         return;
     }
