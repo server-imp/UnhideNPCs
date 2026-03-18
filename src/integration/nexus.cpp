@@ -64,7 +64,7 @@ namespace nexus
         {
             return;
         }
-        if (!unpc::settings || !unpc::settings->loaded())
+        if (!unpc::settings)
         {
             return;
         }

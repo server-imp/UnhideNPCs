@@ -251,7 +251,8 @@ void HotkeyManager::renderHotkey(const std::string& id, Hotkey& hotkey)
     ImGui::TableSetColumnIndex(0);
     ImGui::AlignTextToFramePadding();
     const bool capturing = _hotkeyCapturing == id;
-    ImGui::TextUnformatted(capturing ? "Esc to cancel" : hotkey.label.c_str());
+    ImGui::TextUnformatted(capturing ? "Esc to cancel" : id.c_str());
+    ui::tooltip(hotkey.label.c_str());
     ImGui::TableSetColumnIndex(1);
 
     if (capturing)

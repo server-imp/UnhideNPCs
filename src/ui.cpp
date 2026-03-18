@@ -56,7 +56,15 @@ bool ui::combo(const char* label, const char* id, int& value, const char* const*
     return result;
 }
 
-bool ui::sliderInt(const char* label, const char* id, int32_t& value, const int32_t min, const int32_t max, const char* fmt, const char* tip)
+bool ui::sliderInt(
+    const char*   label,
+    const char*   id,
+    int32_t&      value,
+    const int32_t min,
+    const int32_t max,
+    const char*   fmt,
+    const char*   tip
+)
 {
     const float initialCursorX = ImGui::GetCursorPosX();
     ImGui::Text("%s", label);
@@ -69,7 +77,15 @@ bool ui::sliderInt(const char* label, const char* id, int32_t& value, const int3
     return result;
 }
 
-bool ui::sliderFloat(const char* label, const char* id, float& value, const float min, const float max, const char* fmt, const char* tip)
+bool ui::sliderFloat(
+    const char* label,
+    const char* id,
+    float&      value,
+    const float min,
+    const float max,
+    const char* fmt,
+    const char* tip
+)
 {
     const float initialCursorX = ImGui::GetCursorPosX();
     ImGui::Text("%s", label);
@@ -85,6 +101,32 @@ bool ui::sliderFloat(const char* label, const char* id, float& value, const floa
 bool ui::button(const char* label)
 {
     return ImGui::Button(label, { labelOffset + fieldWidth, 30 });
+}
+
+bool ui::textbox(const char* tag, char* buffer, const size_t bufferSize)
+{
+    ImGui::PushItemWidth(labelOffset + fieldWidth);
+    auto result = ImGui::InputText(tag, buffer, bufferSize);
+    ImGui::PopItemWidth();
+    return result;
+}
+
+bool ui::textboxbutton(const char* tag, const char* hint, char* buffer, const size_t bufferSize, const char* buttonText)
+{
+    const float initialCursorX = ImGui::GetCursorPosX();
+    const auto  width          = labelOffset - ImGui::GetStyle().ItemSpacing.x;
+    ImGui::PushItemWidth(width);
+    ImGui::InputTextWithHint(tag, hint, buffer, bufferSize);
+    ImGui::PopItemWidth();
+    tooltip(hint);
+    ImGui::SameLine();
+    ImGui::SetCursorPosX(initialCursorX + width + ImGui::GetStyle().ItemSpacing.x);
+    if (ImGui::Button(buttonText, { fieldWidth, 30 }))
+    {
+        return true;
+    }
+
+    return false;
 }
 
 void ui::separatorText(const char* text)
@@ -143,7 +185,12 @@ bool ui::textLink(const char* label, const bool centered)
 
     if (hovered)
     {
-        ImGui::GetWindowDrawList()->AddLine(ImVec2(pos.x, pos.y + textSize.y), ImVec2(pos.x + textSize.x, pos.y + textSize.y), color, 1.0f);
+        ImGui::GetWindowDrawList()->AddLine(
+            ImVec2(pos.x, pos.y + textSize.y),
+            ImVec2(pos.x + textSize.x, pos.y + textSize.y),
+            color,
+            1.0f
+        );
     }
 
     return clicked;
@@ -156,7 +203,8 @@ struct CheckboxGroupEntry
     bool*       value {};
     bool*       changed {};
 
-    CheckboxGroupEntry(const char* label, const char* tooltip, bool* value, bool* changed) : label(label), tooltip(tooltip), value(value), changed(changed) {}
+    CheckboxGroupEntry(const char* label, const char* tooltip, bool* value, bool* changed) : label(label),
+        tooltip(tooltip), value(value), changed(changed) {}
 };
 
 bool checkboxGroup(const char* label, const char* tooltip, const std::vector<CheckboxGroupEntry>& items)
@@ -242,8 +290,92 @@ const char* modes[] = { "Both", "Attackable", "Non-Attackable" };
 
 const char* instanceModes[] = { "Always On", "Disabled in instances", "Instances only" };
 
+std::vector<const char*> profileOptions {};
+
+void renderProfileOptions()
+{
+    auto& settings = *unpc::settings;
+    auto& profile  = settings.profile();
+
+    static char profileNameBuffer[64] { 0 };
+    int         selected = unpc::settings->ActiveProfile.get();
+
+    if (profileOptions.empty())
+    {
+        for (const auto& child : unpc::settings->children())
+        {
+            profileOptions.push_back(child->name().c_str());
+        }
+
+        strcpy_s(profileNameBuffer, sizeof(profileNameBuffer), unpc::settings->children()[selected]->name().c_str());
+    }
+
+    if (ui::combo("Profile", "##profile", selected, profileOptions.data(), profileOptions.size(), "The profile to use"))
+    {
+        unpc::settings->ActiveProfile.set(selected);
+        profileOptions.clear();
+        ++re::forceVisibility;
+    }
+
+    if (ui::textboxbutton(
+        "##profileName",
+        "New Profile Name",
+        profileNameBuffer,
+        std::size(profileNameBuffer),
+        "Rename Profile"
+    ))
+    {
+        if (unpc::settings->ActiveProfile.get() > 0 && profileNameBuffer[0])
+        {
+            unpc::settings->renameProfile(
+                unpc::settings->children()[unpc::settings->ActiveProfile.get()]->name(),
+                profileNameBuffer
+            );
+            profileOptions.clear();
+            ++re::forceVisibility;
+        }
+    }
+
+    if (ui::button("New Profile"))
+    {
+        const char* newName = profileNameBuffer[0] ? profileNameBuffer : "Profile";
+        int         i       = 0;
+        auto        name    = fmt::format("{}", newName);
+        while (unpc::settings->profileExists(name))
+        {
+            ++i;
+            name = fmt::format("{} {}", newName, i);
+        }
+        unpc::settings->addProfile(name);
+        unpc::settings->ActiveProfile.set(unpc::settings->children().size() - 1);
+        profileOptions.clear();
+        ++re::forceVisibility;
+    }
+
+    if (ui::button("Remove Profile"))
+    {
+        int i = unpc::settings->ActiveProfile.get();
+        if (i > 0)
+        {
+            unpc::settings->ActiveProfile.set(i - 1);
+            unpc::settings->removeProfile(unpc::settings->children()[i]->name());
+            profileOptions.clear();
+            ++re::forceVisibility;
+        }
+    }
+    ui::tooltip("Remove current profile");
+}
+
 void ui::renderOptions()
 {
+    if (!unpc::settings)
+    {
+        return;
+    }
+
+    auto& settings = *unpc::settings;
+    auto& profile  = settings.profile();
+
     if (!unpc::mumbleLink || unpc::mumbleLink->getContext().isCompetitiveMode())
     {
         ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 100, 100, 255));
@@ -261,209 +393,263 @@ void ui::renderOptions()
         fieldWidth = labelOffset + ImGui::GetFrameHeight();
     }
 
-    std::lock_guard settingsLock { unpc::current_settings::mutex };
+    renderProfileOptions();
 
     separatorText("Show");
 
     bool unhideNpcsChanged {}, unhidePlayersChanged {}, playerOwnedChanged {}, alwaysShowTargetChanged {};
+    bool unhideNpcs       = profile.UnhideNPCs.get();
+    bool unhidePlayers    = profile.UnhidePlayers.get();
+    bool playerOwned      = profile.PlayerOwned.get();
+    bool alwaysShowTarget = profile.AlwaysShowTarget.get();
 
     if (checkboxGroup(
         "Unhide",
         "The selected will be unhidden",
         std::vector<CheckboxGroupEntry> {
-            { "NPCs", unpc::settings->getCommentUnhideNpcs().c_str(), &unpc::current_settings::unhideNpcs, &unhideNpcsChanged },
-            { "Players", unpc::settings->getCommentUnhidePlayers().c_str(), &unpc::current_settings::unhidePlayers, &unhidePlayersChanged },
-            { "Player-Owned", unpc::settings->getCommentPlayerOwned().c_str(), &unpc::current_settings::playerOwned, &playerOwnedChanged },
-            { "Target", unpc::settings->getCommentAlwaysShowTarget().c_str(), &unpc::current_settings::alwaysShowTarget, &alwaysShowTargetChanged }
+            { "NPCs", profile.UnhideNPCs.description().c_str(), &unhideNpcs, &unhideNpcsChanged },
+            { "Players", profile.UnhidePlayers.description().c_str(), &unhidePlayers, &unhidePlayersChanged },
+            { "Player-Owned", profile.PlayerOwned.description().c_str(), &playerOwned, &playerOwnedChanged },
+            { "Target", profile.AlwaysShowTarget.description().c_str(), &alwaysShowTarget, &alwaysShowTargetChanged }
         }
     ))
     {
         if (unhideNpcsChanged)
         {
-            unpc::settings->setUnhideNpcs(unpc::current_settings::unhideNpcs);
+            profile.UnhideNPCs.set(unhideNpcs);
         }
-        else if (unhidePlayersChanged)
+        if (unhidePlayersChanged)
         {
-            unpc::settings->setUnhidePlayers(unpc::current_settings::unhidePlayers);
+            profile.UnhidePlayers.set(unhidePlayers);
         }
-        else if (playerOwnedChanged)
+        if (playerOwnedChanged)
         {
-            unpc::settings->setPlayerOwned(unpc::current_settings::playerOwned);
+            profile.PlayerOwned.set(playerOwned);
         }
-        else if (alwaysShowTargetChanged)
+        if (alwaysShowTargetChanged)
         {
-            unpc::settings->setAlwaysShowTarget(unpc::current_settings::alwaysShowTarget);
+            profile.AlwaysShowTarget.set(alwaysShowTarget);
         }
-
-        ++re::forceVisibility;
     }
+
+    bool unhideLowQuality = profile.UnhideLowQuality.get();
     ImGui::NewLine();
     if (ui::checkbox(
         "Low Quality Models",
         "##unhideLowQualityModels",
-        unpc::current_settings::unhideLowQuality,
-        unpc::settings->getCommentUnhideLowQuality().c_str()
+        unhideLowQuality,
+        profile.UnhideLowQuality.description().c_str()
     ))
     {
-        unpc::settings->setUnhideLowQuality(unpc::current_settings::unhideLowQuality);
-        ++re::forceVisibility;
+        profile.UnhideLowQuality.set(unhideLowQuality);
     }
-    if (auto maxDistance = static_cast<int32_t>(unpc::current_settings::maximumDistance * 0.03125f); ui::sliderInt(
+    if (auto maxDistance = static_cast<int32_t>(profile.MaximumDistance.get()); ui::sliderInt(
         "Max Distance",
         "##maxDistance",
         maxDistance,
         0,
         1000,
         maxDistance == 0 ? "Unlimited" : "%d meters",
-        unpc::settings->getCommentMaximumDistance().c_str()
+        profile.MaximumDistance.description().c_str()
     ))
     {
-        unpc::settings->setMaximumDistance(static_cast<float>(maxDistance));
-        unpc::current_settings::maximumDistance = static_cast<float>(maxDistance) * 32.0f;
-        ++re::forceVisibility;
+        profile.MaximumDistance.set(static_cast<float>(maxDistance));
     }
+
+    int minimumRank = profile.MinimumRank.get();
     if (ui::combo(
         "Minimum Rank",
         "##minRank",
-        unpc::current_settings::minimumRank,
+        minimumRank,
         ranks,
         IM_ARRAYSIZE(ranks),
-        unpc::settings->getCommentMinimumRank().c_str()
+        profile.MinimumRank.description().c_str()
     ))
     {
-        unpc::settings->setMinimumRank(unpc::current_settings::minimumRank);
-        ++re::forceVisibility;
+        profile.MinimumRank.set(minimumRank);
     }
-    if (ui::combo("Attackable", "##attackable", unpc::current_settings::attackable, modes, IM_ARRAYSIZE(modes), unpc::settings->getCommentAttackable().c_str()))
+
+    int attackable = profile.Attackable.get();
+    if (ui::combo(
+        "Attackable",
+        "##attackable",
+        attackable,
+        modes,
+        IM_ARRAYSIZE(modes),
+        profile.Attackable.description().c_str()
+    ))
     {
-        unpc::settings->setAttackable(unpc::current_settings::attackable);
-        ++re::forceVisibility;
+        profile.Attackable.set(attackable);
     }
 
     ui::separatorText("Hide");
     bool hideAllPlayersChanged {}, hideBlockedPlayersChanged {}, hideNonGroupPlayersChanged {}, hideStrangersChanged {},
          hideNonGuildPlayersChanged {}, hideNonFriendPlayersChanged {};
+    bool hidePlayers = profile.HidePlayers.get();
+    bool hideBlockedPlayers = profile.HideBlockedPlayers.get();
+    bool hideNonGroupMembers = profile.HideNonGroupMembers.get();
+    bool hideStrangers = profile.HideStrangers.get();
+    bool hideNonGuildMembers = profile.HideNonGuildMembers.get();
+    bool hideNonFriends = profile.HideNonFriends.get();
 
     if (checkboxGroup(
         "Players",
         "Players that match the selected critera will be hidden",
         std::vector<CheckboxGroupEntry> {
-            { "All", unpc::settings->getCommentHidePlayers().c_str(), &unpc::current_settings::hidePlayers, &hideAllPlayersChanged },
-            { "Blocked", unpc::settings->getCommentHideBlockedPlayers().c_str(), &unpc::current_settings::hideBlockedPlayers, &hideBlockedPlayersChanged },
-            { "Non-Group", unpc::settings->getCommentHideNonGroupMembers().c_str(), &unpc::current_settings::hideNonGroupMembers, &hideNonGroupPlayersChanged },
-            { "Strangers", unpc::settings->getCommentHideStrangers().c_str(), &unpc::current_settings::hideStrangers, &hideStrangersChanged },
-            { "Non-Guild", unpc::settings->getCommentHideNonGuildMembers().c_str(), &unpc::current_settings::hideNonGuildMembers, &hideNonGuildPlayersChanged },
-            { "Non-Friends", unpc::settings->getCommentHideNonFriends().c_str(), &unpc::current_settings::hideNonFriends, &hideNonFriendPlayersChanged }
+            { "All", profile.HidePlayers.description().c_str(), &hidePlayers, &hideAllPlayersChanged },
+            {
+                "Blocked",
+                profile.HideBlockedPlayers.description().c_str(),
+                &hideBlockedPlayers,
+                &hideBlockedPlayersChanged
+            },
+            {
+                "Non-Group",
+                profile.HideNonGroupMembers.description().c_str(),
+                &hideNonGroupMembers,
+                &hideNonGroupPlayersChanged
+            },
+            { "Strangers", profile.HideStrangers.description().c_str(), &hideStrangers, &hideStrangersChanged },
+            {
+                "Non-Guild",
+                profile.HideNonGuildMembers.description().c_str(),
+                &hideNonGuildMembers,
+                &hideNonGuildPlayersChanged
+            },
+            {
+                "Non-Friends",
+                profile.HideNonFriends.description().c_str(),
+                &hideNonFriends,
+                &hideNonFriendPlayersChanged
+            }
         }
     ))
     {
         if (hideAllPlayersChanged)
         {
-            unpc::settings->setHidePlayers(unpc::current_settings::hidePlayers);
+            profile.HidePlayers.set(hidePlayers);
         }
-        else if (hideBlockedPlayersChanged)
+        if (hideBlockedPlayersChanged)
         {
-            unpc::settings->setHideBlockedPlayers(unpc::current_settings::hideBlockedPlayers);
+            profile.HideBlockedPlayers.set(hideBlockedPlayers);
         }
-        else if (hideNonGroupPlayersChanged)
+        if (hideNonGroupPlayersChanged)
         {
-            unpc::settings->setHideNonGroupMembers(unpc::current_settings::hideNonGroupMembers);
+            profile.HideNonGroupMembers.set(hideNonGroupMembers);
         }
-        else if (hideStrangersChanged)
+        if (hideStrangersChanged)
         {
-            unpc::settings->setHideStrangers(unpc::current_settings::hideStrangers);
+            profile.HideStrangers.set(hideStrangers);
         }
-        else if (hideNonGuildPlayersChanged)
+        if (hideNonGuildPlayersChanged)
         {
-            unpc::settings->setHideNonGuildMembers(unpc::current_settings::hideNonGuildMembers);
+            profile.HideNonGuildMembers.set(hideNonGuildMembers);
         }
-        else if (hideNonFriendPlayersChanged)
+        if (hideNonFriendPlayersChanged)
         {
-            unpc::settings->setHideNonFriends(unpc::current_settings::hideNonFriends);
+            profile.HideNonFriends.set(hideNonFriends);
         }
-        ++re::forceVisibility;
     }
     ImGui::NewLine();
 
     bool hideAllPlayerOwnedChanged {}, hideBlockedPlayerOwnedChanged {}, hideNonGroupPlayerOwnedChanged {},
-         hideStrangersOwnedChanged {}, hideNonGuildPlayerOwnedChanged {}, hideNonFriendPlayerOwnedChanged {}, hideMyOwnedChanged {};
+         hideStrangersOwnedChanged {}, hideNonGuildPlayerOwnedChanged {}, hideNonFriendPlayerOwnedChanged {},
+         hideMyOwnedChanged {};
+    bool hidePlayerOwned          = profile.HidePlayerOwned.get();
+    bool hideBlockedPlayersOwned  = profile.HideBlockedPlayersOwned.get();
+    bool hideNonGroupMembersOwned = profile.HideNonGroupMembersOwned.get();
+    bool hideStrangersOwned       = profile.HideStrangersOwned.get();
+    bool hideNonGuildMembersOwned = profile.HideNonGuildMembersOwned.get();
+    bool hideNonFriendsOwned      = profile.HideNonFriendsOwned.get();
+    bool hidePlayerOwnedSelf      = profile.HidePlayerOwnedSelf.get();
 
     if (checkboxGroup(
         "Player-Owned",
         "Characters that are owned by the selected type of players will be hidden",
         std::vector<CheckboxGroupEntry> {
-            { "All", unpc::settings->getCommentHidePlayerOwned().c_str(), &unpc::current_settings::hidePlayerOwned, &hideAllPlayerOwnedChanged },
+            { "All", profile.HidePlayerOwned.description().c_str(), &hidePlayerOwned, &hideAllPlayerOwnedChanged },
             {
                 "Blocked",
-                unpc::settings->getCommentHideBlockedPlayersOwned().c_str(),
-                &unpc::current_settings::hideBlockedPlayersOwned,
+                profile.HideBlockedPlayersOwned.description().c_str(),
+                &hideBlockedPlayersOwned,
                 &hideBlockedPlayerOwnedChanged
             },
             {
                 "Non-Group",
-                unpc::settings->getCommentHideNonGroupMembersOwned().c_str(),
-                &unpc::current_settings::hideNonGroupMembersOwned,
+                profile.HideNonGroupMembersOwned.description().c_str(),
+                &hideNonGroupMembersOwned,
                 &hideNonGroupPlayerOwnedChanged
             },
-            { "Strangers", unpc::settings->getCommentHideStrangersOwned().c_str(), &unpc::current_settings::hideStrangersOwned, &hideStrangersOwnedChanged },
+            {
+                "Strangers",
+                profile.HideStrangersOwned.description().c_str(),
+                &hideStrangersOwned,
+                &hideStrangersOwnedChanged
+            },
             {
                 "Non-Guild",
-                unpc::settings->getCommentHideNonGuildMembersOwned().c_str(),
-                &unpc::current_settings::hideNonGuildMembersOwned,
+                profile.HideNonGuildMembersOwned.description().c_str(),
+                &hideNonGuildMembersOwned,
                 &hideNonGuildPlayerOwnedChanged
             },
             {
                 "Non-Friends",
-                unpc::settings->getCommentHideNonFriendsOwned().c_str(),
-                &unpc::current_settings::hideNonFriendsOwned,
+                profile.HideNonFriendsOwned.description().c_str(),
+                &hideNonFriendsOwned,
                 &hideNonFriendPlayerOwnedChanged
             },
-            { "Mine", unpc::settings->getCommentHidePlayerOwnedSelf().c_str(), &unpc::current_settings::hidePlayerOwnedSelf, &hideMyOwnedChanged }
+            { "Mine", profile.HidePlayerOwnedSelf.description().c_str(), &hidePlayerOwnedSelf, &hideMyOwnedChanged }
         }
     ))
     {
         if (hideAllPlayerOwnedChanged)
         {
-            unpc::settings->setHidePlayerOwned(unpc::current_settings::hidePlayerOwned);
+            profile.HidePlayerOwned.set(hidePlayerOwned);
         }
-        else if (hideBlockedPlayerOwnedChanged)
+        if (hideBlockedPlayerOwnedChanged)
         {
-            unpc::settings->setHideBlockedPlayersOwned(unpc::current_settings::hideBlockedPlayersOwned);
+            profile.HideBlockedPlayersOwned.set(hideBlockedPlayersOwned);
         }
-        else if (hideNonGroupPlayerOwnedChanged)
+        if (hideNonGroupPlayerOwnedChanged)
         {
-            unpc::settings->setHideNonGroupMembersOwned(unpc::current_settings::hideNonGroupMembersOwned);
+            profile.HideNonGroupMembersOwned.set(hideNonGroupMembersOwned);
         }
-        else if (hideStrangersOwnedChanged)
+        if (hideStrangersOwnedChanged)
         {
-            unpc::settings->setHideStrangersOwned(unpc::current_settings::hideStrangersOwned);
+            profile.HideStrangersOwned.set(hideStrangersOwned);
         }
-        else if (hideNonGuildPlayerOwnedChanged)
+        if (hideNonGuildPlayerOwnedChanged)
         {
-            unpc::settings->setHideNonGuildMembersOwned(unpc::current_settings::hideNonGuildMembersOwned);
+            profile.HideNonGuildMembersOwned.set(hideNonGuildMembersOwned);
         }
-        else if (hideNonFriendPlayerOwnedChanged)
+        if (hideNonFriendPlayerOwnedChanged)
         {
-            unpc::settings->setHideNonFriendsOwned(unpc::current_settings::hideNonFriendsOwned);
+            profile.HideNonFriendsOwned.set(hideNonFriendsOwned);
         }
-        else if (hideMyOwnedChanged)
+        if (hideMyOwnedChanged)
         {
-            unpc::settings->setHidePlayerOwnedSelf(unpc::current_settings::hidePlayerOwnedSelf);
+            profile.HidePlayerOwnedSelf.set(hidePlayerOwnedSelf);
         }
-        ++re::forceVisibility;
     }
     ImGui::NewLine();
 
     bool hidePlayersInCombatChanged {}, hidePlayerOwnedInCombatChanged {};
+    bool hidePlayersInCombat     = profile.HidePlayersInCombat.get();
+    bool hidePlayerOwnedInCombat = profile.HidePlayerOwnedInCombat.get();
     if (checkboxGroup(
         "In Combat",
         "When in combat, hide the following",
         std::vector<CheckboxGroupEntry> {
-            { "Players", unpc::settings->getCommentHidePlayersInCombat().c_str(), &unpc::current_settings::hidePlayersInCombat, &hidePlayersInCombatChanged },
+            {
+                "Players",
+                profile.HidePlayersInCombat.description().c_str(),
+                &hidePlayersInCombat,
+                &hidePlayersInCombatChanged
+            },
             {
                 "Player-Owned",
-                unpc::settings->getCommentHidePlayerOwnedInCombat().c_str(),
-                &unpc::current_settings::hidePlayerOwnedInCombat,
+                profile.HidePlayerOwnedInCombat.description().c_str(),
+                &hidePlayerOwnedInCombat,
                 &hidePlayerOwnedInCombatChanged
             }
         }
@@ -471,96 +657,94 @@ void ui::renderOptions()
     {
         if (hidePlayersInCombatChanged)
         {
-            unpc::settings->setHidePlayersInCombat(unpc::current_settings::hidePlayersInCombat);
+            profile.HidePlayersInCombat.set(hidePlayersInCombat);
         }
-        else if (hidePlayerOwnedInCombatChanged)
+        if (hidePlayerOwnedInCombatChanged)
         {
-            unpc::settings->setHidePlayerOwnedInCombat(unpc::current_settings::hidePlayerOwnedInCombat);
+            profile.HidePlayerOwnedInCombat.set(hidePlayerOwnedInCombat);
         }
-        ++re::forceVisibility;
     }
 
     ImGui::NewLine();
+    int32_t maxPlayersVisible = profile.MaxPlayersVisible.get();
     if (ui::sliderInt(
         "Max Players",
         "##MaxPlayersVisible",
-        unpc::current_settings::maxPlayersVisible,
+        maxPlayersVisible,
         0,
         250,
-        unpc::current_settings::maxPlayersVisible == 0 ? "Unlimited" : "%d",
-        unpc::settings->getCommentMaxPlayersVisible().c_str()
+        maxPlayersVisible == 0 ? "Unlimited" : "%d",
+        profile.MaxPlayersVisible.description().c_str()
     ))
     {
-        unpc::settings->setMaxPlayersVisible(unpc::current_settings::maxPlayersVisible);
-        ++re::forceVisibility;
+        profile.MaxPlayersVisible.set(maxPlayersVisible);
     }
+
+    int32_t maxPlayerOwnedVisible = profile.MaxPlayerOwnedVisible.get();
     if (ui::sliderInt(
         "Max Player-Owned",
         "##MaxPlayerOwnedVisible",
-        unpc::current_settings::maxPlayerOwnedVisible,
+        maxPlayerOwnedVisible,
         0,
         100,
-        unpc::current_settings::maxPlayerOwnedVisible == 0 ? "Unlimited" : "%d",
-        unpc::settings->getCommentMaxPlayerOwnedVisible().c_str()
+        maxPlayerOwnedVisible == 0 ? "Unlimited" : "%d",
+        profile.MaxPlayerOwnedVisible.description().c_str()
     ))
     {
-        unpc::settings->setMaxPlayerOwnedVisible(unpc::current_settings::maxPlayerOwnedVisible);
-        ++re::forceVisibility;
+        profile.MaxPlayerOwnedVisible.set(maxPlayerOwnedVisible);
     }
+
+    int32_t maxNpcs = profile.MaxNpcs.get();
     if (ui::sliderInt(
         "Max NPCs",
         "##maxNpcs",
-        unpc::current_settings::maxNpcs,
+        maxNpcs,
         0,
         1000,
-        unpc::current_settings::maxNpcs == 0 ? "Unlimited" : "%d",
-        unpc::settings->getCommentMaxNpcs().c_str()
+        maxNpcs == 0 ? "Unlimited" : "%d",
+        profile.MaxNpcs.description().c_str()
     ))
     {
-        unpc::settings->setMaxNpcs(unpc::current_settings::maxNpcs);
-        ++re::forceVisibility;
+        profile.MaxNpcs.set(maxNpcs);
     }
     ImGui::NewLine();
 
+    int instanceBehaviour = profile.InstanceBehaviour.get();
     if (ui::combo(
         "Instance Behaviour",
         "##instances",
-        unpc::current_settings::instanceBehaviour,
+        instanceBehaviour,
         instanceModes,
         IM_ARRAYSIZE(instanceModes),
-        unpc::settings->getCommentInstanceBehaviour().c_str()
+        profile.InstanceBehaviour.description().c_str()
     ))
     {
-        unpc::settings->setInstanceBehaviour(unpc::current_settings::instanceBehaviour);
-        ++re::forceVisibility;
+        profile.InstanceBehaviour.set(instanceBehaviour);
     }
     separatorText("Misc");
     std::vector<CheckboxGroupEntry> entries {};
-
     bool forceConsoleChanged {}, loadScreenBoostChanged {}, disableOverlayChanged {}, closeOnEscapeChanged {};
+    bool forceConsole = settings.ForceConsole.get();
+    bool loadScreenBoost = settings.LoadScreenBoost.get();
+    bool closeOnEscape = settings.CloseOnEscape.get();
 
-    entries.emplace_back("Console", unpc::settings->getCommentForceConsole().c_str(), &unpc::current_settings::forceConsole, &forceConsoleChanged);
+    entries.emplace_back("Console", settings.ForceConsole.description().c_str(), &forceConsole, &forceConsoleChanged);
     entries.emplace_back(
         "Loading Boost",
-        unpc::settings->getCommentLoadScreenBoost().c_str(),
-        &unpc::current_settings::loadScreenBoost,
+        settings.LoadScreenBoost.description().c_str(),
+        &loadScreenBoost,
         &loadScreenBoostChanged
     );
-    entries.emplace_back("Esc To Close", unpc::settings->getCommentCloseOnEscape().c_str(), &unpc::current_settings::closeOnEscape, &closeOnEscapeChanged);
+    entries.emplace_back(
+        "Esc To Close",
+        settings.CloseOnEscape.description().c_str(),
+        &closeOnEscape,
+        &closeOnEscapeChanged
+    );
 
     if (unpc::mode == unpc::EMode::Nexus)
     {
         goto footer;
-    }
-
-    if (unpc::mode == unpc::EMode::Proxy || unpc::mode == unpc::EMode::Injected)
-    {
-        entries.emplace_back(
-            "Disable Overlay",
-            unpc::settings->getCommentDisableOverlay().c_str(),
-            &unpc::current_settings::disableOverlay,
-            &disableOverlayChanged
-        );
     }
 
 footer:
@@ -568,49 +752,42 @@ footer:
     {
         if (forceConsoleChanged)
         {
-            unpc::settings->setForceConsole(unpc::current_settings::forceConsole);
-            unpc::logger->setConsole(unpc::current_settings::forceConsole);
+            settings.ForceConsole.set(forceConsole);
+            unpc::logger->setConsole(forceConsole);
         }
-        else if (loadScreenBoostChanged)
+        if (loadScreenBoostChanged)
         {
-            unpc::settings->setLoadScreenBoost(unpc::current_settings::loadScreenBoost);
+            settings.LoadScreenBoost.set(loadScreenBoost);
         }
-        else if (closeOnEscapeChanged)
+        if (closeOnEscapeChanged)
         {
-            unpc::settings->setCloseOnEscape(unpc::current_settings::closeOnEscape);
-        }
-        else if (disableOverlayChanged)
-        {
-            unpc::settings->setDisableOverlay(unpc::current_settings::disableOverlay);
-            if (unpc::current_settings::disableOverlay)
-            {
-                unpc::unloadOverlay = true;
-            }
+            settings.CloseOnEscape.set(closeOnEscape);
         }
     }
     ImGui::NewLine();
 
     if (unpc::mode == unpc::EMode::Proxy || unpc::mode == unpc::EMode::Injected)
     {
+        float overlayFontSize = settings.OverlayFontSize.get();
         if (ui::sliderFloat(
             "Font Size",
             "##OverlayFontSize",
-            unpc::current_settings::overlayFontSize,
+            overlayFontSize,
             10,
             20,
             "%.0f",
-            unpc::settings->getCommentOverlayFontSize().c_str()
+            settings.OverlayFontSize.description().c_str()
         ))
         {
-            unpc::settings->setOverlayFontSize(std::roundf(unpc::current_settings::overlayFontSize));
+            settings.OverlayFontSize.set(std::roundf(overlayFontSize));
         }
     }
 
-    if (ImGui::Button("Force Visibility", { labelOffset + fieldWidth, 30 }))
-    {
-        ++re::forceVisibility;
-    }
-    tooltip("Forces all characters to be visible for the next frame\n" "Useful for \"resetting\" things after modifying any settings.");
+    if (ImGui::Button("Force Visibility", { labelOffset + fieldWidth, 30 })) {}
+    tooltip(
+        "Forces all characters to be visible for the next frame\n"
+        "Useful for \"resetting\" things after modifying any settings."
+    );
 
     if (ImGui::TreeNodeEx("Hotkeys", ImGuiTreeNodeFlags_NoTreePushOnOpen))
     {
@@ -648,7 +825,7 @@ void ui::renderWindow()
     {
         return;
     }
-    if (!unpc::settings || !unpc::settings->loaded())
+    if (!unpc::settings)
     {
         return;
     }
@@ -657,13 +834,13 @@ void ui::renderWindow()
         return;
     }
 
-    bool       open       = unpc::settings->getOverlayOpen();
+    bool       open       = unpc::settings->OverlayOpen.get();
     const bool startState = open;
 
     if (wasComboPressed({ VK_LMENU, VK_LSHIFT, 'U' }))
     {
         open = !open;
-        unpc::settings->setOverlayOpen(open);
+        unpc::settings->OverlayOpen.set(open);
         if (!open)
         {
             unpc::hotkeyManager.stopCapturing();
@@ -731,7 +908,7 @@ void ui::renderWindow()
 
     if (startState != open)
     {
-        unpc::settings->setOverlayOpen(open);
+        unpc::settings->OverlayOpen.set(open);
     }
 }
 
@@ -775,7 +952,7 @@ uintptr_t ui::onWndProc(HWND hWnd, const UINT msg, const WPARAM wParam, const LP
         return msg;
     }
 
-    if (!unpc::settings || !unpc::settings->loaded())
+    if (!unpc::settings)
     {
         return msg;
     }
@@ -792,9 +969,9 @@ uintptr_t ui::onWndProc(HWND hWnd, const UINT msg, const WPARAM wParam, const LP
 
     if (msg == WM_KEYDOWN && wParam == VK_ESCAPE)
     {
-        if (unpc::settings->getOverlayOpen() && unpc::settings->getCloseOnEscape())
+        if (unpc::settings->OverlayOpen.get() && unpc::settings->CloseOnEscape.get())
         {
-            unpc::settings->setOverlayOpen(false);
+            unpc::settings->OverlayOpen.set(false);
             return 0;
         }
     }
@@ -1024,7 +1201,7 @@ bool ui::onD3DStarted(const memory::hooks::D3D11* hk)
 
     io.Fonts->Clear();
     ImFontConfig cfg {};
-    cfg.SizePixels = unpc::settings->getOverlayFontSize();
+    cfg.SizePixels = unpc::settings->OverlayFontSize.get();
     io.FontDefault = io.Fonts->AddFontDefault(&cfg);
     io.Fonts->Build();
 

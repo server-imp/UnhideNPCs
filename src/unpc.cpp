@@ -46,140 +46,97 @@ void hotkeyCallback(const std::string& id)
         return;
     }
 
-    auto toggle = [](bool& value)
+    auto lambda = [id](fw::Settings& settings)
     {
-        value = !value;
-        return value;
+        for (auto& _setting : settings.settings())
+        {
+            bool matched = false;
+
+            std::visit([&](auto&& setting)
+            {
+                using T = std::decay_t<decltype(*setting)>;
+                if constexpr (!std::is_same_v<T, fw::Setting<bool>>)
+                {
+                    return;
+                }
+                if (id == setting->name())
+                {
+                    setting->set(!setting->get());
+                    matched = true;
+                }
+            }, _setting);
+
+            if (matched)
+            {
+                LOG_INFO("Hotkey triggered: {}", id);
+                return true;
+            }
+        }
+        return false;
     };
 
-    std::lock_guard lock { current_settings::mutex };
+    if (lambda(*unpc::settings) || lambda(unpc::settings->profile()))
+    {
+        return;
+    }
 
-    if (id == "ToggleUnhideNPCs")
-    {
-        unpc::settings->setUnhideNpcs(toggle(current_settings::unhideNpcs));
-    }
-    else if (id == "ToggleUnhidePlayers")
-    {
-        unpc::settings->setUnhidePlayers(toggle(current_settings::unhidePlayers));
-    }
-    else if (id == "ToggleUnhidePlayerOwned")
-    {
-        unpc::settings->setPlayerOwned(toggle(current_settings::playerOwned));
-    }
-    else if (id == "ToggleUnhideTarget")
-    {
-        unpc::settings->setAlwaysShowTarget(toggle(current_settings::alwaysShowTarget));
-    }
-    else if (id == "ToggleUnhideLowQuality")
-    {
-        unpc::settings->setUnhideLowQuality(toggle(current_settings::unhideLowQuality));
-    }
-    else if (id == "ToggleHidePlayers")
-    {
-        unpc::settings->setHidePlayers(toggle(current_settings::hidePlayers));
-    }
-    else if (id == "ToggleHideBlocked")
-    {
-        unpc::settings->setHideBlockedPlayers(toggle(current_settings::hideBlockedPlayers));
-    }
-    else if (id == "ToggleHideNonGroup")
-    {
-        unpc::settings->setHideNonGroupMembers(toggle(current_settings::hideNonGroupMembers));
-    }
-    else if (id == "ToggleHideStrangers")
-    {
-        unpc::settings->setHideStrangers(toggle(current_settings::hideStrangers));
-    }
-    else if (id == "ToggleHideNonGuild")
-    {
-        unpc::settings->setHideNonGuildMembers(toggle(current_settings::hideNonGuildMembers));
-    }
-    else if (id == "ToggleHideNonFriends")
-    {
-        unpc::settings->setHideNonFriends(toggle(current_settings::hideNonFriends));
-    }
-    else if (id == "ToggleHideAllOwned")
-    {
-        unpc::settings->setHidePlayerOwned(toggle(current_settings::hidePlayerOwned));
-    }
-    else if (id == "ToggleHideBlockedOwned")
-    {
-        unpc::settings->setHideBlockedPlayersOwned(toggle(current_settings::hideBlockedPlayersOwned));
-    }
-    else if (id == "ToggleHideNonGroupOwned")
-    {
-        unpc::settings->setHideNonGroupMembersOwned(toggle(current_settings::hideNonGroupMembersOwned));
-    }
-    else if (id == "ToggleHideStrangersOwned")
-    {
-        unpc::settings->setHideStrangersOwned(toggle(current_settings::hideStrangersOwned));
-    }
-    else if (id == "ToggleHideNonGuildOwned")
-    {
-        unpc::settings->setHideNonGuildMembersOwned(toggle(current_settings::hideNonGuildMembersOwned));
-    }
-    else if (id == "ToggleHideNonFriendsOwned")
-    {
-        unpc::settings->setHideNonFriendsOwned(toggle(current_settings::hideNonFriendsOwned));
-    }
-    else if (id == "ToggleHideSelfOwned")
-    {
-        unpc::settings->setHidePlayerOwnedSelf(toggle(current_settings::hidePlayerOwnedSelf));
-    }
-    else if (id == "ToggleHidePlayersInCombat")
-    {
-        unpc::settings->setHidePlayersInCombat(toggle(current_settings::hidePlayersInCombat));
-    }
-    else if (id == "ToggleHidePlayerOwnedInCombat")
-    {
-        unpc::settings->setHidePlayerOwnedInCombat(toggle(current_settings::hidePlayerOwnedInCombat));
-    }
-    else if (id == "ForceVisibility")
+    if (id == "ForceVisibility")
     {
         ++re::forceVisibility;
     }
     else if (id == "ToggleOverlay")
     {
-        if (current_settings::overlayOpen && hotkeyManager.isCapturing())
+        if (unpc::settings->OverlayOpen.get() && hotkeyManager.isCapturing())
         {
             hotkeyManager.stopCapturing();
         }
 
-        unpc::settings->setOverlayOpen(toggle(current_settings::overlayOpen));
+        unpc::settings->OverlayOpen.set(!unpc::settings->OverlayOpen.get());
     }
-    else
+    else if (id == "SwitchProfile")
     {
-        LOG_WARN("Unknown hotkey: {}", id);
+        auto idx = unpc::settings->ActiveProfile.get();
+        ++idx;
+        if (idx >= static_cast<int>(unpc::settings->children().size()))
+        {
+            idx = 0;
+        }
+        if (idx != unpc::settings->ActiveProfile.get())
+        {
+            unpc::settings->ActiveProfile.set(idx);
+            unpc::settings->needSave();
+            ++re::forceVisibility;
+        }
     }
 }
 
 void initializeHotkeys()
 {
-    hotkeyManager.registerHotkey("ToggleUnhideNPCs", "Unhide NPCs");
-    hotkeyManager.registerHotkey("ToggleUnhidePlayers", "Unhide Players");
-    hotkeyManager.registerHotkey("ToggleUnhidePlayerOwned", "Unhide Player-Owned");
-    hotkeyManager.registerHotkey("ToggleUnhideTarget", "Unhide Target");
-    hotkeyManager.registerHotkey("ToggleUnhideLowQuality", "Low Quality Models");
-    hotkeyManager.registerHotkey("ToggleHidePlayers", "Hide All Player");
-    hotkeyManager.registerHotkey("ToggleHideBlocked", "Hide Blocked Player");
-    hotkeyManager.registerHotkey("ToggleHideNonGroup", "Hide Non-Group Player");
-    hotkeyManager.registerHotkey("ToggleHideStrangers", "Hide Strangers");
-    hotkeyManager.registerHotkey("ToggleHideNonGuild", "Hide Non-Guild Player");
-    hotkeyManager.registerHotkey("ToggleHideNonFriends", "Hide Non-Friends Player");
-    hotkeyManager.registerHotkey("ToggleHideAllOwned", "Hide All Owned");
-    hotkeyManager.registerHotkey("ToggleHideBlockedOwned", "Hide Blocked Owned");
-    hotkeyManager.registerHotkey("ToggleHideNonGroupOwned", "Hide Non-Group Owned");
-    hotkeyManager.registerHotkey("ToggleHideStrangersOwned", "Hide Stranger Owned");
-    hotkeyManager.registerHotkey("ToggleHideNonGuildOwned", "Hide Non-Guild Owned");
-    hotkeyManager.registerHotkey("ToggleHideNonFriendsOwned", "Hide Non-Friends Owned");
-    hotkeyManager.registerHotkey("ToggleHideSelfOwned", "Hide Self Owned");
-    hotkeyManager.registerHotkey("ToggleHidePlayersInCombat", "Hide Players in Combat");
-    hotkeyManager.registerHotkey("ToggleHidePlayerOwnedInCombat", "Hide Player-Owned in Combat");
+    auto lambda = [](fw::Settings& settings)
+    {
+        for (auto& _setting : settings.settings())
+        {
+            std::visit([&](auto&& setting)
+            {
+                using T = std::decay_t<decltype(*setting)>;
+                if constexpr (!std::is_same_v<T, fw::Setting<bool>>)
+                {
+                    return;
+                }
+
+                hotkeyManager.registerHotkey(setting->name(), setting->description());
+            }, _setting);
+        }
+    };
+
     hotkeyManager.registerHotkey("ForceVisibility", "Force Visibility");
     hotkeyManager.registerHotkey("ToggleOverlay", "Alt. Overlay Toggle");
+    hotkeyManager.registerHotkey("SwitchProfile", "Switches to the next profile");
+
+    lambda(*unpc::settings);
+    lambda(unpc::settings->profile());
 
     hotkeyManager.registerCallback(hotkeyCallback);
-
     hotkeyManager.load();
 }
 
@@ -198,53 +155,9 @@ bool initialize()
     }
     LOG_INFO("MumbleLink OK");
 
-    settings.emplace(std::filesystem::current_path() / "addons" / "UnhideNPCs" / "config.cfg");
-    if (!settings || !settings->loaded())
-    {
-        LOG_ERR("Failed to load config");
-        return false;
-    }
-    LOG_INFO("Config OK");
+    settings.emplace(std::filesystem::current_path() / "addons" / "UnhideNPCs" / "settings.json");
 
-    current_settings::update();
-
-    if (current_settings::minimumRank < 0 || current_settings::minimumRank >= static_cast<int32_t>(re::gw2::ECharacterRankMax))
-    {
-        current_settings::minimumRank = settings->setMinimumRank(0);
-    }
-
-    if (current_settings::attackable < 0 || current_settings::attackable > 2)
-    {
-        current_settings::attackable = settings->setAttackable(0);
-    }
-
-    const auto maximumDistance = current_settings::maximumDistance * 0.3125f;
-    if (maximumDistance < 0.0f || maximumDistance > 1000.0f)
-    {
-        current_settings::maximumDistance = settings->setMaximumDistance(0.0f) * 32.0f;
-    }
-
-    if (current_settings::overlayFontSize < 10 || current_settings::overlayFontSize > 20)
-    {
-        current_settings::overlayFontSize = settings->setOverlayFontSize(20);
-    }
-
-    if (current_settings::maxPlayersVisible > 1000)
-    {
-        current_settings::maxPlayersVisible = settings->setMaxPlayersVisible(1000);
-    }
-
-    if (current_settings::maxPlayerOwnedVisible > 1000)
-    {
-        current_settings::maxPlayerOwnedVisible = settings->setMaxPlayerOwnedVisible(1000);
-    }
-
-    if (current_settings::instanceBehaviour < 0 || current_settings::instanceBehaviour > 2)
-    {
-        current_settings::instanceBehaviour = settings->setInstanceBehaviour(0);
-    }
-
-    if (current_settings::forceConsole)
+    if (unpc::settings->ForceConsole.get())
     {
         logger->setConsole(true);
     }
@@ -303,14 +216,6 @@ bool initialize()
     re::gw2::getAvContext = reinterpret_cast<re::gw2::GetAvContextFn>(pointer.add(12).resolve_relative_call().raw());
     LOG_INFO("Pattern 5 OK");
 
-    /*if (!game.findPattern(re::pattern6, pointer))
-    {
-        LOG_ERR("Unable to find pattern 6");
-        return false;
-    }
-    re::gw2::getUIContext = reinterpret_cast<re::gw2::GetUIContextFn>(pointer.add(9).rip().raw());
-    LOG_INFO("Pattern 6 OK");*/
-
     if (!npcHook->enable())
     {
         LOG_ERR("Failed to enable hook");
@@ -321,91 +226,6 @@ bool initialize()
     initializeHotkeys();
 
     return true;
-}
-
-std::mutex current_settings::mutex {};
-
-bool    current_settings::unhideNpcs {};
-bool    current_settings::unhidePlayers {};
-bool    current_settings::playerOwned {};
-bool    current_settings::alwaysShowTarget {};
-bool    current_settings::unhideLowQuality {};
-int32_t current_settings::minimumRank {};
-int32_t current_settings::attackable {};
-float   current_settings::maximumDistance {};
-
-bool current_settings::hidePlayers {};
-bool current_settings::hidePlayerOwned {};
-bool current_settings::hideBlockedPlayers {};
-bool current_settings::hideBlockedPlayersOwned {};
-bool current_settings::hideNonGroupMembers {};
-bool current_settings::hideNonGroupMembersOwned {};
-bool current_settings::hideStrangers {};
-bool current_settings::hideStrangersOwned {};
-
-bool    current_settings::hideNonGuildMembers {};
-bool    current_settings::hideNonGuildMembersOwned {};
-bool    current_settings::hideNonFriends {};
-bool    current_settings::hideNonFriendsOwned {};
-bool    current_settings::hidePlayerOwnedSelf {};
-bool    current_settings::hidePlayersInCombat {};
-bool    current_settings::hidePlayerOwnedInCombat {};
-int32_t current_settings::maxPlayersVisible {};
-int32_t current_settings::maxPlayerOwnedVisible {};
-int32_t current_settings::maxNpcs {};
-int32_t current_settings::instanceBehaviour {};
-
-bool  current_settings::forceConsole {};
-bool  current_settings::loadScreenBoost {};
-bool  current_settings::closeOnEscape {};
-float current_settings::overlayFontSize {};
-bool  current_settings::disableOverlay {};
-bool  current_settings::overlayOpen {};
-
-void current_settings::update()
-{
-    if (!unpc::settings || !unpc::settings->loaded())
-    {
-        return;
-    }
-
-    std::lock_guard lock { mutex };
-
-    unhideNpcs       = unpc::settings->getUnhideNpcs();
-    unhidePlayers    = unpc::settings->getUnhidePlayers();
-    playerOwned      = unpc::settings->getPlayerOwned();
-    alwaysShowTarget = unpc::settings->getAlwaysShowTarget();
-    unhideLowQuality = unpc::settings->getUnhideLowQuality();
-    minimumRank      = static_cast<re::gw2::ECharacterRank>(unpc::settings->getMinimumRank());
-    attackable       = unpc::settings->getAttackable();
-    maximumDistance  = unpc::settings->getMaximumDistance() * 32.0f;
-
-    hidePlayers              = unpc::settings->getHidePlayers();
-    hidePlayerOwned          = unpc::settings->getHidePlayerOwned();
-    hideBlockedPlayers       = unpc::settings->getHideBlockedPlayers();
-    hideBlockedPlayersOwned  = unpc::settings->getHideBlockedPlayersOwned();
-    hideNonGroupMembers      = unpc::settings->getHideNonGroupMembers();
-    hideNonGroupMembersOwned = unpc::settings->getHideNonGroupMembersOwned();
-    hideStrangers            = unpc::settings->getHideStrangers();
-    hideStrangersOwned       = unpc::settings->getHideStrangersOwned();
-    hideNonGuildMembers      = unpc::settings->getHideNonGuildMembers();
-    hideNonGuildMembersOwned = unpc::settings->getHideNonGuildMembersOwned();
-    hideNonFriends           = unpc::settings->getHideNonFriends();
-    hideNonFriendsOwned      = unpc::settings->getHideNonFriendsOwned();
-    hidePlayerOwnedSelf      = unpc::settings->getHidePlayerOwnedSelf();
-    hidePlayersInCombat      = unpc::settings->getHidePlayersInCombat();
-    hidePlayerOwnedInCombat  = unpc::settings->getHidePlayerOwnedInCombat();
-    maxPlayersVisible        = unpc::settings->getMaxPlayersVisible();
-    maxPlayerOwnedVisible    = unpc::settings->getMaxPlayerOwnedVisible();
-    maxNpcs                  = unpc::settings->getMaxNpcs();
-    instanceBehaviour        = unpc::settings->getInstanceBehaviour();
-
-    forceConsole    = unpc::settings->getForceConsole();
-    loadScreenBoost = unpc::settings->getLoadScreenBoost();
-    closeOnEscape   = unpc::settings->getCloseOnEscape();
-    overlayFontSize = unpc::settings->getOverlayFontSize();
-    disableOverlay  = unpc::settings->getDisableOverlay();
-    overlayOpen     = unpc::settings->getOverlayOpen();
 }
 
 void unpc::onHookTick()
@@ -422,17 +242,16 @@ void unpc::onHookTick()
     }
 
     hotkeyManager.update();
-    current_settings::update();
 
     if (mode != EMode::Injected && mode != EMode::Proxy)
     {
         return;
     }
 
-    if (!settings || current_settings::disableOverlay)
-    {
+    if (!settings)
         return;
-    }
+
+    settings->save();
 
     const bool loadingScreen = *loadingScreenActive;
     const bool uiVersion     = mumbleLink && mumbleLink->uiVersion == 2;
@@ -479,50 +298,57 @@ bool unpc::shouldHide(
     const bool    isSquadMember
 )
 {
-    if (isTarget && current_settings::alwaysShowTarget)
+    if (!settings)
+    {
+        return false;
+    }
+
+    const auto& profile = settings->profile();
+
+    if (isTarget && profile.AlwaysShowTarget.get())
     {
         return false;
     }
 
     if (isPlayer)
     {
-        if (current_settings::maxPlayersVisible > 0 && unpc::numPlayersVisible > current_settings::maxPlayersVisible)
+        if (profile.MaxPlayersVisible.get() > 0 && unpc::numPlayersVisible > static_cast<uint32_t>(profile.MaxPlayersVisible.get()))
         {
             return true;
         }
 
-        if (current_settings::hidePlayers)
+        if (profile.HidePlayers.get())
         {
             return true;
         }
 
-        if (current_settings::hideNonFriends && !isFriend)
+        if (profile.HideNonFriends.get() && !isFriend)
         {
             return true;
         }
 
-        if (current_settings::hideBlockedPlayers && isBlocked)
+        if (profile.HideBlockedPlayers.get() && isBlocked)
         {
             return true;
         }
 
-        if (current_settings::hideNonGuildMembers && !(isActiveGuildMember || isGuildMember))
+        if (profile.HideNonGuildMembers.get() && !(isActiveGuildMember || isGuildMember))
         {
             return true;
         }
 
         const bool groupMember = isPartyMember || isSquadMember;
-        if (current_settings::hideNonGroupMembers && !groupMember)
+        if (profile.HideNonGroupMembers.get() && !groupMember)
         {
             return true;
         }
 
-        if (current_settings::hideStrangers && !isFriend && !isPartyMember && !isSquadMember)
+        if (profile.HideStrangers.get() && !isFriend && !isPartyMember && !isSquadMember)
         {
             return true;
         }
 
-        if (current_settings::hidePlayersInCombat && unpc::mumbleLink && unpc::mumbleLink->getContext().isInCombat())
+        if (profile.HidePlayersInCombat.get() && unpc::mumbleLink && unpc::mumbleLink->getContext().isInCombat())
         {
             return true;
         }
@@ -532,48 +358,49 @@ bool unpc::shouldHide(
 
     if (isPlayerOwned)
     {
-        if (current_settings::maxPlayerOwnedVisible > 0 && unpc::numPlayerOwnedVisible > current_settings::maxPlayerOwnedVisible)
+        if (profile.MaxPlayerOwnedVisible.get() > 0
+            && unpc::numPlayerOwnedVisible > static_cast<uint32_t>(profile.MaxPlayerOwnedVisible.get()))
         {
             return true;
         }
 
-        if (isOwnerLocalPlayer && current_settings::hidePlayerOwnedSelf)
+        if (isOwnerLocalPlayer && profile.HidePlayerOwnedSelf.get())
         {
             return true;
         }
 
-        if (current_settings::hidePlayerOwned && !isOwnerLocalPlayer)
+        if (profile.HidePlayerOwned.get() && !isOwnerLocalPlayer)
         {
             return true;
         }
 
-        if (current_settings::hideNonFriendsOwned && !isFriend)
+        if (profile.HideNonFriendsOwned.get() && !isFriend)
         {
             return true;
         }
 
-        if (current_settings::hideBlockedPlayersOwned && isBlocked)
+        if (profile.HideBlockedPlayersOwned.get() && isBlocked)
         {
             return true;
         }
 
-        if (current_settings::hideNonGuildMembersOwned && !(isActiveGuildMember || isGuildMember))
+        if (profile.HideNonGuildMembersOwned.get() && !(isActiveGuildMember || isGuildMember))
         {
             return true;
         }
 
         const bool groupMember = isPartyMember || isSquadMember;
-        if (current_settings::hideNonGroupMembersOwned && !groupMember)
+        if (profile.HideNonGroupMembersOwned.get() && !groupMember)
         {
             return true;
         }
 
-        if (current_settings::hideStrangersOwned && !isOwnerLocalPlayer && !isFriend && !isPartyMember && !isSquadMember)
+        if (profile.HideStrangersOwned.get() && !isOwnerLocalPlayer && !isFriend && !isPartyMember && !isSquadMember)
         {
             return true;
         }
 
-        if (!isOwnerLocalPlayer && current_settings::hidePlayerOwnedInCombat && unpc::mumbleLink && unpc::mumbleLink->getContext().isInCombat())
+        if (!isOwnerLocalPlayer && profile.HidePlayerOwnedInCombat.get() && unpc::mumbleLink && unpc::mumbleLink->getContext().isInCombat())
         {
             return true;
         }
@@ -581,7 +408,7 @@ bool unpc::shouldHide(
         return false;
     }
 
-    if (current_settings::maxNpcs > 0 && unpc::numNpcsVisible > current_settings::maxNpcs)
+    if (profile.MaxNpcs.get() > 0 && unpc::numNpcsVisible > static_cast<uint32_t>(profile.MaxNpcs.get()))
     {
         return true;
     }
@@ -605,55 +432,62 @@ bool unpc::shouldShow(
     const bool    isSquadMember
 )
 {
-    if (isTarget && current_settings::alwaysShowTarget)
+    if (!settings)
+    {
+        return false;
+    }
+
+    const auto& profile = settings->profile();
+
+    if (isTarget && profile.AlwaysShowTarget.get())
     {
         return true;
     }
 
     if (isPlayer)
     {
-        if (!current_settings::unhidePlayers)
+        if (!profile.UnhidePlayers.get())
         {
             return false;
         }
 
-        if (current_settings::maxPlayersVisible > 0 && unpc::numPlayersVisible >= current_settings::maxPlayersVisible)
+        if (profile.MaxPlayersVisible.get() > 0 && unpc::numPlayersVisible >= static_cast<uint32_t>(profile.MaxPlayersVisible.get()))
         {
             return false;
         }
 
-        if (current_settings::hidePlayers)
+        if (profile.HidePlayers.get())
         {
             return false;
         }
 
-        if (current_settings::hideNonFriends && !isFriend)
+        if (profile.HideNonFriends.get() && !isFriend)
         {
             return false;
         }
 
-        if (current_settings::hideBlockedPlayers && isBlocked)
+        if (profile.HideBlockedPlayers.get() && isBlocked)
         {
             return false;
         }
 
-        if (current_settings::hideNonGuildMembers && !(isActiveGuildMember || isGuildMember))
+        if (profile.HideNonGuildMembers.get() && !(isActiveGuildMember || isGuildMember))
         {
             return false;
         }
 
         const bool groupMember = isPartyMember || isSquadMember;
-        if (current_settings::hideNonGroupMembers && !groupMember)
+        if (profile.HideNonGroupMembers.get() && !groupMember)
         {
             return false;
         }
 
-        if (current_settings::hideStrangers && !isFriend && !isPartyMember && !isSquadMember)
+        if (profile.HideStrangers.get() && !isFriend && !isPartyMember && !isSquadMember)
         {
             return false;
         }
 
-        if (current_settings::hidePlayersInCombat && unpc::mumbleLink && unpc::mumbleLink->getContext().isInCombat())
+        if (profile.HidePlayersInCombat.get() && unpc::mumbleLink && unpc::mumbleLink->getContext().isInCombat())
         {
             return false;
         }
@@ -663,53 +497,54 @@ bool unpc::shouldShow(
 
     if (isPlayerOwned)
     {
-        if (!current_settings::playerOwned)
+        if (!profile.PlayerOwned.get())
         {
             return false;
         }
 
-        if (current_settings::maxPlayerOwnedVisible > 0 && unpc::numPlayerOwnedVisible >= current_settings::maxPlayerOwnedVisible)
+        if (profile.MaxPlayerOwnedVisible.get() > 0
+            && unpc::numPlayerOwnedVisible >= static_cast<uint32_t>(profile.MaxPlayerOwnedVisible.get()))
         {
             return false;
         }
 
-        if (current_settings::hidePlayerOwnedSelf && isOwnerLocalPlayer)
+        if (profile.HidePlayerOwnedSelf.get() && isOwnerLocalPlayer)
         {
             return false;
         }
 
-        if (current_settings::hidePlayerOwned && !isOwnerLocalPlayer)
+        if (profile.HidePlayerOwned.get() && !isOwnerLocalPlayer)
         {
             return false;
         }
 
-        if (current_settings::hideNonFriendsOwned && !isFriend)
+        if (profile.HideNonFriendsOwned.get() && !isFriend)
         {
             return false;
         }
 
-        if (current_settings::hideBlockedPlayersOwned && isBlocked)
+        if (profile.HideBlockedPlayersOwned.get() && isBlocked)
         {
             return false;
         }
 
-        if (current_settings::hideNonGuildMembersOwned && !(isActiveGuildMember || isGuildMember))
+        if (profile.HideNonGuildMembersOwned.get() && !(isActiveGuildMember || isGuildMember))
         {
             return false;
         }
 
         const bool groupMember = isPartyMember || isSquadMember;
-        if (current_settings::hideNonGroupMembersOwned && !groupMember)
+        if (profile.HideNonGroupMembersOwned.get() && !groupMember)
         {
             return false;
         }
 
-        if (current_settings::hideStrangersOwned && !isOwnerLocalPlayer && !isFriend && !isPartyMember && !isSquadMember)
+        if (profile.HideStrangersOwned.get() && !isOwnerLocalPlayer && !isFriend && !isPartyMember && !isSquadMember)
         {
             return false;
         }
 
-        if (!isOwnerLocalPlayer && current_settings::hidePlayerOwnedInCombat && unpc::mumbleLink && unpc::mumbleLink->getContext().isInCombat())
+        if (!isOwnerLocalPlayer && profile.HidePlayerOwnedInCombat.get() && unpc::mumbleLink && unpc::mumbleLink->getContext().isInCombat())
         {
             return false;
         }
@@ -717,31 +552,31 @@ bool unpc::shouldShow(
         return true;
     }
 
-    if (!current_settings::unhideNpcs)
+    if (!profile.UnhideNPCs.get())
     {
         return false;
     }
 
-    if (current_settings::maxNpcs > 0 && unpc::numNpcsVisible >= current_settings::maxNpcs)
+    if (profile.MaxNpcs.get() > 0 && unpc::numNpcsVisible >= static_cast<uint32_t>(profile.MaxNpcs.get()))
     {
         return false;
     }
 
-    if (rank < current_settings::minimumRank)
+    if (rank < profile.MinimumRank.get())
     {
         return false;
     }
 
-    if (current_settings::attackable == 1 && !isAttackable)
+    if (profile.Attackable.get() == 1 && !isAttackable)
     {
         return false;
     }
-    if (current_settings::attackable == 2 && isAttackable)
+    if (profile.Attackable.get() == 2 && isAttackable)
     {
         return false;
     }
 
-    if (current_settings::maximumDistance > 0 && distance >= current_settings::maximumDistance)
+    if (profile.MaximumDistance.get() > 0 && distance >= profile.MaximumDistance.get())
     {
         return false;
     }
