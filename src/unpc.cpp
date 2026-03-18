@@ -254,7 +254,7 @@ void unpc::onHookTick()
         return;
     }
 
-    if (!settings)
+    if (!settings || !settings->loaded())
         return;
 
     settings->save();
