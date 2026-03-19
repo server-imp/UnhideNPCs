@@ -35,8 +35,6 @@ uint32_t unpc::numPlayerOwnedVisible {};
 uint32_t unpc::numNpcsVisible {};
 uint32_t unpc::numPlayersInArea {};
 
-bool unpc::unloadOverlay {};
-
 #include "re.hpp"
 
 void hotkeyCallback(const std::string& id)
@@ -140,9 +138,62 @@ void initializeHotkeys()
     hotkeyManager.load();
 }
 
+bool checkInitFile()
+{
+    const auto rootDir = std::filesystem::current_path() / "addons" / "UnhideNPCs";
+    if (!std::filesystem::exists(rootDir))
+    {
+        if (!std::filesystem::create_directories(rootDir))
+        {
+            LOG_ERR("Failed to create root directory: {}", rootDir.string());
+            return false;
+        }
+    }
+
+    const auto initFile = rootDir / "init.txt";
+    if (std::filesystem::exists(initFile))
+    {
+        // if the file already exists, it means we must have crashed in a previous initialization
+        // compare the contents of the file with the current version string
+
+        std::ifstream file(initFile);
+        std::string   version;
+        file >> version;
+        file.close();
+
+        // if it is the same as the current version, then abort
+        if (version == unpc::version::STRING)
+        {
+            LOG_ERR("Initialization aborted, previous init of same version crashed");
+            return false;
+        }
+
+        // if it's different from the current version, then remove it
+        std::filesystem::remove(initFile);
+    }
+
+    // write the current version to the init file
+    std::ofstream file(initFile);
+    file << unpc::version::STRING;
+    file.close();
+
+    return true;
+}
+
+void removeInitFile()
+{
+    std::error_code ec{};
+    std::filesystem::remove(std::filesystem::current_path() / "addons" / "UnhideNPCs" / "init.txt", ec);
+}
+
 bool initialize()
 {
     LOG_INFO("Initializing");
+
+    if (!checkInitFile())
+    {
+        return false;
+    }
 
     if (!mumbleLink)
     {
@@ -150,6 +201,7 @@ bool initialize()
         if (!mumbleLink)
         {
             LOG_ERR("MumbleLink Failed");
+            removeInitFile();
             return false;
         }
     }
@@ -159,6 +211,7 @@ bool initialize()
     if (!settings->loaded())
     {
         LOG_ERR("Settings Failed");
+        removeInitFile();
         return false;
     }
     LOG_INFO("Settings OK");
@@ -172,6 +225,7 @@ bool initialize()
     if (!Module::tryGetByName("Gw2-64.exe", game))
     {
         LOG_ERR("Unable to get Gw2-64.exe module");
+        removeInitFile();
         return false;
     }
     LOG_INFO("Gw2-64.exe OK");
@@ -180,6 +234,7 @@ bool initialize()
     if (!game.findPattern(re::pattern1, pointer))
     {
         LOG_ERR("Unable to find pattern 1");
+        removeInitFile();
         return false;
     }
     re::vtableIndex = pointer.add(2).deref<uint32_t>() / 8;
@@ -189,6 +244,7 @@ bool initialize()
     if (!game.findPattern(re::pattern2, pointer))
     {
         LOG_ERR("Unable to find pattern 2");
+        removeInitFile();
         return false;
     }
     pointer = pointer.add(10).resolve_relative_call();
@@ -199,6 +255,7 @@ bool initialize()
     if (!game.findPattern(re::pattern3, pointer))
     {
         LOG_ERR("Unable to find pattern 3");
+        removeInitFile();
         return false;
     }
     pointer             = pointer.add(5);
@@ -209,6 +266,7 @@ bool initialize()
     if (!game.findPattern(re::pattern4, pointer))
     {
         LOG_ERR("Unable to find pattern 4");
+        removeInitFile();
         return false;
     }
     re::gw2::getContextCollection = reinterpret_cast<re::gw2::GetContextCollectionFn>(pointer.raw());
@@ -217,6 +275,7 @@ bool initialize()
     if (!Scanner::findStringReference(re::pattern5, pointer))
     {
         LOG_ERR("Unable to find pattern 5");
+        removeInitFile();
         return false;
     }
     re::gw2::getAvContext = reinterpret_cast<re::gw2::GetAvContextFn>(pointer.add(12).resolve_relative_call().raw());
@@ -225,6 +284,7 @@ bool initialize()
     if (!npcHook->enable())
     {
         LOG_ERR("Failed to enable hook");
+        removeInitFile();
         return false;
     }
     LOG_INFO("Hook OK");
@@ -241,23 +301,24 @@ void unpc::onHookTick()
         return;
     }
 
-    if (unloadOverlay && ui::d3dHook)
+    if (!settings || !settings->loaded())
     {
-        ui::d3dHook.reset();
-        unloadOverlay = false;
+        return;
     }
 
     hotkeyManager.update();
+    settings->save();
+
+    if (TRIGGER_ONCE)
+    {
+        // remove the init.txt at this point as all initialization is completed
+        removeInitFile();
+    }
 
     if (mode != EMode::Injected && mode != EMode::Proxy)
     {
         return;
     }
-
-    if (!settings || !settings->loaded())
-        return;
-
-    settings->save();
 
     const bool loadingScreen = *loadingScreenActive;
     const bool uiVersion     = mumbleLink && mumbleLink->uiVersion == 2;
