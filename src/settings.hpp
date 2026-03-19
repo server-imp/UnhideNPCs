@@ -87,7 +87,8 @@ validator(
         "Hide any characters that are owned by blocked players (pets, clones, minis etc)"
     ).onChanged(forceVisibility);
 
-    S(bool, HideNonGroupMembers, false, "Hide any players who are not in the same group as you (Party or Squad)");
+    S(bool, HideNonGroupMembers, false, "Hide any players who are not in the same group as you (Party or Squad)").onChanged(forceVisibility);
+
     S(
         bool,
         HideNonGroupMembersOwned,
@@ -245,9 +246,9 @@ public:
     explicit Settings(const std::filesystem::path& filePath);
 
     [[nodiscard]] bool profileExists(const std::string& name) const;
-    void addProfile(const std::string& name);
-    void removeProfile(const std::string& name);
-    void renameProfile(const std::string& oldName, const std::string& newName);
+    void               addProfile(const std::string& name);
+    void               removeProfile(const std::string& name);
+    void               renameProfile(const std::string& oldName, const std::string& newName);
 };
 
 inline std::unique_ptr<fw::Settings> SettingsProfile::createChild(const std::string& name)
