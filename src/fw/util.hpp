@@ -4,6 +4,39 @@
 #include "pch.hpp"
 #include "memory/handle.hpp"
 
+/// Evaluates to true only once per call site.
+#define TRIGGER_ONCE []() -> bool { static bool once = false; if (once) return false; once = true; return true; }()
+
+/// Evaluates to true every `ms` milliseconds.
+/// The first call returns true immediately.
+#define TRIGGER_EVERY_MS_IMMEDIATE(ms) \
+([]() -> bool { \
+static std::atomic<ULONGLONG> last{0}; \
+ULONGLONG now = GetTickCount64(); \
+ULONGLONG prev = last.load(std::memory_order_relaxed); \
+if (now - prev >= (ms)) { \
+if (last.compare_exchange_strong(prev, now, std::memory_order_relaxed)) { \
+return true; \
+} \
+} \
+return false; \
+}())
+
+/// Evaluates to true every `ms` milliseconds.
+/// The first call waits until the interval has elapsed.
+#define TRIGGER_EVERY_MS(ms) \
+([]() -> bool { \
+static std::atomic<ULONGLONG> last{GetTickCount64()}; \
+ULONGLONG now = GetTickCount64(); \
+ULONGLONG prev = last.load(std::memory_order_relaxed); \
+if (now - prev >= (ms)) { \
+if (last.compare_exchange_strong(prev, now, std::memory_order_relaxed)) { \
+return true; \
+} \
+} \
+return false; \
+}())
+
 namespace util
 {
     void ltrim(std::string& s);
@@ -72,7 +105,6 @@ namespace util
     memory::Handle getVirtualFunctionAddress(void* object, std::size_t offset);
 
     bool isValidGuildWars2Name(const wchar_t* name);
-
 }
 
 #endif //UNHIDENPCS_UTIL_HPP
