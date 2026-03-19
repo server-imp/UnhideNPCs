@@ -109,7 +109,7 @@ namespace fw
         void save(bool force = false);
         void load();
 
-        bool loaded() const;
+        [[nodiscard]] bool loaded() const;
 
         [[nodiscard]] const std::string&        name() const;
         void                                    setName(const std::string& name);

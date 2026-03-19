@@ -152,21 +152,51 @@ void fw::Settings::save(const bool force)
 
 void fw::Settings::load()
 {
-    std::lock_guard lock(_mutex);
+    std::unique_lock lock(_mutex);
 
     _loaded = false;
     if (_owner && _owner != this)
     {
+        lock.unlock();
         _owner->load();
+        lock.lock();
+        _loaded = _owner->loaded();
         return;
     }
 
-    nlohmann::ordered_json json;
-    std::ifstream          ifs(_filePath);
-    ifs >> json;
-    deserialize(json);
-    LOG_INFO("Loaded settings");
-    _loaded = true;
+    std::ifstream ifs(_filePath);
+    if (!ifs.is_open())
+    {
+        LOG_WARN("Failed to open settings file, re-saving current state");
+        lock.unlock();
+        save(true);
+        _loaded = true;
+        return;
+    }
+
+    const auto  json = nlohmann::ordered_json::parse(ifs, nullptr, false);
+    if (json.is_discarded() || !json.is_object() || json.empty() || json.is_null())
+    {
+        LOG_WARN("Failed to parse settings file, re-saving current state");
+        lock.unlock();
+        save(true);
+        _loaded = true;
+        return;
+    }
+
+    try
+    {
+        deserialize(json);
+        LOG_INFO("Loaded settings");
+        _loaded = true;
+    }
+    catch (const std::exception& e)
+    {
+        LOG_WARN("Failed to deserialize settings, re-saving current state");
+        lock.unlock();
+        save(true);
+        _loaded = true;
+    }
 }
 
 bool fw::Settings::loaded() const
