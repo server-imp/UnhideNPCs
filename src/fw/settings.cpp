@@ -171,7 +171,6 @@ void fw::Settings::load()
 
 bool fw::Settings::loaded()
 {
-    std::lock_guard lock(_mutex);
     return _loaded;
 }
 

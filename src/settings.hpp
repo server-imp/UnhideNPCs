@@ -240,22 +240,22 @@ public:
         }
     );
 
-    SettingsProfile& profile() const;
+    [[nodiscard]] SettingsProfile& profile() const;
 
     explicit Settings(const std::filesystem::path& filePath);
 
-    bool profileExists(const std::string& name) const;
+    [[nodiscard]] bool profileExists(const std::string& name) const;
     void addProfile(const std::string& name);
     void removeProfile(const std::string& name);
     void renameProfile(const std::string& oldName, const std::string& newName);
 };
 
-inline std::unique_ptr<fw::Settings> Settings::createChild(const std::string& name)
+inline std::unique_ptr<fw::Settings> SettingsProfile::createChild(const std::string& name)
 {
     return std::make_unique<SettingsProfile>(this, name);
 }
 
-inline std::unique_ptr<fw::Settings> SettingsProfile::createChild(const std::string& name)
+inline std::unique_ptr<fw::Settings> Settings::createChild(const std::string& name)
 {
     return std::make_unique<SettingsProfile>(this, name);
 }
@@ -263,12 +263,20 @@ inline std::unique_ptr<fw::Settings> SettingsProfile::createChild(const std::str
 inline SettingsProfile& Settings::profile() const
 {
     const auto idx = ActiveProfile.get() % _children.size();
-    return *static_cast<SettingsProfile*>(_children[idx].get());
+    return *dynamic_cast<SettingsProfile*>(_children[idx].get());
 }
 
 inline Settings::Settings(const std::filesystem::path& filePath) : fw::Settings(nullptr, "", filePath)
 {
     addChild<SettingsProfile>(this, "Default");
+
+    if (!std::filesystem::exists(filePath))
+    {
+        this->save(true);
+        this->load();
+        return;
+    }
+
     this->load();
     this->save(true);
 }
