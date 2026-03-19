@@ -49,8 +49,6 @@ namespace unpc
     extern uint32_t numNpcsVisible;
     extern uint32_t numPlayersInArea;
 
-    extern bool unloadOverlay;
-
     void onHookTick();
 
     // This function may be called second, returning true means the character will be forced invisible
