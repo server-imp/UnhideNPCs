@@ -169,7 +169,7 @@ void fw::Settings::load()
     _loaded = true;
 }
 
-bool fw::Settings::loaded()
+bool fw::Settings::loaded() const
 {
     return _loaded;
 }

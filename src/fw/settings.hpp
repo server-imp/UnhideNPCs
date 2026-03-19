@@ -109,9 +109,9 @@ namespace fw
         void save(bool force = false);
         void load();
 
-        bool loaded();
+        bool loaded() const;
 
-        const std::string&                      name() const;
+        [[nodiscard]] const std::string&        name() const;
         void                                    setName(const std::string& name);
         std::vector<SettingVariant>&            settings();
         std::vector<std::unique_ptr<Settings>>& children();

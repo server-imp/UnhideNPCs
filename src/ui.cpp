@@ -783,7 +783,10 @@ footer:
         }
     }
 
-    if (ImGui::Button("Force Visibility", { labelOffset + fieldWidth, 30 })) {}
+    if (ImGui::Button("Force Visibility", { labelOffset + fieldWidth, 30 }))
+    {
+        ++re::forceVisibility;
+    }
     tooltip(
         "Forces all characters to be visible for the next frame\n"
         "Useful for \"resetting\" things after modifying any settings."
