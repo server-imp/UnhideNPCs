@@ -1,5 +1,7 @@
 #include "scanner.hpp"
 
+#include <set>
+
 #include "pattern.hpp"
 #include "../logger.hpp"
 #include "fw/util.hpp"
@@ -206,6 +208,80 @@ bool memory::Scanner::findStringReference(const std::string& string, Handle& res
 
     LOG_DBG("Could not find reference");
     return false;
+}
+
+bool memory::Scanner::findStringReferences(const std::string& string, std::vector<Handle>& results)
+{
+    LOG_DBG("Looking for {}", string);
+
+    results.clear();
+
+    if (string.empty())
+    {
+        LOG_DBG("Invalid string");
+        return false;
+    }
+
+    const auto hModule = GetModuleHandleA(nullptr);
+    MODULEINFO mi {};
+    if (!GetModuleInformation(GetCurrentProcess(), hModule, &mi, sizeof(mi)))
+    {
+        LOG_DBG("Could not get module information: {:08X}", GetLastError());
+        return false;
+    }
+
+    const auto   base    = reinterpret_cast<uint8_t*>(hModule);
+    const size_t imgSize = mi.SizeOfImage;
+    const size_t len     = string.size();
+    const auto*  text    = reinterpret_cast<const uint8_t*>(string.data());
+
+    std::set<void*> added {};
+
+    for (size_t i = 0; i + len <= imgSize; ++i)
+    {
+        if (memcmp(base + i, text, len) != 0)
+        {
+            continue;
+        }
+
+        const uint8_t* strAddr = base + i;
+
+        // Scan for LEA instructions referencing strAddr
+        for (size_t j = 0; j + 7 < imgSize; ++j)
+        {
+            uint8_t* insn = base + j;
+
+            // Quick byte check for REX.W + LEA
+            if (insn[0] != 0x48 || insn[1] != 0x8D)
+            {
+                continue;
+            }
+
+            if (const uint8_t modrm = insn[2]; (modrm & 0xC7) != 0x05) // mod=00, rm=101
+            {
+                continue;
+            }
+
+            if (const int32_t disp = *reinterpret_cast<const int32_t*>(insn + 3); insn + 7 + disp == strAddr)
+            {
+                if (added.find(insn) != added.end())
+                    continue;
+                added.insert(insn);
+
+                results.emplace_back(const_cast<uint8_t*>(insn));
+                LOG_DBG("Found reference at {:08X}", results.back().raw());
+            }
+        }
+    }
+
+    if (results.empty())
+    {
+        LOG_DBG("Could not find references");
+        return false;
+    }
+
+    LOG_DBG("Found {} reference(s)", results.size());
+    return true;
 }
 
 bool memory::Scanner::findWstringReference(const std::wstring& string, Handle& result)

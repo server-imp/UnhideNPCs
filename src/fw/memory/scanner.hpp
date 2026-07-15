@@ -23,6 +23,8 @@ namespace memory
 
         static bool findStringReference(const std::string& string, Handle& result);
 
+        static bool findStringReferences(const std::string& string, std::vector<Handle>& results);
+
         static bool findWstringReference(const std::wstring& string, Handle& result);
     };
 }
