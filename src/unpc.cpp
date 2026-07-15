@@ -19,9 +19,12 @@ std::optional<logging::Logger> unpc::logger;
 std::optional<Settings>        unpc::settings;
 std::optional<Detour>          unpc::npcHook {};
 
-HotkeyManager unpc::hotkeyManager("ArenaNet_Gr_Window_Class", std::filesystem::current_path() / "addons" / "UnhideNPCs" / "hotkeys.json");
-HANDLE        unpc::hMutex {};
-HMODULE       unpc::hModule {};
+HotkeyManager unpc::hotkeyManager(
+    "ArenaNet_Gr_Window_Class",
+    std::filesystem::current_path() / "addons" / "UnhideNPCs" / "hotkeys.json"
+);
+HANDLE  unpc::hMutex {};
+HMODULE unpc::hModule {};
 
 HANDLE unpc::hThread {};
 
@@ -50,19 +53,22 @@ void hotkeyCallback(const std::string& id)
         {
             bool matched = false;
 
-            std::visit([&](auto&& setting)
-            {
-                using T = std::decay_t<decltype(*setting)>;
-                if constexpr (!std::is_same_v<T, fw::Setting<bool>>)
+            std::visit(
+                [&](auto&& setting)
                 {
-                    return;
-                }
-                if (id == setting->name())
-                {
-                    setting->set(!setting->get());
-                    matched = true;
-                }
-            }, _setting);
+                    using T = std::decay_t<decltype(*setting)>;
+                    if constexpr (!std::is_same_v<T, fw::Setting<bool>>)
+                    {
+                        return;
+                    }
+                    if (id == setting->name())
+                    {
+                        setting->set(!setting->get());
+                        matched = true;
+                    }
+                },
+                _setting
+            );
 
             if (matched)
             {
@@ -114,16 +120,19 @@ void initializeHotkeys()
     {
         for (auto& _setting : settings.settings())
         {
-            std::visit([&](auto&& setting)
-            {
-                using T = std::decay_t<decltype(*setting)>;
-                if constexpr (!std::is_same_v<T, fw::Setting<bool>>)
+            std::visit(
+                [&](auto&& setting)
                 {
-                    return;
-                }
+                    using T = std::decay_t<decltype(*setting)>;
+                    if constexpr (!std::is_same_v<T, fw::Setting<bool>>)
+                    {
+                        return;
+                    }
 
-                hotkeyManager.registerHotkey(setting->name(), setting->description());
-            }, _setting);
+                    hotkeyManager.registerHotkey(setting->name(), setting->description());
+                },
+                _setting
+            );
         }
     };
 
@@ -138,62 +147,9 @@ void initializeHotkeys()
     hotkeyManager.load();
 }
 
-bool checkInitFile()
-{
-    const auto rootDir = std::filesystem::current_path() / "addons" / "UnhideNPCs";
-    if (!std::filesystem::exists(rootDir))
-    {
-        if (!std::filesystem::create_directories(rootDir))
-        {
-            LOG_ERR("Failed to create root directory: {}", rootDir.string());
-            return false;
-        }
-    }
-
-    const auto initFile = rootDir / "init.txt";
-    if (std::filesystem::exists(initFile))
-    {
-        // if the file already exists, it means we must have crashed in a previous initialization
-        // compare the contents of the file with the current version string
-
-        std::ifstream file(initFile);
-        std::string   version;
-        file >> version;
-        file.close();
-
-        // if it is the same as the current version, then abort
-        if (version == unpc::version::STRING)
-        {
-            LOG_ERR("Initialization aborted, previous init of same version crashed");
-            return false;
-        }
-
-        // if it's different from the current version, then remove it
-        std::filesystem::remove(initFile);
-    }
-
-    // write the current version to the init file
-    std::ofstream file(initFile);
-    file << unpc::version::STRING;
-    file.close();
-
-    return true;
-}
-
-void removeInitFile()
-{
-    std::error_code ec{};
-    std::filesystem::remove(std::filesystem::current_path() / "addons" / "UnhideNPCs" / "init.txt", ec);
-}
-
 bool initialize()
 {
     LOG_INFO("Initializing");
-
-    if (!checkInitFile())
-    {
-        return false;
-    }
 
     if (!mumbleLink)
     {
@@ -201,7 +157,6 @@ bool initialize()
         if (!mumbleLink)
         {
             LOG_ERR("MumbleLink Failed");
-            removeInitFile();
             return false;
         }
     }
@@ -211,7 +166,6 @@ bool initialize()
     if (!settings->loaded())
     {
         LOG_ERR("Settings Failed");
-        removeInitFile();
         return false;
     }
     LOG_INFO("Settings OK");
@@ -225,7 +179,6 @@ bool initialize()
     if (!Module::tryGetByName("Gw2-64.exe", game))
     {
         LOG_ERR("Unable to get Gw2-64.exe module");
-        removeInitFile();
         return false;
     }
     LOG_INFO("Gw2-64.exe OK");
@@ -234,7 +187,6 @@ bool initialize()
     if (!game.findPattern(re::pattern1, pointer))
     {
         LOG_ERR("Unable to find pattern 1");
-        removeInitFile();
         return false;
     }
     re::vtableIndex = pointer.add(2).deref<uint32_t>() / 8;
@@ -244,7 +196,6 @@ bool initialize()
     if (!game.findPattern(re::pattern2, pointer))
     {
         LOG_ERR("Unable to find pattern 2");
-        removeInitFile();
         return false;
     }
     pointer = pointer.add(10).resolve_relative_call();
@@ -255,7 +206,6 @@ bool initialize()
     if (!game.findPattern(re::pattern3, pointer))
     {
         LOG_ERR("Unable to find pattern 3");
-        removeInitFile();
         return false;
     }
     pointer             = pointer.add(5);
@@ -263,19 +213,24 @@ bool initialize()
     LOG_DBG("Loading screen active: {:08X}", reinterpret_cast<uintptr_t>(loadingScreenActive));
     LOG_INFO("Pattern 3 OK");
 
-    if (!game.findPattern(re::pattern4, pointer))
+    std::vector<Handle> asserts {};
+    if (!unpc::findGW2AssertPoints(
+        0x107,
+        "context",
+        "D:\\Perforce\\Live\\NAEU\\v2\\Code\\Gw2\\Core\\Common\\Random.cpp",
+        asserts
+    ))
     {
         LOG_ERR("Unable to find pattern 4");
-        removeInitFile();
         return false;
     }
-    re::gw2::getContextCollection = reinterpret_cast<re::gw2::GetContextCollectionFn>(pointer.raw());
+    re::gw2::getContextCollection = reinterpret_cast<re::gw2::GetContextCollectionFn>(asserts[0].sub(19).
+        resolve_relative_call().raw());
     LOG_INFO("Pattern 4 OK");
 
     if (!Scanner::findStringReference(re::pattern5, pointer))
     {
         LOG_ERR("Unable to find pattern 5");
-        removeInitFile();
         return false;
     }
     re::gw2::getAvContext = reinterpret_cast<re::gw2::GetAvContextFn>(pointer.add(12).resolve_relative_call().raw());
@@ -284,7 +239,6 @@ bool initialize()
     if (!npcHook->enable())
     {
         LOG_ERR("Failed to enable hook");
-        removeInitFile();
         return false;
     }
     LOG_INFO("Hook OK");
@@ -309,12 +263,6 @@ void unpc::onHookTick()
     hotkeyManager.update();
     settings->save();
 
-    if (TRIGGER_ONCE)
-    {
-        // remove the init.txt at this point as all initialization is completed
-        removeInitFile();
-    }
-
     if (mode != EMode::Injected && mode != EMode::Proxy)
     {
         return;
@@ -335,7 +283,14 @@ void unpc::onHookTick()
 
         if (!ui::d3dHook && (mode == EMode::Proxy || mode == EMode::Injected))
         {
-            ui::d3dHook = hooks::D3D11::create("ArenaNet_Gr_Window_Class", "", ui::onD3DPresent, ui::onD3DResizeBuffers, ui::onD3DStarted, ui::onD3DShutdown);
+            ui::d3dHook = hooks::D3D11::create(
+                "ArenaNet_Gr_Window_Class",
+                "",
+                ui::onD3DPresent,
+                ui::onD3DResizeBuffers,
+                ui::onD3DStarted,
+                ui::onD3DShutdown
+            );
 
             if (!ui::d3dHook || !ui::d3dHook.value()->enable())
             {
@@ -379,7 +334,8 @@ bool unpc::shouldHide(
 
     if (isPlayer)
     {
-        if (profile.MaxPlayersVisible.get() > 0 && unpc::numPlayersVisible > static_cast<uint32_t>(profile.MaxPlayersVisible.get()))
+        if (profile.MaxPlayersVisible.get() > 0 && unpc::numPlayersVisible > static_cast<uint32_t>(profile.
+            MaxPlayersVisible.get()))
         {
             return true;
         }
@@ -425,8 +381,8 @@ bool unpc::shouldHide(
 
     if (isPlayerOwned)
     {
-        if (profile.MaxPlayerOwnedVisible.get() > 0
-            && unpc::numPlayerOwnedVisible > static_cast<uint32_t>(profile.MaxPlayerOwnedVisible.get()))
+        if (profile.MaxPlayerOwnedVisible.get() > 0 && unpc::numPlayerOwnedVisible > static_cast<uint32_t>(profile.
+            MaxPlayerOwnedVisible.get()))
         {
             return true;
         }
@@ -467,7 +423,8 @@ bool unpc::shouldHide(
             return true;
         }
 
-        if (!isOwnerLocalPlayer && profile.HidePlayerOwnedInCombat.get() && unpc::mumbleLink && unpc::mumbleLink->getContext().isInCombat())
+        if (!isOwnerLocalPlayer && profile.HidePlayerOwnedInCombat.get() && unpc::mumbleLink && unpc::mumbleLink->
+            getContext().isInCombat())
         {
             return true;
         }
@@ -518,7 +475,8 @@ bool unpc::shouldShow(
             return false;
         }
 
-        if (profile.MaxPlayersVisible.get() > 0 && unpc::numPlayersVisible >= static_cast<uint32_t>(profile.MaxPlayersVisible.get()))
+        if (profile.MaxPlayersVisible.get() > 0 && unpc::numPlayersVisible >= static_cast<uint32_t>(profile.
+            MaxPlayersVisible.get()))
         {
             return false;
         }
@@ -569,8 +527,8 @@ bool unpc::shouldShow(
             return false;
         }
 
-        if (profile.MaxPlayerOwnedVisible.get() > 0
-            && unpc::numPlayerOwnedVisible >= static_cast<uint32_t>(profile.MaxPlayerOwnedVisible.get()))
+        if (profile.MaxPlayerOwnedVisible.get() > 0 && unpc::numPlayerOwnedVisible >= static_cast<uint32_t>(profile.
+            MaxPlayerOwnedVisible.get()))
         {
             return false;
         }
@@ -611,7 +569,8 @@ bool unpc::shouldShow(
             return false;
         }
 
-        if (!isOwnerLocalPlayer && profile.HidePlayerOwnedInCombat.get() && unpc::mumbleLink && unpc::mumbleLink->getContext().isInCombat())
+        if (!isOwnerLocalPlayer && profile.HidePlayerOwnedInCombat.get() && unpc::mumbleLink && unpc::mumbleLink->
+            getContext().isInCombat())
         {
             return false;
         }
@@ -784,4 +743,54 @@ void unpc::entrypoint()
         0,
         nullptr
     );
+}
+
+bool unpc::findGW2AssertPoints(
+    const i32                    num,
+    const std::string&           a,
+    const std::string&           b,
+    std::vector<memory::Handle>& results
+)
+{
+    LOG_DBG("Looking for gw2 assert points [{}, {}]", a, b);
+    results.clear();
+
+    std::vector<Handle> aRefs {};
+    std::vector<Handle> bRefs {};
+
+    if (!Scanner::findStringReferences(b, aRefs))
+    {
+        LOG_DBG("Found no references to string \"{}\"", a);
+        return false;
+    }
+
+    if (!Scanner::findStringReferences(a, bRefs))
+    {
+        LOG_DBG("Found no references to string \"{}\"", b);
+        return false;
+    }
+
+    for (const auto& bRef : bRefs)
+    {
+        for (const auto& aRef : aRefs)
+        {
+            // 7 bytes before the reference to b should be a reference to a
+            if (bRef.sub(7) != aRef)
+            {
+                continue;
+            }
+            // 7 bytes after the reference to b should be a 0xE8 byte (beginning of call instruction)
+            if (bRef.add(7).deref<uint8_t>() != 0xE8)
+                continue;
+            // take 4 bytes prior to aRef and compare to the required num
+            if (aRef.sub(4).deref<i32>() != num)
+                continue;
+
+            results.push_back(aRef);
+            LOG_DBG("Found assert at \"{:08X}\"", aRef.raw());
+        }
+    }
+
+    LOG_DBG("Found {} asserts", results.size());
+    return !results.empty();
 }
