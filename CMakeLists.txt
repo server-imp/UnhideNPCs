@@ -78,24 +78,44 @@ if (BUILDING_ON_GITHUB)
 endif ()
 
 FetchContent_Declare(
-        imgui
+        imgui_1800
         GIT_REPOSITORY https://github.com/ocornut/imgui.git
-        GIT_TAG v1.80
+        GIT_TAG "58075c4414b985b352d10718b02a8c43f25efd7c" # v1.80
         GIT_SHALLOW TRUE
         PATCH_COMMAND git apply --ignore-whitespace "${CMAKE_SOURCE_DIR}/patches/imgui-xinput-lowercase.patch"
 )
-FetchContent_MakeAvailable(imgui)
-add_library(imgui STATIC
-        ${imgui_SOURCE_DIR}/imgui.cpp
-        ${imgui_SOURCE_DIR}/imgui_demo.cpp
-        ${imgui_SOURCE_DIR}/imgui_draw.cpp
-        ${imgui_SOURCE_DIR}/imgui_tables.cpp
-        ${imgui_SOURCE_DIR}/imgui_widgets.cpp
-        ${imgui_SOURCE_DIR}/backends/imgui_impl_dx11.cpp
-        ${imgui_SOURCE_DIR}/backends/imgui_impl_win32.cpp
+FetchContent_MakeAvailable(imgui_1800)
+add_library(imgui_1800 STATIC
+        ${imgui_1800_SOURCE_DIR}/imgui.cpp
+        ${imgui_1800_SOURCE_DIR}/imgui_demo.cpp
+        ${imgui_1800_SOURCE_DIR}/imgui_draw.cpp
+        ${imgui_1800_SOURCE_DIR}/imgui_tables.cpp
+        ${imgui_1800_SOURCE_DIR}/imgui_widgets.cpp
+        ${imgui_1800_SOURCE_DIR}/backends/imgui_impl_dx11.cpp
+        ${imgui_1800_SOURCE_DIR}/backends/imgui_impl_win32.cpp
 )
-target_include_directories(imgui PUBLIC ${imgui_SOURCE_DIR})
-target_compile_definitions(imgui PRIVATE IMGUI_IMPL_WIN32_DISABLE_GAMEPAD)
+target_include_directories(imgui_1800 PUBLIC ${imgui_1800_SOURCE_DIR})
+target_compile_definitions(imgui_1800 PRIVATE IMGUI_IMPL_WIN32_DISABLE_GAMEPAD)
+
+FetchContent_Declare(
+        imgui_19270
+        GIT_REPOSITORY https://github.com/ocornut/imgui.git
+        GIT_TAG "dac07199cfd761113d966eb8ad739254e10df2fe" # v1.92.7
+        GIT_SHALLOW TRUE
+        #PATCH_COMMAND git apply --ignore-whitespace "${CMAKE_SOURCE_DIR}/patches/imgui-xinput-lowercase.patch"
+)
+FetchContent_MakeAvailable(imgui_19270)
+add_library(imgui_19270 STATIC
+        ${imgui_19270_SOURCE_DIR}/imgui.cpp
+        ${imgui_19270_SOURCE_DIR}/imgui_demo.cpp
+        ${imgui_19270_SOURCE_DIR}/imgui_draw.cpp
+        ${imgui_19270_SOURCE_DIR}/imgui_tables.cpp
+        ${imgui_19270_SOURCE_DIR}/imgui_widgets.cpp
+        ${imgui_19270_SOURCE_DIR}/backends/imgui_impl_dx11.cpp
+        ${imgui_19270_SOURCE_DIR}/backends/imgui_impl_win32.cpp
+)
+target_include_directories(imgui_19270 PUBLIC ${imgui_19270_SOURCE_DIR})
+target_compile_definitions(imgui_19270 PRIVATE IMGUI_IMPL_WIN32_DISABLE_GAMEPAD)
 
 FetchContent_Declare(
         Nexus
@@ -118,73 +138,97 @@ file(GLOB_RECURSE PROJECT_SOURCES
         "src/**.cpp"
 )
 
-add_library(${PROJECT_NAME} SHARED src/dllmain.cpp ${PROJECT_SOURCES} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
+function(add_unhidenpcs_dll TARGET_NAME IMGUI_TARGET OUTPUT_NAME)
+    add_library(${TARGET_NAME} SHARED
+            src/dllmain.cpp
+            ${PROJECT_SOURCES}
+            ${CMAKE_CURRENT_BINARY_DIR}/version.rc
+    )
 
-target_compile_options(${PROJECT_NAME} PRIVATE
-        -Os
-        -ffunction-sections
-        -fdata-sections
-        -fno-strict-aliasing
+    if(UNPC_IMGUI_VERSION)
+        target_compile_definitions(${TARGET_NAME} PRIVATE UNPC_IMGUI_VERSION=${UNPC_IMGUI_VERSION})
+    endif()
+
+    target_compile_options(${TARGET_NAME} PRIVATE
+            -Os
+            -ffunction-sections
+            -fdata-sections
+            -fno-strict-aliasing
+    )
+
+    target_link_options(${TARGET_NAME} PRIVATE
+            -static
+            -static-libgcc
+            -static-libstdc++
+            -Wl,--gc-sections
+            "${CMAKE_SOURCE_DIR}/src/proxy/d3d9.def"
+            "${CMAKE_SOURCE_DIR}/src/proxy/dxgi.def"
+            "${CMAKE_SOURCE_DIR}/src/proxy/midimap.def"
+    )
+
+    set_target_properties(${TARGET_NAME} PROPERTIES
+            PREFIX ""
+            OUTPUT_NAME "${OUTPUT_NAME}"
+            SUFFIX ".dll"
+    )
+
+    if (BUILDING_ON_GITHUB)
+        target_include_directories(${TARGET_NAME} PRIVATE
+                "${UnhideNPCs_RE_SOURCE_DIR}"
+        )
+        file(GLOB SRC_RE "${UnhideNPCs_RE_SOURCE_DIR}/*.cpp")
+    else()
+        target_include_directories(${TARGET_NAME} PRIVATE
+                "${CMAKE_CURRENT_SOURCE_DIR}/../UnhideNPCs-RE"
+        )
+        file(GLOB SRC_RE "${CMAKE_CURRENT_SOURCE_DIR}/../UnhideNPCs-RE/*.cpp")
+    endif()
+
+    target_sources(${TARGET_NAME} PRIVATE ${SRC_RE})
+
+    target_precompile_headers(${TARGET_NAME} PRIVATE src/pch.hpp)
+
+    target_include_directories(${TARGET_NAME} PRIVATE
+            src
+            "${fmt_SOURCE_DIR}"
+            "${minhook_SOURCE_DIR}"
+            "${nexus_SOURCE_DIR}"
+            "${CMAKE_CURRENT_BINARY_DIR}"
+            "${json_SOURCE_DIR}/single_include"
+    )
+
+    target_sources(${TARGET_NAME} PRIVATE ${SRC_RE})
+
+    target_link_libraries(${TARGET_NAME} PRIVATE
+            minhook
+            fmt
+            ${IMGUI_TARGET}
+            d3d11
+            dxgi
+            d3dcompiler
+            xinput
+            gdi32
+            user32
+            dwmapi
+    )
+
+    add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
+            COMMAND ${CMAKE_OBJCOPY} --only-keep-debug $<TARGET_FILE:${TARGET_NAME}> $<TARGET_FILE:${TARGET_NAME}>.debug
+            COMMAND ${CMAKE_STRIP} --strip-debug $<TARGET_FILE:${TARGET_NAME}>
+            COMMAND ${CMAKE_OBJCOPY} --add-gnu-debuglink=$<TARGET_FILE_NAME:${TARGET_NAME}>.debug $<TARGET_FILE:${TARGET_NAME}>
+    )
+endfunction()
+
+set(UNPC_IMGUI_VERSION 1800)
+add_unhidenpcs_dll(
+        UnhideNPCs
+        imgui_1800
+        UnhideNPCs
 )
 
-target_link_options(${PROJECT_NAME} PRIVATE
-        -static
-        -static-libgcc
-        -static-libstdc++
-        -Wl,--gc-sections
-        "${CMAKE_SOURCE_DIR}/src/proxy/d3d9.def"
-        "${CMAKE_SOURCE_DIR}/src/proxy/dxgi.def"
-        "${CMAKE_SOURCE_DIR}/src/proxy/midimap.def"
-)
-
-set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".dll")
-target_precompile_headers(${PROJECT_NAME} PRIVATE "src/pch.hpp")
-target_include_directories(${PROJECT_NAME} PRIVATE
-        "src"
-        "${fmt_SOURCE_DIR}"
-        "${minhook_SOURCE_DIR}"
-        "${nexus_SOURCE_DIR}"
-        "${CMAKE_CURRENT_BINARY_DIR}"
-        "${json_SOURCE_DIR}/single_include"
-)
-
-if (BUILDING_ON_GITHUB)
-    target_include_directories(${PROJECT_NAME} PRIVATE "${UnhideNPCs_RE_SOURCE_DIR}")
-    file(GLOB SRC_RE "${UnhideNPCs_RE_SOURCE_DIR}/*.cpp")
-else ()
-    target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../UnhideNPCs-RE")
-    file(GLOB SRC_RE "${CMAKE_CURRENT_SOURCE_DIR}/../UnhideNPCs-RE/*.cpp")
-endif ()
-target_sources(${PROJECT_NAME} PRIVATE ${SRC_RE})
-
-target_link_libraries(${PROJECT_NAME} PRIVATE
-        minhook
-        fmt
-        imgui
-        d3d11
-        dxgi
-        d3dcompiler
-        xinput
-        gdi32
-        user32
-)
-
-#add_executable(Injector src/injector.cpp)
-
-#add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-#COMMAND ${CMAKE_COMMAND} -E copy_if_different
-#$<TARGET_FILE:${PROJECT_NAME}>
-#"C:/Users/user/Nextcloud/user files/Guild Wars 2/UnhideNPCs.dll"
-#COMMAND ${CMAKE_COMMAND} -E copy_if_different
-#$<TARGET_FILE:${PROJECT_NAME}>
-#"C:/Program Files/Guild Wars 2/addons/UnhideNPCs.dll"
-#COMMAND ${CMAKE_COMMAND} -E copy_if_different
-#$<TARGET_FILE:${PROJECT_NAME}>
-#"C:/Program Files (x86)/Steam/steamapps/common/Guild Wars 2/d33d9.dll"
-#)
-
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_OBJCOPY} --only-keep-debug $<TARGET_FILE:${PROJECT_NAME}> $<TARGET_FILE:${PROJECT_NAME}>.debug
-        COMMAND ${CMAKE_STRIP} --strip-debug $<TARGET_FILE:${PROJECT_NAME}>
-        COMMAND ${CMAKE_OBJCOPY} --add-gnu-debuglink=$<TARGET_FILE_NAME:${PROJECT_NAME}>.debug $<TARGET_FILE:${PROJECT_NAME}>
+set(UNPC_IMGUI_VERSION 19270)
+add_unhidenpcs_dll(
+        UnhideNPCs_ArcDps
+        imgui_19270
+        UnhideNPCs_ArcDps
 )
