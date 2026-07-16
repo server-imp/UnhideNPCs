@@ -21,7 +21,7 @@ arcdps_exports* mod_init()
 {
     memset(&arc_exports, 0, sizeof(arcdps_exports));
     arc_exports.sig       = unpc::SIGNATURE;
-    arc_exports.imguivers = 18000;
+    arc_exports.imguivers = UNPC_IMGUI_VERSION;
     arc_exports.size      = sizeof(arcdps_exports);
     arc_exports.out_name  = "UnhideNPCs";
     arc_exports.out_build = unpc::version::STRING;
