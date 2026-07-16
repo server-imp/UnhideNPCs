@@ -802,6 +802,13 @@ footer:
         unpc::hotkeyManager.stopCapturing();
     }
 
+    ImGui::Text(
+        "PLR:%-3d OWN:%-3d NPC:%-3d",
+        unpc::numPlayersVisible,
+        unpc::numPlayerOwnedVisible,
+        unpc::numNpcsVisible
+    );
+
 #ifndef BUILDING_ON_GITHUB
     ui::separatorText("Debug");
     re::debugMenu();

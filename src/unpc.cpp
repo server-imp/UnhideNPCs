@@ -381,7 +381,7 @@ bool unpc::shouldHide(
 
     if (isPlayerOwned)
     {
-        if (profile.MaxPlayerOwnedVisible.get() > 0 && unpc::numPlayerOwnedVisible > static_cast<uint32_t>(profile.
+        if (profile.MaxPlayerOwnedVisible.get() > 0 && unpc::numPlayerOwnedVisible >= static_cast<uint32_t>(profile.
             MaxPlayerOwnedVisible.get()))
         {
             return true;
@@ -475,7 +475,7 @@ bool unpc::shouldShow(
             return false;
         }
 
-        if (profile.MaxPlayersVisible.get() > 0 && unpc::numPlayersVisible >= static_cast<uint32_t>(profile.
+        if (profile.MaxPlayersVisible.get() > 0 && unpc::numPlayersVisible > static_cast<uint32_t>(profile.
             MaxPlayersVisible.get()))
         {
             return false;
