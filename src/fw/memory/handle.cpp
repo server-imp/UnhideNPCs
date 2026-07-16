@@ -47,10 +47,18 @@ memory::Handle memory::Handle::rip()
 
 memory::Handle memory::Handle::resolve_relative_call() const
 {
-    const auto offset          = add(1).deref<int32_t>();
-    const auto nextInstruction = add(5);
+    LOG_DBG("Resolving relative call at {:08X}", _pointer);
 
-    return nextInstruction.add(offset);
+    const auto offset          = add(1).deref<int32_t>();
+    LOG_DBG("Offset: {:04X}", offset);
+
+    const auto nextInstruction = add(5);
+    LOG_DBG("Next instruction: {:08X}", nextInstruction.raw());
+
+    auto result = nextInstruction.add(offset);
+    LOG_DBG("Resolved to: {:08X}", result.raw());
+
+    return result;
 }
 
 bool memory::Handle::operator==(const Handle& other) const noexcept
