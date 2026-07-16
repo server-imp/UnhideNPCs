@@ -35,6 +35,8 @@ bool memory::Module::findWstring(const std::wstring& string, memory::Handle& res
 
 memory::Module memory::Module::getFromHandle(const HMODULE hModule)
 {
+    LOG_DBG("Getting module from handle: {:08X}", reinterpret_cast<uintptr_t>(hModule));
+
     if (!hModule)
     {
         LOG_DBG("Invalid module handle");
@@ -47,6 +49,7 @@ memory::Module memory::Module::getFromHandle(const HMODULE hModule)
         LOG_DBG("GetModuleInformation failed: {}", GetLastError());
         return {};
     }
+    LOG_DBG("Module info: {:08X} - {:04X}", reinterpret_cast<uintptr_t>(moduleInfo.lpBaseOfDll), moduleInfo.SizeOfImage);
 
     char dllPath[MAX_PATH] {};
     if (!GetModuleFileName(hModule, dllPath, MAX_PATH))
@@ -54,6 +57,7 @@ memory::Module memory::Module::getFromHandle(const HMODULE hModule)
         LOG_DBG("GetModuleFileName failed: {}", GetLastError());
         return {};
     }
+    LOG_DBG("Module path: \"{}\"", dllPath);
 
     Module result {};
     result._hModule = hModule;
@@ -121,6 +125,7 @@ bool memory::Module::tryGetByAddr(const memory::Handle& addr, Module& result)
         LOG_DBG("EnumProcessModules[1] failed: {}", GetLastError());
         return false;
     }
+    LOG_DBG("Needed: {}", needed / sizeof(HMODULE));
 
     std::vector<HMODULE> mods(needed / sizeof(HMODULE));
     if (!EnumProcessModules(GetCurrentProcess(), mods.data(), needed, &needed))
@@ -129,19 +134,25 @@ bool memory::Module::tryGetByAddr(const memory::Handle& addr, Module& result)
         return false;
     }
 
+    LOG_DBG("Iterating over {} modules", mods.size());
+    int done = 0;
     for (const HMODULE mod : mods)
     {
+        LOG_DBG("Checking module at {:08X} [{}/{}]", reinterpret_cast<uintptr_t>(mod), done++, mods.size());
         result = getFromHandle(mod);
         if (!result.size())
         {
+            LOG_DBG("Module is invalid");
             continue;
         }
 
+        LOG_DBG("Checking module range");
         if (addr >= result.start() && addr < result.end())
         {
             LOG_DBG("Found module: {}", result.name());
             return true;
         }
+        LOG_DBG("Module range unmatched");
     }
 
     LOG_DBG("Not found");
