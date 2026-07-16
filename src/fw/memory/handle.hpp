@@ -1,6 +1,7 @@
 #ifndef UNHIDENPCS_HANDLE_HPP
 #define UNHIDENPCS_HANDLE_HPP
 #pragma once
+#include "fw/logger.hpp"
 
 namespace memory
 {
@@ -41,6 +42,7 @@ namespace memory
         template <typename T>
         std::enable_if_t<std::is_object_v<T>, T&> deref()
         {
+            LOG_DBG("Dereferencing {:08X} [{}]", _pointer, sizeof(T));
             return *to_ptr<T*>();
         }
 
