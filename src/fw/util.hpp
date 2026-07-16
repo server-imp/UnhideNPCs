@@ -2,7 +2,8 @@
 #define UNHIDENPCS_UTIL_HPP
 #pragma once
 #include "pch.hpp"
-#include "memory/handle.hpp"
+
+namespace memory { class Handle; }
 
 /// Evaluates to true only once per call site.
 #define TRIGGER_ONCE []() -> bool { static bool once = false; if (once) return false; once = true; return true; }()
