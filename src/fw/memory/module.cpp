@@ -5,8 +5,7 @@
 
 void memory::Module::initSections()
 {
-    if (_sectionsInitialized)
-        return;
+    _sectionsInitialized = true;
 
     LOG_DBG("Initializing sections of module \"{}\"", _name);
 
@@ -45,8 +44,6 @@ void memory::Module::initSections()
 
     if (_dataSections.empty())
         LOG_DBG("No data sections found");
-
-    _sectionsInitialized = true;
 }
 
 HMODULE memory::Module::handle() const
@@ -171,8 +168,7 @@ bool memory::Module::findStringReferences(const std::string& string, std::vector
         return false;
     }
 
-    retn:
-    LOG_DBG("Found {} references", results.size());
+retn: LOG_DBG("Found {} references", results.size());
     return true;
 }
 
@@ -268,8 +264,7 @@ bool memory::Module::findWstringReferences(const std::wstring& string, std::vect
         return false;
     }
 
-    retn:
-    LOG_DBG("Found {} references", results.size());
+retn: LOG_DBG("Found {} references", results.size());
     return true;
 }
 
