@@ -213,29 +213,29 @@ bool initialize()
     LOG_DBG("Loading screen active: {:08X}", reinterpret_cast<uintptr_t>(loadingScreenActive));
     LOG_INFO("Pattern 3 OK");
 
+    std::vector<Handle> asserts {};
+    if (!unpc::findAsserts(
+        game,
+        0x107,
+        "D:\\Perforce\\Live\\NAEU\\v2\\Code\\Gw2\\Core\\Common\\Random.cpp",
+        "context",
+        asserts
+    ) && !unpc::findAsserts(
+        game,
+        0x107,
+        "D:\\Perforce\\Live\\China\\v4\\Code\\Gw2\\Core\\Common\\Random.cpp",
+        "context",
+        asserts
+    ))
     {
-        std::vector<Handle> asserts {};
-        if (!unpc::findGW2AssertPoints(
-            0x107,
-            "context",
-            "D:\\Perforce\\Live\\NAEU\\v2\\Code\\Gw2\\Core\\Common\\Random.cpp",
-            asserts
-        ) && !unpc::findGW2AssertPoints(
-            0x107,
-            "context",
-            "D:\\Perforce\\Live\\China\\v4\\Code\\Gw2\\Core\\Com-nn\\Random.cpp",
-            asserts
-        ))
-        {
-            LOG_ERR("Unable to find pattern 4");
-            return false;
-        }
-        re::gw2::getContextCollection = reinterpret_cast<re::gw2::GetContextCollectionFn>(asserts[0].sub(19).
-            resolve_relative_call().raw());
+        LOG_ERR("Unable to find pattern 4");
+        return false;
     }
+    re::gw2::getContextCollection = reinterpret_cast<re::gw2::GetContextCollectionFn>(asserts[0].sub(13).
+        resolve_relative_call().raw());
     LOG_INFO("Pattern 4 OK");
 
-    if (!Scanner::findStringReference(re::pattern5, pointer))
+    if (!game.findStringReference(re::pattern5, pointer))
     {
         LOG_ERR("Unable to find pattern 5");
         return false;
@@ -752,28 +752,27 @@ void unpc::entrypoint()
     );
 }
 
-bool unpc::findGW2AssertPoints(
+bool unpc::findAsserts(
+    memory::Module               module,
     const i32                    num,
     const std::string&           a,
     const std::string&           b,
     std::vector<memory::Handle>& results
 )
 {
-    LOG_DBG("Looking for gw2 assert points [{}, {}]", a, b);
+    LOG_DBG("Looking for asserts [0x{:X}, \"{}\", \"{}\"]", num, a, b);
     results.clear();
 
     std::vector<Handle> aRefs {};
     std::vector<Handle> bRefs {};
 
-    if (!Scanner::findStringReferences(b, aRefs))
+    if (!module.findStringReferences(a, aRefs))
     {
-        LOG_DBG("Found no references to string \"{}\"", a);
         return false;
     }
 
-    if (!Scanner::findStringReferences(a, bRefs))
+    if (!module.findStringReferences(b, bRefs))
     {
-        LOG_DBG("Found no references to string \"{}\"", b);
         return false;
     }
 
@@ -786,15 +785,21 @@ bool unpc::findGW2AssertPoints(
             {
                 continue;
             }
-            // 7 bytes after the reference to b should be a 0xE8 byte (beginning of call instruction)
+
+            // the subsequent instruction should be a call
             if (bRef.add(7).deref<uint8_t>() != 0xE8)
                 continue;
-            // take 4 bytes prior to aRef and compare to the required num
-            if (aRef.sub(4).deref<i32>() != num)
+
+            // the preceding instruction should be a mov, matching the number
+            const auto mov = aRef.sub(5);
+            if (mov.deref<uint8_t>() != 0xB8 || mov.add(1).deref<i32>() != num)
                 continue;
 
-            results.push_back(aRef);
-            LOG_DBG("Found assert at \"{:08X}\"", aRef.raw());
+            // check if mov is rex prefixed
+            if ((mov.sub(1).deref<uint8_t>() & 0xF0) == 0x40)
+                results.push_back(mov.sub(1));
+            else
+                results.push_back(mov);
         }
     }
 
