@@ -12,6 +12,12 @@ namespace memory
         std::string           _name {};
         std::filesystem::path _path {};
 
+        bool               _sectionsInitialized {};
+        std::vector<Range> _textSections {};
+        std::vector<Range> _dataSections {};
+
+        void initSections();
+
     public:
         [[nodiscard]] HMODULE handle() const;
 
@@ -24,6 +30,17 @@ namespace memory
         bool findString(const std::string& string, memory::Handle& result) const;
 
         bool findWstring(const std::wstring& string, memory::Handle& result) const;
+
+        bool findStringReference(const std::string& string, Handle& result);
+        bool findStringReferences(const std::string& string, std::vector<Handle>& results, int max = 0);
+        bool findWstringReference(const std::wstring& string, Handle& result);
+        bool findWstringReferences(const std::wstring& string, std::vector<Handle>& results, int max = 0);
+
+        [[nodiscard]] std::vector<Range> textSections();
+        [[nodiscard]] std::vector<Range> dataSections();
+
+        bool isCode(const Handle& handle);
+        bool isData(const Handle& handle);
 
         static Module getFromHandle(HMODULE hModule);
 
