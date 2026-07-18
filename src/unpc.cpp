@@ -213,19 +213,26 @@ bool initialize()
     LOG_DBG("Loading screen active: {:08X}", reinterpret_cast<uintptr_t>(loadingScreenActive));
     LOG_INFO("Pattern 3 OK");
 
-    std::vector<Handle> asserts {};
-    if (!unpc::findGW2AssertPoints(
-        0x107,
-        "context",
-        "D:\\Perforce\\Live\\NAEU\\v2\\Code\\Gw2\\Core\\Common\\Random.cpp",
-        asserts
-    ))
     {
-        LOG_ERR("Unable to find pattern 4");
-        return false;
+        std::vector<Handle> asserts {};
+        if (!unpc::findGW2AssertPoints(
+            0x107,
+            "context",
+            "D:\\Perforce\\Live\\NAEU\\v2\\Code\\Gw2\\Core\\Common\\Random.cpp",
+            asserts
+        ) && !unpc::findGW2AssertPoints(
+            0x107,
+            "context",
+            "D:\\Perforce\\Live\\China\\v4\\Code\\Gw2\\Core\\Com-nn\\Random.cpp",
+            asserts
+        ))
+        {
+            LOG_ERR("Unable to find pattern 4");
+            return false;
+        }
+        re::gw2::getContextCollection = reinterpret_cast<re::gw2::GetContextCollectionFn>(asserts[0].sub(19).
+            resolve_relative_call().raw());
     }
-    re::gw2::getContextCollection = reinterpret_cast<re::gw2::GetContextCollectionFn>(asserts[0].sub(19).
-        resolve_relative_call().raw());
     LOG_INFO("Pattern 4 OK");
 
     if (!Scanner::findStringReference(re::pattern5, pointer))
