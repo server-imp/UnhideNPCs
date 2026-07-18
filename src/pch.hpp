@@ -6,6 +6,7 @@
 #include <windows.h>
 #include <functional>
 #include <filesystem>
+#include <algorithm>
 #include <psapi.h>
 #include <thread>
 #include <chrono>
@@ -20,6 +21,8 @@
 #include <mutex>
 #include <iostream>
 #include <codecvt>
+#include <set>
+#include <unordered_set>
 using namespace std::chrono_literals;
 
 #include "fmt/format.h"
