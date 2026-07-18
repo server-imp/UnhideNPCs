@@ -40,9 +40,9 @@ namespace memory
         }
 
         template <typename T>
-        std::enable_if_t<std::is_object_v<T>, T&> deref()
+        std::enable_if_t<std::is_object_v<T>, T&> deref() const
         {
-            LOG_DBG("Dereferencing {:08X} [{}]", _pointer, sizeof(T));
+            //LOG_DBG("Dereferencing {:08X} [{}]", _pointer, sizeof(T));
             return *to_ptr<T*>();
         }
 
