@@ -753,7 +753,7 @@ void unpc::entrypoint()
 }
 
 bool unpc::findAsserts(
-    memory::Module               module,
+    memory::Module&              module,
     const i32                    num,
     const std::string&           a,
     const std::string&           b,

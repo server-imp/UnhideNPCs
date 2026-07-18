@@ -90,7 +90,7 @@ namespace unpc
 
     // Locate asserts/errors with the specified values
     // returns the address of the first instruction (mov)
-    bool findAsserts(memory::Module module, i32 num, const std::string& a, const std::string& b, std::vector<memory::Handle>& results);
+    bool findAsserts(memory::Module& module, i32 num, const std::string& a, const std::string& b, std::vector<memory::Handle>& results);
 }
 
 #endif //UNHIDENPCS_UNPC_HPP
