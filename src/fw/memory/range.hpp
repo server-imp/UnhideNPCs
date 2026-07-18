@@ -32,6 +32,10 @@ namespace memory
         [[nodiscard]] bool contains(const Handle& address) const;
 
         [[nodiscard]] bool contains(uintptr_t address) const;
+
+        static bool contains(const std::vector<Range>& ranges, const Handle& address);
+
+        static bool contains(const std::vector<Range>& ranges, uintptr_t address);
     };
 }
 

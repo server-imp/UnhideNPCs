@@ -54,3 +54,27 @@ bool memory::Range::contains(const uintptr_t address) const
 {
     return _start <= address && address < _end.raw();
 }
+
+bool memory::Range::contains(const std::vector<Range>& ranges, const Handle& address)
+{
+    return std::any_of(
+        ranges.begin(),
+        ranges.end(),
+        [&address](const Range& range)
+        {
+            return range.contains(address);
+        }
+    );
+}
+
+bool memory::Range::contains(const std::vector<Range>& ranges, uintptr_t address)
+{
+    return std::any_of(
+        ranges.begin(),
+        ranges.end(),
+        [&address](const Range& range)
+        {
+            return range.contains(address);
+        }
+    );
+}
