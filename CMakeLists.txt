@@ -134,6 +134,13 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(json)
 
+FetchContent_Declare(
+        zydis
+        GIT_REPOSITORY "https://github.com/zyantific/zydis.git"
+        GIT_TAG "a2278f1d254e492f6a6b39f6cb5d1f5d515659dc" # 4.1.1
+)
+FetchContent_MakeAvailable(zydis)
+
 file(GLOB_RECURSE PROJECT_SOURCES
         "src/**.cpp"
 )
@@ -195,6 +202,8 @@ function(add_unhidenpcs_dll TARGET_NAME IMGUI_TARGET OUTPUT_NAME)
             "${nexus_SOURCE_DIR}"
             "${CMAKE_CURRENT_BINARY_DIR}"
             "${json_SOURCE_DIR}/single_include"
+            "${zydis_SOURCE_DIR}/include"
+            "${zydis_SOURCE_DIR}/dependencies/zycore/include"
     )
 
     target_sources(${TARGET_NAME} PRIVATE ${SRC_RE})
@@ -210,6 +219,7 @@ function(add_unhidenpcs_dll TARGET_NAME IMGUI_TARGET OUTPUT_NAME)
             gdi32
             user32
             dwmapi
+            Zydis
     )
 
     add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
