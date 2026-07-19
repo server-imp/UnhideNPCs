@@ -619,6 +619,8 @@ bool unpc::shouldShow(
 
 void unpc::start()
 {
+    const auto start = std::chrono::high_resolution_clock::now();
+
     if (settings && logger && npcHook)
     {
         return;
@@ -665,14 +667,18 @@ void unpc::start()
         return;
     }
 
-    if (!initialize())
+    auto result = initialize();
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+    if (!result)
     {
         LOG_ERR("Initialization failed");
         exit = true;
         return;
     }
 
-    LOG_INFO("Initialization complete");
+    LOG_INFO("Initialized in {}ms", duration);
 }
 
 void unpc::stop()
