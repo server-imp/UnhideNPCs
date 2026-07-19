@@ -455,3 +455,35 @@ bool util::isValidGuildWars2Name(const wchar_t* name)
 
     return true;
 }
+
+bool util::looksLikeAscii(const memory::Handle& handle, const size_t minLen, const size_t maxLen)
+{
+    const char* p = handle.to_ptr<char*>();
+
+    for (size_t i = 0; i < maxLen; ++i)
+    {
+        const auto c = static_cast<uint8_t>(p[i]);
+        if (c == '\0')
+            return i >= minLen;
+
+        if (c < 0x20 || c > 0x7E)
+            return false;
+    }
+    return false;
+}
+
+bool util::looksLikeUtf16Ascii(const memory::Handle& handle, const size_t minLen, const size_t maxLen)
+{
+    const char16_t* p = handle.to_ptr<char16_t*>();
+
+    for (size_t i = 0; i < maxLen; ++i)
+    {
+        const uint16_t c = p[i];
+        if (c == 0)
+            return i >= minLen;
+
+        if (c < 0x20 || c > 0x7E)
+            return false;
+    }
+    return false;
+}

@@ -106,6 +106,9 @@ namespace util
     memory::Handle getVirtualFunctionAddress(void* object, std::size_t offset);
 
     bool isValidGuildWars2Name(const wchar_t* name);
+
+    bool looksLikeAscii(const memory::Handle& handle, size_t minLen = 5, size_t maxLen = 96);
+    bool looksLikeUtf16Ascii(const memory::Handle& handle, size_t minLen = 5, size_t maxLen = 96);
 }
 
 #endif //UNHIDENPCS_UTIL_HPP
