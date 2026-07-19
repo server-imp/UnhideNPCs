@@ -2,10 +2,95 @@
 
 #include "scanner.hpp"
 #include "fw/logger.hpp"
+#include "Zydis/Zydis.h"
+
+#ifndef FW_MIN_STRING_LENGTH
+#define FW_MIN_STRING_LENGTH 5
+#endif
+#ifndef FW_MAX_STRING_LENGTH
+#define FW_MAX_STRING_LENGTH 128
+#endif
+
+void memory::Module::initRipRelativeIndex()
+{
+    if (_ripRelativeInitialized)
+        return;
+
+    LOG_DBG("Initializing RIP-relative index for module \"{}\"", _name);
+
+    const auto sections = textSections();
+
+    auto start = std::chrono::high_resolution_clock::now();
+
+    ZydisDecoder decoder;
+    ZydisDecoderInit(&decoder, ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_STACK_WIDTH_64);
+    ZydisDecoderEnableMode(&decoder, ZYDIS_DECODER_MODE_MINIMAL, ZYAN_TRUE);
+
+    for (const auto& section : sections)
+    {
+        auto      address = section.start().raw();
+        ptrdiff_t offset  = 0;
+
+        auto*      ptr  = section.start().to_ptr<uint8_t*>();
+        const auto size = section.size();
+
+        while (offset < size)
+        {
+            if (const auto byte = ptr[offset]; byte == 0x00 || byte == 0xCC)
+            {
+                ptrdiff_t skip {};
+                while (offset + skip < size && ptr[offset + skip] == byte)
+                    ++skip;
+
+                if (skip >= 4)
+                {
+                    offset  += skip;
+                    address += skip;
+                    continue;
+                }
+            }
+
+            ZydisDecodedInstruction instruction;
+            ZydisDecoderContext     context;
+
+            const ZyanStatus status = ZydisDecoderDecodeInstruction(
+                &decoder,
+                &context,
+                ptr + offset,
+                size - offset,
+                &instruction
+            );
+
+            if (!ZYAN_SUCCESS(status))
+            {
+                ++offset;
+                ++address;
+                continue;
+            }
+
+            const auto& modrm = instruction.raw.modrm;
+            const auto& disp  = instruction.raw.disp;
+
+            if (instruction.attributes & ZYDIS_ATTRIB_HAS_MODRM && modrm.mod == 0 && modrm.rm == 5 && disp.size == 32)
+            {
+                _ripRelativeInstructions.emplace(address, instruction);
+            }
+
+            offset  += instruction.length;
+            address += instruction.length;
+        }
+    }
+
+    _ripRelativeInitialized = true;
+    auto end                = std::chrono::high_resolution_clock::now();
+    auto duration           = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    LOG_DBG("Found {} instructions in {}ms", _ripRelativeInstructions.size(), duration);
+}
 
 void memory::Module::initSections()
 {
-    _sectionsInitialized = true;
+    if (_sectionsInitialized)
+        return;
 
     LOG_DBG("Initializing sections of module \"{}\"", _name);
 
@@ -44,6 +129,79 @@ void memory::Module::initSections()
 
     if (_dataSections.empty())
         LOG_DBG("No data sections found");
+
+    _sectionsInitialized = true;
+}
+
+void memory::Module::initRefStrings()
+{
+    if (_refStringsInitialized)
+        return;
+
+    LOG_DBG("Collecting referenced strings in module \"{}\"", _name);
+
+    enum class RefType : uint8_t
+    {
+        Reject,
+        Ascii,
+        Utf16
+    };
+    std::unordered_map<uintptr_t, RefType> refState {};
+
+    const auto instructions = ripRelativeInstructions();
+    auto       start        = std::chrono::high_resolution_clock::now();
+
+    for (const auto& [address, ins] : instructions)
+    {
+        auto key = address + ins.length + ins.raw.disp.value;
+
+        if (auto it = refState.find(key); it != refState.end())
+        {
+            switch (it->second)
+            {
+            case RefType::Reject: continue;
+            case RefType::Ascii: _refStringsAscii[key].emplace_back(address);
+                continue;
+            case RefType::Utf16: _refStringsUtf16[key].emplace_back(address);
+                continue;
+            }
+        }
+
+        auto  ref = Handle(key);
+        Range dataSection {};
+
+        if (!getDataSection(ref, dataSection))
+        {
+            refState.emplace(key, RefType::Reject);
+            continue;
+        }
+
+        const size_t remainingBytes = dataSection.end().raw() - ref.raw();
+
+        const size_t asciiMaxLen = std::min<size_t>(FW_MAX_STRING_LENGTH, remainingBytes);
+        const size_t utf16MaxLen = std::min<size_t>(FW_MAX_STRING_LENGTH, remainingBytes / sizeof(char16_t));
+
+        if (asciiMaxLen >= FW_MIN_STRING_LENGTH && util::looksLikeAscii(ref, FW_MIN_STRING_LENGTH, asciiMaxLen))
+        {
+            _refStringsAscii.try_emplace(key).first->second.emplace_back(address);
+            refState.emplace(key, RefType::Ascii);
+            continue;
+        }
+
+        if (utf16MaxLen >= FW_MIN_STRING_LENGTH && util::looksLikeUtf16Ascii(ref, FW_MIN_STRING_LENGTH, utf16MaxLen))
+        {
+            _refStringsUtf16.try_emplace(key).first->second.emplace_back(address);
+            refState.emplace(key, RefType::Utf16);
+            continue;
+        }
+
+        refState.emplace(key, RefType::Reject);
+    }
+
+    _refStringsInitialized = true;
+    auto end               = std::chrono::high_resolution_clock::now();
+    auto duration          = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    LOG_DBG("Found {} referenced strings in {}ms", _refStringsAscii.size() + _refStringsUtf16.size(), duration);
 }
 
 HMODULE memory::Module::handle() const
@@ -61,19 +219,37 @@ const std::filesystem::path& memory::Module::path()
     return _path;
 }
 
-bool memory::Module::findPattern(const std::string& pattern, memory::Handle& result) const
+bool memory::Module::findPattern(const std::string& pattern, memory::Handle& result)
 {
-    return Scanner::findPattern(pattern, *this, result);
+    for (const auto& section : textSections())
+    {
+        if (Scanner::findPattern(pattern, section, result))
+            return true;
+    }
+
+    return false;
 }
 
-bool memory::Module::findString(const std::string& string, memory::Handle& result) const
+bool memory::Module::findString(const std::string& string, memory::Handle& result)
 {
-    return Scanner::findString(string, *this, result);
+    for (const auto& section : dataSections())
+    {
+        if (Scanner::findString(string, section, result))
+            return true;
+    }
+
+    return false;
 }
 
-bool memory::Module::findWstring(const std::wstring& string, memory::Handle& result) const
+bool memory::Module::findWstring(const std::wstring& string, memory::Handle& result)
 {
-    return Scanner::findWstring(string, *this, result);
+    for (const auto& section : dataSections())
+    {
+        if (Scanner::findWstring(string, section, result))
+            return true;
+    }
+
+    return false;
 }
 
 bool memory::Module::findStringReference(const std::string& string, Handle& result)
@@ -91,74 +267,39 @@ bool memory::Module::findStringReference(const std::string& string, Handle& resu
 
 bool memory::Module::findStringReferences(const std::string& string, std::vector<Handle>& results, const int max)
 {
+    LOG_DBG("Looking for references to \"{}\"", string);
+
     results.clear();
 
     if (string.empty())
     {
+        LOG_DBG("Empty string");
         return false;
     }
 
-    LOG_DBG("Looking for instances of \"{}\"", string);
-
-    std::unordered_set<uint8_t*> stringInstances(4);
-    for (const auto& section : dataSections())
+    if (string.size() > FW_MAX_STRING_LENGTH - 1)
     {
-        auto* base = section.start().to_ptr<uint8_t*>();
-
-        for (size_t i = 0; i + string.size() + 1 <= section.size(); ++i)
-        {
-            auto* address = base + i;
-
-            if (memcmp(address, string.data(), string.size()) != 0)
-                continue;
-
-            if (address[string.size()] != '\0')
-                continue;
-
-            stringInstances.emplace(address);
-        }
-    }
-
-    if (stringInstances.empty())
-    {
-        LOG_DBG("Did not find any instances");
+        LOG_DBG("String exceeds FW_MAX_STRING_LENGTH");
         return false;
     }
 
-    LOG_DBG("Found {} instance(s), proceeding to look for references", stringInstances.size());
-
-    for (const auto& section : textSections())
+    for (const auto& [ptr, accessors] : refStringsAscii())
     {
-        auto* base = section.start().to_ptr<uint8_t*>();
+        const auto mem = reinterpret_cast<const char*>(ptr);
+        if (std::memcmp(mem, string.data(), string.size()) != 0)
+            continue;
 
-        for (size_t i = 0; i + 7 <= section.size(); ++i)
+        if (mem[string.size()] != '\0')
+            continue;
+
+        results.insert(results.end(), accessors.begin(), accessors.end());
+
+        if (max > 0 && results.size() >= max)
         {
-            auto* insn = base + i;
+            results.resize(max);
 
-            // check for REX prefix + LEA instruction
-            if ((insn[0] & 0xF0) != 0x40 || insn[1] != 0x8D)
-                continue;
-
-            // check ModRM byte for RIP-relative addressing mode
-            // mod=00, r/m=101 means the operand is [RIP + disp32]
-            if ((insn[2] & 0xC7) != 0x05)
-                continue;
-
-            // read the 32-bit relative offset stored after the opcode
-            int32_t offset;
-            memcpy(&offset, insn + 3, sizeof(offset));
-
-            auto* target = insn + 7 + offset;
-
-            if (stringInstances.find(target) != stringInstances.end())
-            {
-                results.emplace_back(insn);
-
-                if (max > 0 && results.size() >= max)
-                {
-                    goto retn;
-                }
-            }
+            LOG_DBG("Found {} references", results.size());
+            return true;
         }
     }
 
@@ -168,7 +309,7 @@ bool memory::Module::findStringReferences(const std::string& string, std::vector
         return false;
     }
 
-retn: LOG_DBG("Found {} references", results.size());
+    LOG_DBG("Found {} references", results.size());
     return true;
 }
 
@@ -185,76 +326,41 @@ bool memory::Module::findWstringReference(const std::wstring& string, Handle& re
     return true;
 }
 
-bool memory::Module::findWstringReferences(const std::wstring& string, std::vector<Handle>& results, int max)
+bool memory::Module::findWstringReferences(const std::wstring& string, std::vector<Handle>& results, const int max)
 {
+    LOG_DBG("Looking for references to \"{}\"", util::wstringToString(string));
+
     results.clear();
 
     if (string.empty())
     {
+        LOG_DBG("Empty string");
         return false;
     }
 
-    LOG_DBG("Looking for instances of L\"{}\"", util::wstringToString(string));
-
-    std::unordered_set<uint8_t*> stringInstances(4);
-    for (const auto& section : dataSections())
+    if (string.size() > FW_MAX_STRING_LENGTH - 1)
     {
-        auto* base = section.start().to_ptr<uint8_t*>();
-
-        for (size_t i = 0; i + string.size() + 1 <= section.size(); ++i)
-        {
-            auto* address = base + i;
-
-            if (memcmp(address, string.data(), string.size()) != 0)
-                continue;
-
-            if (address[string.size()] != '\0')
-                continue;
-
-            stringInstances.emplace(address);
-        }
-    }
-
-    if (stringInstances.empty())
-    {
-        LOG_DBG("Did not find any instances");
+        LOG_DBG("String exceeds FW_MAX_STRING_LENGTH");
         return false;
     }
 
-    LOG_DBG("Found {} instance(s), proceeding to look for references", stringInstances.size());
-
-    for (const auto& section : textSections())
+    for (const auto& [ptr, accessors] : refStringsUtf16())
     {
-        auto* base = section.start().to_ptr<uint8_t*>();
+        const auto* mem = reinterpret_cast<const char16_t*>(ptr);
+        if (std::memcmp(mem, string.data(), string.size() * sizeof(char16_t)) != 0)
+            continue;
 
-        for (size_t i = 0; i + 7 <= section.size(); ++i)
+        if (mem[string.size()] != u'\0')
+            continue;
+
+        results.insert(results.end(), accessors.begin(), accessors.end());
+
+        if (max > 0 && results.size() >= max)
         {
-            auto* insn = base + i;
+            results.resize(max);
 
-            // check for REX prefix + LEA instruction
-            if ((insn[0] & 0xF0) != 0x40 || insn[1] != 0x8D)
-                continue;
-
-            // check ModRM byte for RIP-relative addressing mode
-            // mod=00, r/m=101 means the operand is [RIP + disp32]
-            if ((insn[2] & 0xC7) != 0x05)
-                continue;
-
-            // read the 32-bit relative offset stored after the opcode
-            int32_t offset;
-            memcpy(&offset, insn + 3, sizeof(offset));
-
-            auto* target = insn + 7 + offset;
-
-            if (stringInstances.find(target) != stringInstances.end())
-            {
-                results.emplace_back(insn);
-
-                if (max > 0 && results.size() >= max)
-                {
-                    goto retn;
-                }
-            }
+            LOG_DBG("Found {} references", results.size());
+            return true;
         }
     }
 
@@ -264,11 +370,11 @@ bool memory::Module::findWstringReferences(const std::wstring& string, std::vect
         return false;
     }
 
-retn: LOG_DBG("Found {} references", results.size());
+    LOG_DBG("Found {} references", results.size());
     return true;
 }
 
-std::vector<memory::Range> memory::Module::textSections()
+const std::vector<memory::Range>& memory::Module::textSections()
 {
     if (!_sectionsInitialized)
     {
@@ -278,7 +384,7 @@ std::vector<memory::Range> memory::Module::textSections()
     return _textSections;
 }
 
-std::vector<memory::Range> memory::Module::dataSections()
+const std::vector<memory::Range>& memory::Module::dataSections()
 {
     if (!_sectionsInitialized)
     {
@@ -288,14 +394,82 @@ std::vector<memory::Range> memory::Module::dataSections()
     return _dataSections;
 }
 
-bool memory::Module::isCode(const Handle& handle)
+bool memory::Module::getDataSection(const Handle& handle, Range& result)
+{
+    for (const auto& section : dataSections())
+    {
+        if (!section.contains(handle))
+            continue;
+
+        result = section;
+        return true;
+    }
+
+    return false;
+}
+
+const std::unordered_map<uintptr_t, ZydisDecodedInstruction>& memory::Module::ripRelativeInstructions()
+{
+    if (!_ripRelativeInitialized)
+    {
+        initRipRelativeIndex();
+    }
+
+    return _ripRelativeInstructions;
+}
+
+const std::unordered_map<uintptr_t, std::vector<memory::Handle>>& memory::Module::refStringsAscii()
+{
+    if (!_refStringsInitialized)
+    {
+        initRefStrings();
+    }
+
+    return _refStringsAscii;
+}
+
+const std::unordered_map<uintptr_t, std::vector<memory::Handle>>& memory::Module::refStringsUtf16()
+{
+    if (!_refStringsInitialized)
+    {
+        initRefStrings();
+    }
+
+    return _refStringsUtf16;
+}
+
+bool memory::Module::isInCodeSection(const Handle& handle)
 {
     return contains(textSections(), handle);
 }
 
-bool memory::Module::isData(const Handle& handle)
+bool memory::Module::isInDataSection(const Handle& handle)
 {
     return contains(dataSections(), handle);
+}
+
+bool memory::Module::findReferencesTo(const Handle& handle, std::vector<Handle>& results, const int max)
+{
+    LOG_DBG("Looking for references to {:08X}", handle.raw());
+
+    results.clear();
+
+    const uintptr_t target = handle.raw();
+
+    for (const auto& [address, ins] : ripRelativeInstructions())
+    {
+        if (address + ins.length + ins.raw.disp.value == target)
+        {
+            results.emplace_back(address);
+            if (max > 0 && results.size() >= max)
+            {
+                return true;
+            }
+        }
+    }
+
+    LOG_DBG("Found {} references", results.size());
+    return !results.empty();
 }
 
 memory::Module memory::Module::getFromHandle(const HMODULE hModule)
@@ -393,10 +567,8 @@ bool memory::Module::tryGetByAddr(const memory::Handle& addr, Module& result)
         return false;
     }
 
-    int done = 0;
     for (const HMODULE mod : mods)
     {
-        //LOG_DBG("Checking module at {:08X} [{}/{}]", reinterpret_cast<uintptr_t>(mod), done++, mods.size());
         result = getFromHandle(mod);
         if (!result.size())
         {

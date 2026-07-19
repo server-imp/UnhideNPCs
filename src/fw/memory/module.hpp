@@ -2,6 +2,7 @@
 #define UNHIDENPCS_MODULE_HPP
 #pragma once
 #include "range.hpp"
+#include "Zydis/Zydis.h"
 
 namespace memory
 {
@@ -16,7 +17,16 @@ namespace memory
         std::vector<Range> _textSections {};
         std::vector<Range> _dataSections {};
 
+        bool                                                   _ripRelativeInitialized {};
+        std::unordered_map<uintptr_t, ZydisDecodedInstruction> _ripRelativeInstructions {};
+
+        bool                                                       _refStringsInitialized {};
+        std::unordered_map<uintptr_t, std::vector<memory::Handle>> _refStringsAscii {};
+        std::unordered_map<uintptr_t, std::vector<memory::Handle>> _refStringsUtf16 {};
+
+        void initRipRelativeIndex();
         void initSections();
+        void initRefStrings();
 
     public:
         [[nodiscard]] HMODULE handle() const;
@@ -25,22 +35,31 @@ namespace memory
 
         const std::filesystem::path& path();
 
-        bool findPattern(const std::string& pattern, memory::Handle& result) const;
+        bool findPattern(const std::string& pattern, memory::Handle& result);
 
-        bool findString(const std::string& string, memory::Handle& result) const;
+        bool findString(const std::string& string, memory::Handle& result);
 
-        bool findWstring(const std::wstring& string, memory::Handle& result) const;
+        bool findWstring(const std::wstring& string, memory::Handle& result);
 
         bool findStringReference(const std::string& string, Handle& result);
         bool findStringReferences(const std::string& string, std::vector<Handle>& results, int max = 0);
         bool findWstringReference(const std::wstring& string, Handle& result);
         bool findWstringReferences(const std::wstring& string, std::vector<Handle>& results, int max = 0);
 
-        [[nodiscard]] std::vector<Range> textSections();
-        [[nodiscard]] std::vector<Range> dataSections();
+        [[nodiscard]] const std::vector<Range>& textSections();
+        [[nodiscard]] const std::vector<Range>& dataSections();
 
-        bool isCode(const Handle& handle);
-        bool isData(const Handle& handle);
+        bool getDataSection(const Handle& handle, Range& result);
+
+        const std::unordered_map<uintptr_t, ZydisDecodedInstruction>& ripRelativeInstructions();
+
+        const std::unordered_map<uintptr_t, std::vector<Handle>>& refStringsAscii();
+        const std::unordered_map<uintptr_t, std::vector<Handle>>& refStringsUtf16();
+
+        bool isInCodeSection(const Handle& handle);
+        bool isInDataSection(const Handle& handle);
+
+        bool findReferencesTo(const Handle& handle, std::vector<Handle>& results, int max = 0);
 
         static Module getFromHandle(HMODULE hModule);
 
