@@ -1,8 +1,7 @@
 #ifndef UNHIDENPCS_UNPC_HPP
 #define UNHIDENPCS_UNPC_HPP
 #pragma once
-#include "fw/logger.hpp"
-#include "fw/memory/memory.hpp"
+#include "fw.hpp"
 #include "gw2.hpp"
 #include "hotkey.hpp"
 #include "MumbleLink.hpp"
