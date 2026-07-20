@@ -1,8 +1,7 @@
 #ifndef UNHIDENPCS_UI_HPP
 #define UNHIDENPCS_UI_HPP
 #pragma once
-#include "fw/memory/hooks/d3d11.hpp"
-#include "fw/memory/hooks/wndproc.hpp"
+#include "fw.hpp"
 
 namespace ui
 {

@@ -3,7 +3,7 @@
 #include "imgui.h"
 #include "ui.hpp"
 #include "unpc.hpp"
-#include "fw/logger.hpp"
+#include "fw.hpp"
 
 std::string Hotkey::toString() const
 {

@@ -2,7 +2,7 @@
 
 #include "pch.hpp"
 #include "unpc.hpp"
-#include "fw/proxy.hpp"
+#include "fw.hpp"
 #include "proxy/dxgi.hpp"
 #include "proxy/midimap.hpp"
 #include "proxy/d3d9.hpp"

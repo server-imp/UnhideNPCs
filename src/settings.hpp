@@ -2,7 +2,7 @@
 #define UNHIDENPCS_SETTINGS_HPP
 #pragma once
 #include "hook.hpp"
-#include "fw/settings.hpp"
+#include "fw.hpp"
 
 #define S(type, name, value, comment) fw::Setting<type>& name = add<type>(value, #name, comment)
 
