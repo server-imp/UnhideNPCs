@@ -40,9 +40,9 @@ uint32_t unpc::numPlayersInArea {};
 
 #include "re.hpp"
 
-void hotkeyCallback(const std::string& id)
+static void hotkeyCallback(const std::string& id)
 {
-    if (!unpc::settings)
+    if (!settings)
     {
         return;
     }
@@ -79,7 +79,7 @@ void hotkeyCallback(const std::string& id)
         return false;
     };
 
-    if (lambda(*unpc::settings) || lambda(unpc::settings->profile()))
+    if (lambda(*settings) || lambda(settings->profile()))
     {
         return;
     }
@@ -90,31 +90,31 @@ void hotkeyCallback(const std::string& id)
     }
     else if (id == "ToggleOverlay")
     {
-        if (unpc::settings->OverlayOpen.get() && hotkeyManager.isCapturing())
+        if (settings->OverlayOpen.get() && hotkeyManager.isCapturing())
         {
             hotkeyManager.stopCapturing();
         }
 
-        unpc::settings->OverlayOpen.set(!unpc::settings->OverlayOpen.get());
+        settings->OverlayOpen.set(!settings->OverlayOpen.get());
     }
     else if (id == "SwitchProfile")
     {
-        auto idx = unpc::settings->ActiveProfile.get();
+        auto idx = settings->ActiveProfile.get();
         ++idx;
-        if (idx >= static_cast<int>(unpc::settings->children().size()))
+        if (idx >= static_cast<int>(settings->children().size()))
         {
             idx = 0;
         }
-        if (idx != unpc::settings->ActiveProfile.get())
+        if (idx != settings->ActiveProfile.get())
         {
-            unpc::settings->ActiveProfile.set(idx);
-            unpc::settings->needSave();
+            settings->ActiveProfile.set(idx);
+            settings->needSave();
             ++re::forceVisibility;
         }
     }
 }
 
-void initializeHotkeys()
+static void initializeHotkeys()
 {
     auto lambda = [](fw::Settings& settings)
     {
@@ -140,14 +140,14 @@ void initializeHotkeys()
     hotkeyManager.registerHotkey("ToggleOverlay", "Alt. Overlay Toggle");
     hotkeyManager.registerHotkey("SwitchProfile", "Switches to the next profile");
 
-    lambda(*unpc::settings);
-    lambda(unpc::settings->profile());
+    lambda(*settings);
+    lambda(settings->profile());
 
     hotkeyManager.registerCallback(hotkeyCallback);
     hotkeyManager.load();
 }
 
-bool initialize()
+static bool initialize()
 {
     LOG_INFO("Initializing");
 
@@ -170,7 +170,7 @@ bool initialize()
     }
     LOG_INFO("Settings OK");
 
-    if (unpc::settings->ForceConsole.get())
+    if (settings->ForceConsole.get())
     {
         logger->setConsole(true);
     }
@@ -214,13 +214,13 @@ bool initialize()
     LOG_INFO("Pattern 3 OK");
 
     std::vector<Handle> asserts {};
-    if (!unpc::findAsserts(
+    if (!findAsserts(
         game,
         0x107,
         "D:\\Perforce\\Live\\NAEU\\v2\\Code\\Gw2\\Core\\Common\\Random.cpp",
         "context",
         asserts
-    ) && !unpc::findAsserts(
+    ) && !findAsserts(
         game,
         0x107,
         "D:\\Perforce\\Live\\China\\v4\\Code\\Gw2\\Core\\Common\\Random.cpp",
@@ -341,8 +341,8 @@ bool unpc::shouldHide(
 
     if (isPlayer)
     {
-        if (profile.MaxPlayersVisible.get() > 0 && unpc::numPlayersVisible > static_cast<uint32_t>(profile.
-            MaxPlayersVisible.get()))
+        if (profile.MaxPlayersVisible.get() > 0 && numPlayersVisible > static_cast<uint32_t>(profile.MaxPlayersVisible.
+            get()))
         {
             return true;
         }
@@ -378,7 +378,7 @@ bool unpc::shouldHide(
             return true;
         }
 
-        if (profile.HidePlayersInCombat.get() && unpc::mumbleLink && unpc::mumbleLink->getContext().isInCombat())
+        if (profile.HidePlayersInCombat.get() && mumbleLink && mumbleLink->getContext().isInCombat())
         {
             return true;
         }
@@ -388,7 +388,7 @@ bool unpc::shouldHide(
 
     if (isPlayerOwned)
     {
-        if (profile.MaxPlayerOwnedVisible.get() > 0 && unpc::numPlayerOwnedVisible >= static_cast<uint32_t>(profile.
+        if (profile.MaxPlayerOwnedVisible.get() > 0 && numPlayerOwnedVisible >= static_cast<uint32_t>(profile.
             MaxPlayerOwnedVisible.get()))
         {
             return true;
@@ -430,8 +430,8 @@ bool unpc::shouldHide(
             return true;
         }
 
-        if (!isOwnerLocalPlayer && profile.HidePlayerOwnedInCombat.get() && unpc::mumbleLink && unpc::mumbleLink->
-            getContext().isInCombat())
+        if (!isOwnerLocalPlayer && profile.HidePlayerOwnedInCombat.get() && mumbleLink && mumbleLink->getContext().
+            isInCombat())
         {
             return true;
         }
@@ -439,7 +439,7 @@ bool unpc::shouldHide(
         return false;
     }
 
-    if (profile.MaxNpcs.get() > 0 && unpc::numNpcsVisible > static_cast<uint32_t>(profile.MaxNpcs.get()))
+    if (profile.MaxNpcs.get() > 0 && numNpcsVisible > static_cast<uint32_t>(profile.MaxNpcs.get()))
     {
         return true;
     }
@@ -482,8 +482,8 @@ bool unpc::shouldShow(
             return false;
         }
 
-        if (profile.MaxPlayersVisible.get() > 0 && unpc::numPlayersVisible > static_cast<uint32_t>(profile.
-            MaxPlayersVisible.get()))
+        if (profile.MaxPlayersVisible.get() > 0 && numPlayersVisible > static_cast<uint32_t>(profile.MaxPlayersVisible.
+            get()))
         {
             return false;
         }
@@ -519,7 +519,7 @@ bool unpc::shouldShow(
             return false;
         }
 
-        if (profile.HidePlayersInCombat.get() && unpc::mumbleLink && unpc::mumbleLink->getContext().isInCombat())
+        if (profile.HidePlayersInCombat.get() && mumbleLink && mumbleLink->getContext().isInCombat())
         {
             return false;
         }
@@ -534,7 +534,7 @@ bool unpc::shouldShow(
             return false;
         }
 
-        if (profile.MaxPlayerOwnedVisible.get() > 0 && unpc::numPlayerOwnedVisible >= static_cast<uint32_t>(profile.
+        if (profile.MaxPlayerOwnedVisible.get() > 0 && numPlayerOwnedVisible >= static_cast<uint32_t>(profile.
             MaxPlayerOwnedVisible.get()))
         {
             return false;
@@ -576,8 +576,8 @@ bool unpc::shouldShow(
             return false;
         }
 
-        if (!isOwnerLocalPlayer && profile.HidePlayerOwnedInCombat.get() && unpc::mumbleLink && unpc::mumbleLink->
-            getContext().isInCombat())
+        if (!isOwnerLocalPlayer && profile.HidePlayerOwnedInCombat.get() && mumbleLink && mumbleLink->getContext().
+            isInCombat())
         {
             return false;
         }
@@ -590,7 +590,7 @@ bool unpc::shouldShow(
         return false;
     }
 
-    if (profile.MaxNpcs.get() > 0 && unpc::numNpcsVisible >= static_cast<uint32_t>(profile.MaxNpcs.get()))
+    if (profile.MaxNpcs.get() > 0 && numNpcsVisible >= static_cast<uint32_t>(profile.MaxNpcs.get()))
     {
         return false;
     }
@@ -667,8 +667,8 @@ void unpc::start()
         return;
     }
 
-    auto result = initialize();
-    auto end = std::chrono::high_resolution_clock::now();
+    auto result   = initialize();
+    auto end      = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
     if (!result)
@@ -759,11 +759,11 @@ void unpc::entrypoint()
 }
 
 bool unpc::findAsserts(
-    memory::Module&              module,
-    const i32                    num,
-    const std::string&           a,
-    const std::string&           b,
-    std::vector<memory::Handle>& results
+    Module&              module,
+    const i32            num,
+    const std::string&   a,
+    const std::string&   b,
+    std::vector<Handle>& results
 )
 {
     LOG_DBG("Looking for asserts [0x{:X}, \"{}\", \"{}\"]", num, a, b);
