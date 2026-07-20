@@ -29,43 +29,6 @@ message(STATUS "Building on GitHub Actions: ${BUILDING_ON_GITHUB}")
 
 include(FetchContent)
 
-FetchContent_Declare(
-        fmt
-        GIT_REPOSITORY "https://github.com/fmtlib/fmt.git"
-        GIT_TAG "e424e3f2e607da02742f73db84873b8084fc714c" # 12.0.0
-        GIT_SHALLOW TRUE
-        CXX_STANDARD 17
-)
-FetchContent_MakeAvailable(fmt)
-target_compile_options(fmt PRIVATE "-w")
-
-if (POLICY CMP0169)
-    cmake_policy(SET CMP0169 OLD)
-endif ()
-
-FetchContent_Declare(
-        minhook
-        GIT_REPOSITORY https://github.com/TsudaKageyu/minhook.git
-        GIT_TAG c3fcafdc10146beb5919319d0683e44e3c30d537
-        GIT_SHALLOW TRUE
-)
-
-FetchContent_GetProperties(minhook)
-if (NOT minhook_POPULATED)
-    FetchContent_Populate(minhook)
-endif ()
-
-add_library(minhook STATIC
-        ${minhook_SOURCE_DIR}/src/buffer.c
-        ${minhook_SOURCE_DIR}/src/hook.c
-        ${minhook_SOURCE_DIR}/src/trampoline.c
-        ${minhook_SOURCE_DIR}/src/hde/hde64.c
-)
-
-target_include_directories(minhook PUBLIC
-        ${minhook_SOURCE_DIR}/include
-)
-
 # If compiled on GitHub Actions, fetch UnhideNPCs-RE
 if (BUILDING_ON_GITHUB)
     FetchContent_Declare(
@@ -75,6 +38,15 @@ if (BUILDING_ON_GITHUB)
             GIT_SHALLOW TRUE
     )
     FetchContent_MakeAvailable(UnhideNPCs_RE)
+    FetchContent_Declare(
+            fw
+            GIT_REPOSITORY "https://github.com/server-imp/fw.git"
+            GIT_TAG "master"
+            GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(fw)
+else()
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../fw ${CMAKE_BINARY_DIR}/_deps/fw-build)
 endif ()
 
 FetchContent_Declare(
@@ -125,22 +97,6 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(Nexus)
 
-FetchContent_Declare(
-        json
-        GIT_REPOSITORY "https://github.com/nlohmann/json.git"
-        GIT_TAG "55f93686c01528224f448c19128836e7df245f72" # 3.12.0
-        GIT_SHALLOW TRUE
-        GIT_PROGRESS TRUE
-)
-FetchContent_MakeAvailable(json)
-
-FetchContent_Declare(
-        zydis
-        GIT_REPOSITORY "https://github.com/zyantific/zydis.git"
-        GIT_TAG "a2278f1d254e492f6a6b39f6cb5d1f5d515659dc" # 4.1.1
-)
-FetchContent_MakeAvailable(zydis)
-
 file(GLOB_RECURSE PROJECT_SOURCES
         "src/**.cpp"
 )
@@ -152,9 +108,9 @@ function(add_unhidenpcs_dll TARGET_NAME IMGUI_TARGET OUTPUT_NAME)
             ${CMAKE_CURRENT_BINARY_DIR}/version.rc
     )
 
-    if(UNPC_IMGUI_VERSION)
+    if (UNPC_IMGUI_VERSION)
         target_compile_definitions(${TARGET_NAME} PRIVATE UNPC_IMGUI_VERSION=${UNPC_IMGUI_VERSION})
-    endif()
+    endif ()
 
     target_compile_options(${TARGET_NAME} PRIVATE
             -Os
@@ -181,15 +137,16 @@ function(add_unhidenpcs_dll TARGET_NAME IMGUI_TARGET OUTPUT_NAME)
 
     if (BUILDING_ON_GITHUB)
         target_include_directories(${TARGET_NAME} PRIVATE
-                "${UnhideNPCs_RE_SOURCE_DIR}"
+                ${UnhideNPCs_RE_SOURCE_DIR}
+                ${fw_SOURCE_DIR}/include
         )
         file(GLOB SRC_RE "${UnhideNPCs_RE_SOURCE_DIR}/*.cpp")
-    else()
+    else ()
         target_include_directories(${TARGET_NAME} PRIVATE
-                "${CMAKE_CURRENT_SOURCE_DIR}/../UnhideNPCs-RE"
+                ${CMAKE_CURRENT_SOURCE_DIR}/../UnhideNPCs-RE
         )
         file(GLOB SRC_RE "${CMAKE_CURRENT_SOURCE_DIR}/../UnhideNPCs-RE/*.cpp")
-    endif()
+    endif ()
 
     target_sources(${TARGET_NAME} PRIVATE ${SRC_RE})
 
@@ -197,29 +154,16 @@ function(add_unhidenpcs_dll TARGET_NAME IMGUI_TARGET OUTPUT_NAME)
 
     target_include_directories(${TARGET_NAME} PRIVATE
             src
-            "${fmt_SOURCE_DIR}"
-            "${minhook_SOURCE_DIR}"
-            "${nexus_SOURCE_DIR}"
-            "${CMAKE_CURRENT_BINARY_DIR}"
-            "${json_SOURCE_DIR}/single_include"
-            "${zydis_SOURCE_DIR}/include"
-            "${zydis_SOURCE_DIR}/dependencies/zycore/include"
+            ${nexus_SOURCE_DIR}
+            ${CMAKE_CURRENT_BINARY_DIR}
+            ${fw_SOURCE_DIR}/include
     )
 
     target_sources(${TARGET_NAME} PRIVATE ${SRC_RE})
 
     target_link_libraries(${TARGET_NAME} PRIVATE
-            minhook
-            fmt
             ${IMGUI_TARGET}
-            d3d11
-            dxgi
-            d3dcompiler
-            xinput
-            gdi32
-            user32
-            dwmapi
-            Zydis
+            fw
     )
 
     add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
