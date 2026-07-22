@@ -178,10 +178,10 @@ static bool initialize()
     Module game {};
     if (!Module::tryGetByName("Gw2-64.exe", game))
     {
-        LOG_ERR("Unable to get Gw2-64.exe module");
-        return false;
+        game = Module::getMain();
+        LOG_ERR("Unable to find \"Gw2-64.exe\", using fallback module: \"{}\"", game.name());
     }
-    LOG_INFO("Gw2-64.exe OK");
+    LOG_INFO("Module OK");
 
     Handle pointer {};
     if (!game.findPattern(re::pattern1, pointer))
