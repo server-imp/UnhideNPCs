@@ -149,8 +149,6 @@ static void initializeHotkeys()
 
 static bool initialize()
 {
-    LOG_INFO("Initializing");
-
     if (!mumbleLink)
     {
         mumbleLink = mode == EMode::Nexus ? nexus::getMumbleLink() : getMumbleLink();
@@ -160,7 +158,6 @@ static bool initialize()
             return false;
         }
     }
-    LOG_INFO("MumbleLink OK");
 
     settings.emplace(std::filesystem::current_path() / "addons" / "UnhideNPCs" / "settings.json");
     if (!settings->loaded())
@@ -168,7 +165,6 @@ static bool initialize()
         LOG_ERR("Settings Failed");
         return false;
     }
-    LOG_INFO("Settings OK");
 
     if (settings->ForceConsole.get())
     {
@@ -181,7 +177,6 @@ static bool initialize()
         game = Module::getMain();
         LOG_ERR("Unable to find \"Gw2-64.exe\", using fallback module: \"{}\"", game.name());
     }
-    LOG_INFO("Module OK");
 
     Handle  ptr {};
     RefData ref {};
@@ -205,7 +200,7 @@ static bool initialize()
     {
         return false;
     }
-    npcHook.emplace("Hook", ptr.to_ptr<void*>(), reinterpret_cast<void*>(re::hook));
+    npcHook.emplace("Character Hook", ptr.to_ptr<void*>(), reinterpret_cast<void*>(re::hook));
 
     auto pattern3 = Pattern("pattern3", re::pattern3).callback(
         [&](Handle& ptr)
@@ -213,7 +208,7 @@ static bool initialize()
             ptr                 = ptr.add(5);
             loadingScreenActive = ptr.add(6).add(ptr.add(2).deref<int32_t>()).to_ptr<int32_t*>();
             ptr                 = Handle(loadingScreenActive);
-            LOG_DBG("Loading screen active: {:08X}", reinterpret_cast<uintptr_t>(loadingScreenActive));
+            LOG_DBG("Loading screen active: {}", ptr.formatted());
             return true;
         }
     );
@@ -231,7 +226,6 @@ static bool initialize()
     }
     re::gw2::getContextCollection = reinterpret_cast<re::gw2::GetContextCollectionFn>(asserts[0].sub(13).
         resolve_relative_call().raw());
-    LOG_INFO("Pattern 4 OK");
 
     if (!game.findStringReference(re::pattern5, ref))
     {
@@ -240,14 +234,12 @@ static bool initialize()
     }
     re::gw2::getAvContext = reinterpret_cast<re::gw2::GetAvContextFn>(ref.instruction().add(12).resolve_relative_call().
                                                                           raw());
-    LOG_INFO("Pattern 5 OK");
 
     if (!npcHook->enable())
     {
         LOG_ERR("Failed to enable hook");
         return false;
     }
-    LOG_INFO("Hook OK");
 
     initializeHotkeys();
     game.clear();
@@ -632,11 +624,10 @@ void unpc::start()
     auto logLevel = logging::LogLevel::Debug;
 #endif
 
-    logger.emplace("UnhideNPCs", std::filesystem::current_path() / "addons" / "UnhideNPCs" / "log.txt", logLevel);
+    logger.emplace("UnhideNPCs", std::filesystem::current_path() / "addons" / "UnhideNPCs" / "unhidenpcs.log", logLevel);
 
     LOG_INFO("Starting");
     LOG_INFO("Version {}", version::STRING);
-    LOG_INFO("Built on {} at {}", __DATE__, __TIME__);
 
     if (injected)
     {
@@ -678,7 +669,7 @@ void unpc::start()
         return;
     }
 
-    LOG_INFO("Initialized in {}ms", duration);
+    LOG_INFO("Started in {}ms", duration);
 }
 
 void unpc::stop()
