@@ -387,6 +387,8 @@ void HotkeyManager::load()
         hk->ctrl   = temp.ctrl;
         hk->shift  = temp.shift;
         hk->alt    = temp.alt;
-        LOG_INFO("Loaded hotkey \"{}\": {}", id, hk->toString());
+
+        if (hk->vkCode)
+            LOG_INFO("Loaded hotkey \"{}\": {}", id, hk->toString());
     }
 }
