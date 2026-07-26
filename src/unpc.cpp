@@ -183,50 +183,48 @@ static bool initialize()
     }
     LOG_INFO("Module OK");
 
-    Handle pointer {};
-    if (!game.findPattern(re::pattern1, pointer))
-    {
-        LOG_ERR("Unable to find pattern 1");
-        return false;
-    }
-    re::vtableIndex = pointer.add(2).deref<uint32_t>() / 8;
-    LOG_DBG("VTable Index: {}", re::vtableIndex);
-    LOG_INFO("Pattern 1 OK");
+    Handle  ptr {};
+    RefData ref {};
 
-    if (!game.findPattern(re::pattern2, pointer))
-    {
-        LOG_ERR("Unable to find pattern 2");
-        return false;
-    }
-    pointer = pointer.add(10).resolve_relative_call();
-    LOG_DBG("Resolved call to {}+{:X}", game.name(), pointer.sub(game.start()).raw());
-    npcHook.emplace("Hook", pointer.to_ptr<void*>(), reinterpret_cast<void*>(re::hook));
-    LOG_INFO("Pattern 2 OK");
+    auto pattern1 = Pattern("pattern1", re::pattern1).callback(
+        [&](const Handle& ptr)
+        {
+            re::vtableIndex = ptr.add(2).deref<uint32_t>() / 8;
+            LOG_DBG("VTable Index: {}", re::vtableIndex);
+            return true;
+        }
+    );
 
-    if (!game.findPattern(re::pattern3, pointer))
+    if (!pattern1.resolve(game, ptr))
     {
-        LOG_ERR("Unable to find pattern 3");
         return false;
     }
-    pointer             = pointer.add(5);
-    loadingScreenActive = pointer.add(6).add(pointer.add(2).deref<int32_t>()).to_ptr<int32_t*>();
-    LOG_DBG("Loading screen active: {:08X}", reinterpret_cast<uintptr_t>(loadingScreenActive));
-    LOG_INFO("Pattern 3 OK");
+
+    auto pattern2 = Pattern("pattern2", re::pattern2).add(10).relCall();
+    if (!pattern2.resolve(game, ptr))
+    {
+        return false;
+    }
+    npcHook.emplace("Hook", ptr.to_ptr<void*>(), reinterpret_cast<void*>(re::hook));
+
+    auto pattern3 = Pattern("pattern3", re::pattern3).callback(
+        [&](Handle& ptr)
+        {
+            ptr                 = ptr.add(5);
+            loadingScreenActive = ptr.add(6).add(ptr.add(2).deref<int32_t>()).to_ptr<int32_t*>();
+            ptr                 = Handle(loadingScreenActive);
+            LOG_DBG("Loading screen active: {:08X}", reinterpret_cast<uintptr_t>(loadingScreenActive));
+            return true;
+        }
+    );
+    if (!pattern3.resolve(game, ptr))
+    {
+        return false;
+    }
 
     std::vector<Handle> asserts {};
-    if (!findAsserts(
-        game,
-        0x107,
-        "D:\\Perforce\\Live\\NAEU\\v2\\Code\\Gw2\\Core\\Common\\Random.cpp",
-        "context",
-        asserts
-    ) && !findAsserts(
-        game,
-        0x107,
-        "D:\\Perforce\\Live\\China\\v4\\Code\\Gw2\\Core\\Common\\Random.cpp",
-        "context",
-        asserts
-    ))
+    if (!findAsserts(game, 0x107, R"(D:\Perforce\Live\NAEU\v2\Code\Gw2\Core\Common\Random.cpp)", "context", asserts) &&
+        !findAsserts(game, 0x107, R"(D:\Perforce\Live\China\v4\Code\Gw2\Core\Common\Random.cpp)", "context", asserts))
     {
         LOG_ERR("Unable to find pattern 4");
         return false;
@@ -235,12 +233,13 @@ static bool initialize()
         resolve_relative_call().raw());
     LOG_INFO("Pattern 4 OK");
 
-    if (!game.findStringReference(re::pattern5, pointer))
+    if (!game.findStringReference(re::pattern5, ref))
     {
         LOG_ERR("Unable to find pattern 5");
         return false;
     }
-    re::gw2::getAvContext = reinterpret_cast<re::gw2::GetAvContextFn>(pointer.add(12).resolve_relative_call().raw());
+    re::gw2::getAvContext = reinterpret_cast<re::gw2::GetAvContextFn>(ref.instruction().add(12).resolve_relative_call().
+                                                                          raw());
     LOG_INFO("Pattern 5 OK");
 
     if (!npcHook->enable())
@@ -251,6 +250,7 @@ static bool initialize()
     LOG_INFO("Hook OK");
 
     initializeHotkeys();
+    game.clear();
 
     return true;
 }
@@ -694,13 +694,15 @@ void unpc::stop()
 
     if (npcHook)
     {
-        npcHook->disable(true);
+        npcHook->disable();
 
         while (re::hookInFlight.load(std::memory_order_acquire) != 0)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
     }
+
+    MH_Uninitialize();
 
     if (mode == EMode::Nexus)
     {
@@ -769,8 +771,8 @@ bool unpc::findAsserts(
     LOG_DBG("Looking for asserts [0x{:X}, \"{}\", \"{}\"]", num, a, b);
     results.clear();
 
-    std::vector<Handle> aRefs {};
-    std::vector<Handle> bRefs {};
+    std::vector<RefData> aRefs {};
+    std::vector<RefData> bRefs {};
 
     if (!module.findStringReferences(a, aRefs))
     {
@@ -782,10 +784,13 @@ bool unpc::findAsserts(
         return false;
     }
 
-    for (const auto& bRef : bRefs)
+    for (const auto& bRefData : bRefs)
     {
-        for (const auto& aRef : aRefs)
+        for (const auto& aRefData : aRefs)
         {
+            const auto& aRef = aRefData.instruction();
+            const auto& bRef = bRefData.instruction();
+
             // 7 bytes before the reference to b should be a reference to a
             if (bRef.sub(7) != aRef)
             {
