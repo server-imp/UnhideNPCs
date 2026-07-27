@@ -106,7 +106,7 @@ bool ui::button(const char* label)
 bool ui::textbox(const char* tag, char* buffer, const size_t bufferSize)
 {
     ImGui::PushItemWidth(labelOffset + fieldWidth);
-    auto result = ImGui::InputText(tag, buffer, bufferSize);
+    const auto result = ImGui::InputText(tag, buffer, bufferSize);
     ImGui::PopItemWidth();
     return result;
 }
@@ -203,11 +203,11 @@ struct CheckboxGroupEntry
     bool*       value {};
     bool*       changed {};
 
-    CheckboxGroupEntry(const char* label, const char* tooltip, bool* value, bool* changed) : label(label),
-        tooltip(tooltip), value(value), changed(changed) {}
+    CheckboxGroupEntry(const char* label, const char* tooltip, bool* value, bool* changed)
+        : label(label), tooltip(tooltip), value(value), changed(changed) {}
 };
 
-bool checkboxGroup(const char* label, const char* tooltip, const std::vector<CheckboxGroupEntry>& items)
+static bool checkboxGroup(const char* label, const char* tooltip, const std::vector<CheckboxGroupEntry>& items)
 {
     const size_t count = items.size();
 
@@ -220,7 +220,7 @@ bool checkboxGroup(const char* label, const char* tooltip, const std::vector<Che
     if (count == 1)
     {
         snprintf(id, sizeof(id), "##%p", static_cast<void*>(items[0].value));
-        auto result = ui::checkbox(items[0].label, id, *items[0].value, items[0].tooltip);
+        const auto result = ui::checkbox(items[0].label, id, *items[0].value, items[0].tooltip);
         if (result)
         {
             *items[0].changed = true;
@@ -242,7 +242,7 @@ bool checkboxGroup(const char* label, const char* tooltip, const std::vector<Che
         }
     }
 
-    bool result = false;
+    auto result = false;
 
     for (size_t i = 0; i < count; ++i)
     {
@@ -285,16 +285,16 @@ bool checkboxGroup(const char* label, const char* tooltip, const std::vector<Che
     return result;
 }
 
-const char* ranks[] = { "Normal", "Veteran", "Elite", "Champion", "Legendary" };
-const char* modes[] = { "Both", "Attackable", "Non-Attackable" };
+static const char* ranks[] = { "Normal", "Veteran", "Elite", "Champion", "Legendary" };
+static const char* modes[] = { "Both", "Attackable", "Non-Attackable" };
 
-const char* instanceModes[] = { "Always On", "Disabled in instances", "Instances only" };
+static const char* instanceModes[] = { "Always On", "Disabled in instances", "Instances only" };
 
-std::vector<const char*> profileOptions {};
+static std::vector<const char*> profileOptions {};
 
-void renderProfileOptions()
+static void renderProfileOptions()
 {
-    auto& settings = *unpc::settings;
+    const auto& settings = *unpc::settings;
     auto& profile  = settings.profile();
 
     static char profileNameBuffer[64] { 0 };
@@ -339,7 +339,7 @@ void renderProfileOptions()
     if (ui::button("New Profile"))
     {
         const char* newName = profileNameBuffer[0] ? profileNameBuffer : "Profile";
-        int         i       = 0;
+        auto i       = 0;
         auto        name    = fmt::format("{}", newName);
         while (unpc::settings->profileExists(name))
         {
@@ -354,7 +354,7 @@ void renderProfileOptions()
 
     if (ui::button("Remove Profile"))
     {
-        int i = unpc::settings->ActiveProfile.get();
+        const int i = unpc::settings->ActiveProfile.get();
         if (i > 0)
         {
             unpc::settings->ActiveProfile.set(i - 1);
@@ -373,8 +373,8 @@ void ui::renderOptions()
         return;
     }
 
-    auto& settings = *unpc::settings;
-    auto& profile  = settings.profile();
+    const auto& settings = *unpc::settings;
+    const auto& profile  = settings.profile();
 
     if (!unpc::mumbleLink || unpc::mumbleLink->getContext().isCompetitiveMode())
     {
@@ -796,8 +796,7 @@ footer:
     {
         unpc::hotkeyManager.renderHotkeys();
         ImGui::TreePop();
-    }
-    else
+    } else
     {
         unpc::hotkeyManager.stopCapturing();
     }
@@ -874,16 +873,16 @@ void ui::renderWindow()
                 tmp                                      = nullptr;
             }
 
-            auto& io     = ImGui::GetIO();
-            auto  window = ImGui::GetCurrentWindow();
+            const auto& io     = ImGui::GetIO();
+            const auto  window = ImGui::GetCurrentWindow();
 
-            ImVec2 min = ImVec2(0.0f, 0.0f);
-            ImVec2 max = io.DisplaySize;
+            const auto min = ImVec2(0.0f, 0.0f);
+            const ImVec2 max = io.DisplaySize;
 
             ImVec2 pos  = window->Pos;
-            ImVec2 size = window->Size;
+            const ImVec2 size = window->Size;
 
-            bool clamped = false;
+            auto clamped = false;
 
             if (pos.x < min.x)
             {
@@ -999,23 +998,23 @@ uintptr_t ui::onWndProc(HWND hWnd, const UINT msg, const WPARAM wParam, const LP
         {
             switch (msg)
             {
-            case WM_LBUTTONDOWN:
-            case WM_LBUTTONDBLCLK:
-            case WM_RBUTTONDOWN:
-            case WM_RBUTTONDBLCLK:
-            case WM_MBUTTONDOWN:
-            case WM_MBUTTONDBLCLK:
-            case WM_XBUTTONDOWN:
-            case WM_XBUTTONDBLCLK:
-            case WM_LBUTTONUP:
-            case WM_RBUTTONUP:
-            case WM_MBUTTONUP:
-            case WM_XBUTTONUP:
-            case WM_MOUSEWHEEL:
-            case WM_MOUSEHWHEEL:
-            case WM_SETCURSOR: ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
-                return 0;
-            default: break;
+                case WM_LBUTTONDOWN:
+                case WM_LBUTTONDBLCLK:
+                case WM_RBUTTONDOWN:
+                case WM_RBUTTONDBLCLK:
+                case WM_MBUTTONDOWN:
+                case WM_MBUTTONDBLCLK:
+                case WM_XBUTTONDOWN:
+                case WM_XBUTTONDBLCLK:
+                case WM_LBUTTONUP:
+                case WM_RBUTTONUP:
+                case WM_MBUTTONUP:
+                case WM_XBUTTONUP:
+                case WM_MOUSEWHEEL:
+                case WM_MOUSEHWHEEL:
+                case WM_SETCURSOR: ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
+                    return 0;
+                default: break;
             }
         }
 
@@ -1023,16 +1022,16 @@ uintptr_t ui::onWndProc(HWND hWnd, const UINT msg, const WPARAM wParam, const LP
         {
             switch (msg)
             {
-            case WM_KEYDOWN:
-            case WM_SYSKEYDOWN:
-            case WM_CHAR:
-            case WM_SYSCHAR: ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
-                if (io.WantTextInput)
-                {
-                    return 0;
-                }
-                break;
-            default: break;
+                case WM_KEYDOWN:
+                case WM_SYSKEYDOWN:
+                case WM_CHAR:
+                case WM_SYSCHAR: ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
+                    if (io.WantTextInput)
+                    {
+                        return 0;
+                    }
+                    break;
+                default: break;
             }
         }
 
@@ -1069,8 +1068,7 @@ void ui::onD3DResizeBuffers(const memory::hooks::D3D11* hk, const bool pre)
     if (pre)
     {
         ImGui_ImplDX11_InvalidateDeviceObjects();
-    }
-    else
+    } else
     {
         ImGui_ImplDX11_Init(hk->device(), hk->context());
     }

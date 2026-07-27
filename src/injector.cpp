@@ -9,12 +9,12 @@
 #define MODULE_NAME ("UnhideNPCs.dll")
 #define TARGET_NAME ("Gw2-64.exe")
 
-DWORD getPidByName(const char* name)
+static DWORD getPidByName(const char* name)
 {
     PROCESSENTRY32 entry;
     entry.dwSize = sizeof(PROCESSENTRY32);
 
-    HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    const HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 
     if (Process32First(snapshot, &entry) == TRUE)
     {
@@ -32,7 +32,7 @@ DWORD getPidByName(const char* name)
     return 0;
 }
 
-bool findModule(const DWORD dwPid, const std::string& name)
+static bool findModule(const DWORD dwPid, const std::string& name)
 {
     MODULEENTRY32 entry;
     entry.dwSize = sizeof(entry);
@@ -105,7 +105,7 @@ int main()
         return 3;
     }
 
-    HANDLE hProc = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
+    const HANDLE hProc = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
     if (!hProc)
     {
         printf("OpenProcess failed: %ld\n", GetLastError());
@@ -153,7 +153,7 @@ int main()
         return 7;
     }
 
-    DWORD waitResult = WaitForSingleObject(hThread, INFINITE);
+    const DWORD waitResult = WaitForSingleObject(hThread, INFINITE);
     if (waitResult != WAIT_OBJECT_0)
     {
         printf("WaitForSingleObject failed: %lu\n", GetLastError());

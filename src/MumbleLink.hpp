@@ -32,23 +32,23 @@ struct MumbleContext
 {
     unsigned char serverAddress[28]; // contains sockaddr_in or sockaddr_in6
     uint32_t      mapId;
-    EMapType       mapType;
+    EMapType      mapType;
     uint32_t      shardId;
     uint32_t      instance;
     uint32_t      buildId;
     // Additional data beyond the <context_len> bytes the game instructs Mumble to use to distinguish between instances.
-    uint32_t uiState;
+    uint32_t      uiState;
     // Bitmask: Bit 1 = IsMapOpen, Bit 2 = IsCompassTopRight, Bit 3 = DoesCompassHaveRotationEnabled, Bit 4 = Game has focus, Bit 5 = Is in Competitive game mode, Bit 6 = Textbox has focus, Bit 7 = Is in Combat
-    uint16_t compassWidth;    // pixels
-    uint16_t compassHeight;   // pixels
-    float    compassRotation; // radians
-    float    playerX;         // continentCoords
-    float    playerY;         // continentCoords
-    float    mapCenterX;      // continentCoords
-    float    mapCenterY;      // continentCoords
-    float    mapScale;
-    uint32_t processId;
-    uint8_t  mountIndex;
+    uint16_t      compassWidth;    // pixels
+    uint16_t      compassHeight;   // pixels
+    float         compassRotation; // radians
+    float         playerX;         // continentCoords
+    float         playerY;         // continentCoords
+    float         mapCenterX;      // continentCoords
+    float         mapCenterY;      // continentCoords
+    float         mapScale;
+    uint32_t      processId;
+    uint8_t       mountIndex;
 
     [[nodiscard]] bool isMapOpen() const
     {
@@ -90,19 +90,20 @@ struct MumbleContext
 #pragma pack(push, 1)
 struct MumbleLink
 {
-    uint32_t uiVersion;
-    uint32_t uiTick;
-    float fAvatarPosition[3];
-    float fAvatarFront[3];
-    float fAvatarTop[3];
-    wchar_t name[256];
-    float fCameraPosition[3];
-    float fCameraFront[3];
-    float fCameraTop[3];
-    wchar_t identity[256];
-    uint32_t context_len; // Despite the actual context containing more data, this value is currently 48. See "context" section below.
+    uint32_t      uiVersion;
+    uint32_t      uiTick;
+    float         fAvatarPosition[3];
+    float         fAvatarFront[3];
+    float         fAvatarTop[3];
+    wchar_t       name[256];
+    float         fCameraPosition[3];
+    float         fCameraFront[3];
+    float         fCameraTop[3];
+    wchar_t       identity[256];
+    uint32_t      context_len;
+    // Despite the actual context containing more data, this value is currently 48. See "context" section below.
     unsigned char context[256];
-    wchar_t description[2048];
+    wchar_t       description[2048];
 
     const MumbleContext& getContext()
     {
@@ -117,8 +118,8 @@ struct MumbleLink
 
     [[nodiscard]] float getFov() const
     {
-        static float cachedFov = 1.222f;
-        static u64 lastUpdate {};
+        static auto cachedFov = 1.222f;
+        static u64  lastUpdate {};
 
         if (GetTickCount64() - lastUpdate < 1000)
         {
@@ -126,7 +127,7 @@ struct MumbleLink
         }
 
         lastUpdate = GetTickCount64();
-        auto json = getIdentity();
+        auto json  = getIdentity();
         if (json.contains("fov") && json["fov"].is_number())
         {
             cachedFov = json["fov"].get<float>();
@@ -155,8 +156,7 @@ inline MumbleLink* getMumbleLink()
             PAGE_READWRITE,
             0,
             sizeof(MumbleLink),
-            mappingName.c_str()
-        );
+            mappingName.c_str());
 
         if (!hMap)
         {

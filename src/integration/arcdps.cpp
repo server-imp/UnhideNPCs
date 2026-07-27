@@ -31,7 +31,7 @@ arcdps_exports* mod_init()
         return &arc_exports;
     }
 
-    arc_exports.imgui = reinterpret_cast<void*>(reinterpret_cast<std::uintptr_t>(ui::renderWindow));
+    arc_exports.imgui        = reinterpret_cast<void*>(reinterpret_cast<std::uintptr_t>(ui::renderWindow));
     arc_exports.wnd_nofilter = reinterpret_cast<void*>(ui::onWndProc);
 
     unpc::start();

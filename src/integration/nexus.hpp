@@ -23,7 +23,7 @@ namespace nexus
 
     void options();
 
-    void onLoad(AddonAPI* aApi);
+    void onLoad(AddonAPI * aApi);
 
     void onUnload();
 }

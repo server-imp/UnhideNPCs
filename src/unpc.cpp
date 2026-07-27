@@ -51,7 +51,7 @@ static void hotkeyCallback(const std::string& id)
     {
         for (auto& _setting : settings.settings())
         {
-            bool matched = false;
+            auto matched = false;
 
             std::visit(
                 [&](auto&& setting)
@@ -87,8 +87,7 @@ static void hotkeyCallback(const std::string& id)
     if (id == "ForceVisibility")
     {
         ++re::forceVisibility;
-    }
-    else if (id == "ToggleOverlay")
+    } else if (id == "ToggleOverlay")
     {
         if (settings->OverlayOpen.get() && hotkeyManager.isCapturing())
         {
@@ -96,8 +95,7 @@ static void hotkeyCallback(const std::string& id)
         }
 
         settings->OverlayOpen.set(!settings->OverlayOpen.get());
-    }
-    else if (id == "SwitchProfile")
+    } else if (id == "SwitchProfile")
     {
         auto idx = settings->ActiveProfile.get();
         ++idx;
@@ -294,8 +292,7 @@ void unpc::onHookTick()
             if (!ui::d3dHook || !ui::d3dHook.value()->enable())
             {
                 LOG_INFO("Overlay Not OK");
-            }
-            else
+            } else
             {
                 LOG_INFO("Overlay OK");
             }
@@ -624,7 +621,11 @@ void unpc::start()
     auto logLevel = logging::LogLevel::Debug;
 #endif
 
-    logger.emplace("UnhideNPCs", std::filesystem::current_path() / "addons" / "UnhideNPCs" / "unhidenpcs.log", logLevel);
+    logger.emplace(
+        "UnhideNPCs",
+        std::filesystem::current_path() / "addons" / "UnhideNPCs" / "unhidenpcs.log",
+        logLevel
+    );
 
     LOG_INFO("Starting");
     LOG_INFO("Version {}", version::STRING);
@@ -633,24 +634,20 @@ void unpc::start()
     {
         LOG_INFO("Mode: Injected");
         mode = EMode::Injected;
-    }
-    else if (hProxyModule)
+    } else if (hProxyModule)
     {
         LOG_INFO("Mode: Proxy({})", proxyModuleName);
         mode = EMode::Proxy;
-    }
-    else if (nexusPresent && util::isModuleInAnyDirsRelativeToExe(hModule, { "addons" }))
+    } else if (nexusPresent && util::isModuleInAnyDirsRelativeToExe(hModule, { "addons" }))
     {
         LOG_INFO("Mode: Nexus");
         mode = EMode::Nexus;
         logger->registerCallback(nexus::logCallback);
-    }
-    else if (arcDpsPresent && util::isModuleInAnyDirsRelativeToExe(hModule, { "", "bin64" }))
+    } else if (arcDpsPresent && util::isModuleInAnyDirsRelativeToExe(hModule, { "", "bin64" }))
     {
         LOG_INFO("Mode: ArcDPS");
         mode = EMode::ArcDps;
-    }
-    else
+    } else
     {
         LOG_INFO("Mode: Unknown");
         mode = EMode::Unknown;
@@ -658,8 +655,8 @@ void unpc::start()
         return;
     }
 
-    auto result   = initialize();
-    auto end      = std::chrono::high_resolution_clock::now();
+    const auto result   = initialize();
+    const auto end      = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
     if (!result)

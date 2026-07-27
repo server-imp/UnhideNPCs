@@ -15,14 +15,7 @@ namespace ui
 
     bool checkbox(const char* label, const char* id, bool& value, const char* tip);
 
-    bool combo(
-        const char*        label,
-        const char*        id,
-        int&               value,
-        const char* const* items,
-        int                count,
-        const char*        tip
-    );
+    bool combo(const char* label, const char* id, int& value, const char* const* items, int count, const char* tip);
 
     bool sliderInt(
         const char* label,
@@ -46,7 +39,7 @@ namespace ui
 
     bool button(const char* label);
 
-    bool textbox(const char* tag, char* buffer, const size_t bufferSize);
+    bool textbox(const char* tag, char* buffer, size_t bufferSize);
 
     bool textboxbutton(const char* tag, const char* hint, char* buffer, size_t bufferSize, const char* buttonText);
 

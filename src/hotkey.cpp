@@ -27,8 +27,8 @@ std::string Hotkey::toString() const
         s += "Alt + ";
     }
 
-    char name[64];
-    const auto  scan = MapVirtualKey(vkCode, MAPVK_VK_TO_VSC);
+    char       name[64];
+    const auto scan = MapVirtualKey(vkCode, MAPVK_VK_TO_VSC);
     GetKeyNameTextA(scan << 16, name, 64);
 
     s += name;
@@ -48,8 +48,8 @@ bool HotkeyManager::isHotkeyPressed(Hotkey& hotkey) const
         return false;
     }
 
-    const bool pressed = _keyStates.down[hotkey.vkCode] && _keyStates.down[VK_CONTROL] == hotkey.ctrl && _keyStates.down[VK_SHIFT] == hotkey.shift && _keyStates
-        .down[VK_MENU] == hotkey.alt;
+    const bool pressed = _keyStates.down[hotkey.vkCode] && _keyStates.down[VK_CONTROL] == hotkey.ctrl && _keyStates.down
+    [VK_SHIFT] == hotkey.shift && _keyStates.down[VK_MENU] == hotkey.alt;
 
     if (pressed && !hotkey.active)
     {
@@ -84,7 +84,7 @@ uintptr_t HotkeyManager::onWndProc(HWND hWnd, const UINT msg, const WPARAM wPara
         return msg;
     }
 
-    if (unpc::mumbleLink && unpc::mumbleLink->getContext().isTextboxFocused())
+    if (unpc::mumbleLink&& unpc::mumbleLink->getContext().isTextboxFocused())
     {
         return msg;
     }
@@ -108,28 +108,28 @@ uintptr_t HotkeyManager::onWndProc(HWND hWnd, const UINT msg, const WPARAM wPara
 
     switch (vkCode)
     {
-    case 0:
-    case VK_LBUTTON:
-    case VK_RBUTTON:
-    case VK_MBUTTON:
-    case VK_XBUTTON1:
-    case VK_XBUTTON2:
-    case VK_BACK:
-    case VK_TAB:
-    case VK_RETURN:
-    case VK_PAUSE:
-    case VK_CAPITAL:
-    case VK_NONAME:
-    case VK_CONTROL:
-    case VK_LCONTROL:
-    case VK_RCONTROL:
-    case VK_SHIFT:
-    case VK_LSHIFT:
-    case VK_RSHIFT:
-    case VK_MENU:
-    case VK_LMENU:
-    case VK_RMENU: return msg;
-    default: break;
+        case 0:
+        case VK_LBUTTON:
+        case VK_RBUTTON:
+        case VK_MBUTTON:
+        case VK_XBUTTON1:
+        case VK_XBUTTON2:
+        case VK_BACK:
+        case VK_TAB:
+        case VK_RETURN:
+        case VK_PAUSE:
+        case VK_CAPITAL:
+        case VK_NONAME:
+        case VK_CONTROL:
+        case VK_LCONTROL:
+        case VK_RCONTROL:
+        case VK_SHIFT:
+        case VK_LSHIFT:
+        case VK_RSHIFT:
+        case VK_MENU:
+        case VK_LMENU:
+        case VK_RMENU: return msg;
+        default: break;
     }
 
     const bool ctrl  = (GetKeyState(VK_CONTROL) & 0x8000) != 0;
@@ -145,11 +145,11 @@ uintptr_t HotkeyManager::onWndProc(HWND hWnd, const UINT msg, const WPARAM wPara
             return 0;
         }
 
-        hotkey->vkCode   = vkCode;
-        hotkey->ctrl     = ctrl;
-        hotkey->shift    = shift;
-        hotkey->alt      = alt;
-        hotkey->active   = true; // prevent it from activating immediately
+        hotkey->vkCode = vkCode;
+        hotkey->ctrl   = ctrl;
+        hotkey->shift  = shift;
+        hotkey->alt    = alt;
+        hotkey->active = true; // prevent it from activating immediately
 
         LOG_INFO("Updated hotkey \"{}\" to {}", _hotkeyCapturing, hotkey->toString());
 
@@ -231,7 +231,7 @@ void HotkeyManager::triggerCallbacks(const std::string& id) const
     }
 }
 
-void HotkeyManager::registerCallback(const std::function<void(const std::string&)>& callback)
+void HotkeyManager::registerCallback(const std::function < void(const std::string &) > &callback)
 {
     _callbacks.push_back(callback);
 }
@@ -266,8 +266,7 @@ void HotkeyManager::renderHotkey(const std::string& id, Hotkey& hotkey)
             LOG_INFO("Updated hotkey \"{}\" to {}", id, hotkey.toString());
             _needSave = true;
         }
-    }
-    else
+    } else
     {
         ImGui::PushID(id.c_str());
         if (ImGui::Button(hotkey.toString().c_str(), ImVec2(-FLT_MIN, 0)))
@@ -282,7 +281,12 @@ void HotkeyManager::renderHotkey(const std::string& id, Hotkey& hotkey)
 
 void HotkeyManager::renderHotkeys()
 {
-    if (ImGui::BeginTable("hotkey_table", 2, ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_ScrollY, ImVec2(0, 300)))
+    if (ImGui::BeginTable(
+        "hotkey_table",
+        2,
+        ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_ScrollY,
+        ImVec2(0, 300)
+    ))
     {
         ImGui::TableSetupColumn("Text", ImGuiTableColumnFlags_WidthStretch);
         ImGui::TableSetupColumn("Button", ImGuiTableColumnFlags_WidthFixed, ui::fieldWidth);
@@ -374,7 +378,7 @@ void HotkeyManager::load()
     std::vector<std::pair<std::string, Hotkey>> hotkeys = json;
     for (auto& [id, hotkey] : hotkeys)
     {
-        auto hk = getHotkey(id);
+        const auto hk = getHotkey(id);
         if (!hk)
         {
             LOG_WARN("Unknown hotkey \"{}\"", id);

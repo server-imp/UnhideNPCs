@@ -51,35 +51,39 @@ namespace unpc
     void onHookTick();
 
     // This function may be called second, returning true means the character will be forced invisible
-    bool shouldHide(bool    isPlayer,
-                    bool    isPlayerOwned,
-                    bool    isOwnerLocalPlayer,
-                    bool    isTarget,
-                    bool    isAttackable,
-                    uint8_t rank,
-                    float   distance,
-                    bool    isFriend,
-                    bool    isBlocked,
-                    bool    isActiveGuildMember,
-                    bool    isGuildMember,
-                    bool    isPartyMember,
-                    bool    isSquadMember);
+    bool shouldHide(
+        bool    isPlayer,
+        bool    isPlayerOwned,
+        bool    isOwnerLocalPlayer,
+        bool    isTarget,
+        bool    isAttackable,
+        uint8_t rank,
+        float   distance,
+        bool    isFriend,
+        bool    isBlocked,
+        bool    isActiveGuildMember,
+        bool    isGuildMember,
+        bool    isPartyMember,
+        bool    isSquadMember
+    );
 
     // This function is called first, returning true means the character will be forced visible
     // if returning false, it will go on to call shouldHide
-    bool shouldShow(bool    isPlayer,
-                    bool    isPlayerOwned,
-                    bool    isOwnerLocalPlayer,
-                    bool    isTarget,
-                    bool    isAttackable,
-                    uint8_t rank,
-                    float   distance,
-                    bool    isFriend,
-                    bool    isBlocked,
-                    bool    isActiveGuildMember,
-                    bool    isGuildMember,
-                    bool    isPartyMember,
-                    bool    isSquadMember);
+    bool shouldShow(
+        bool    isPlayer,
+        bool    isPlayerOwned,
+        bool    isOwnerLocalPlayer,
+        bool    isTarget,
+        bool    isAttackable,
+        uint8_t rank,
+        float   distance,
+        bool    isFriend,
+        bool    isBlocked,
+        bool    isActiveGuildMember,
+        bool    isGuildMember,
+        bool    isPartyMember,
+        bool    isSquadMember
+    );
 
     void start();
 
@@ -89,7 +93,13 @@ namespace unpc
 
     // Locate asserts/errors with the specified values
     // returns the address of the first instruction (mov)
-    bool findAsserts(memory::Module& module, i32 num, const std::string& a, const std::string& b, std::vector<memory::Handle>& results);
+    bool findAsserts(
+        memory::Module&              module,
+        i32                          num,
+        const std::string&           a,
+        const std::string&           b,
+        std::vector<memory::Handle>& results
+    );
 }
 
 #endif //UNHIDENPCS_UNPC_HPP

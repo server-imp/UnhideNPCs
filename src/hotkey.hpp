@@ -6,7 +6,7 @@
 struct Hotkey
 {
     std::string label {};
-    uint32_t vkCode {};
+    uint32_t    vkCode {};
 
     bool ctrl {};
     bool shift {};
@@ -24,21 +24,21 @@ class HotkeyManager
 private:
     struct
     {
-        bool down[256]{};
-        bool pressed[256]{};
+        bool down[256] {};
+        bool pressed[256] {};
     } _keyStates {};
 
-    std::vector<std::pair<std::string, Hotkey>> _hotkeys {};
-    std::vector<std::function<void(const std::string&)>> _callbacks {};
+    std::vector<std::pair<std::string, Hotkey>>           _hotkeys {};
+    std::vector<std::function<void(const std::string &)>> _callbacks {};
 
     std::string _requiredWndClassName {};
-    bool _wndClassActive = true;
+    bool        _wndClassActive = true;
 
     std::string _hotkeyCapturing {};
-    bool _captureJustStarted {};
+    bool        _captureJustStarted {};
 
     std::filesystem::path _filePath;
-    bool _needSave = false;
+    bool                  _needSave = false;
 
     std::mutex _mutex {};
 
@@ -49,16 +49,16 @@ public:
 
     uintptr_t onWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-    void setRequiredWndClassName(const std::string& className);
-    void registerHotkey(const std::string& id, const std::string& label);
-    void unregisterHotkey(const std::string& id);
-    void triggerCallbacks(const std::string& id) const;
-    void registerCallback(const std::function<void(const std::string&)>& callback);
-    void update();
-    void renderHotkey(const std::string& id, Hotkey& hotkey);
-    void renderHotkeys();
-    void stopCapturing(bool clearHotkey = false);
-    [[nodiscard]] bool isCapturing() const;
+    void                  setRequiredWndClassName(const std::string& className);
+    void                  registerHotkey(const std::string& id, const std::string& label);
+    void                  unregisterHotkey(const std::string& id);
+    void                  triggerCallbacks(const std::string& id) const;
+    void                  registerCallback(const std::function<void(const std::string &)>& callback);
+    void                  update();
+    void                  renderHotkey(const std::string& id, Hotkey& hotkey);
+    void                  renderHotkeys();
+    void                  stopCapturing(bool clearHotkey = false);
+    [[nodiscard]] bool    isCapturing() const;
     [[nodiscard]] Hotkey* getHotkey(const std::string& id);
 
     void save();
