@@ -166,11 +166,13 @@ function(add_unhidenpcs_dll TARGET_NAME IMGUI_TARGET OUTPUT_NAME)
             fw
     )
 
-    add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
-            COMMAND ${CMAKE_OBJCOPY} --only-keep-debug $<TARGET_FILE:${TARGET_NAME}> $<TARGET_FILE:${TARGET_NAME}>.debug
-            COMMAND ${CMAKE_STRIP} --strip-debug $<TARGET_FILE:${TARGET_NAME}>
-            COMMAND ${CMAKE_OBJCOPY} --add-gnu-debuglink=$<TARGET_FILE_NAME:${TARGET_NAME}>.debug $<TARGET_FILE:${TARGET_NAME}>
-    )
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
+                COMMAND ${CMAKE_OBJCOPY} --only-keep-debug $<TARGET_FILE:${TARGET_NAME}> $<TARGET_FILE:${TARGET_NAME}>.debug
+                COMMAND ${CMAKE_STRIP} --strip-debug $<TARGET_FILE:${TARGET_NAME}>
+                COMMAND ${CMAKE_OBJCOPY} --add-gnu-debuglink=$<TARGET_FILE_NAME:${TARGET_NAME}>.debug $<TARGET_FILE:${TARGET_NAME}>
+        )
+    endif()
 endfunction()
 
 set(UNPC_IMGUI_VERSION 1800)
