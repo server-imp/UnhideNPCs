@@ -1,7 +1,6 @@
 --- a/backends/imgui_impl_win32.cpp
 +++ b/backends/imgui_impl_win32.cpp
-@@ -21,7 +21,7 @@
-
+@@ -21,6 +21,6 @@
  // Using XInput library for gamepad (with recent Windows SDK this may leads to executables which won't run on Windows 7)
  #ifndef IMGUI_IMPL_WIN32_DISABLE_GAMEPAD
 -#include <XInput.h>
