@@ -43,7 +43,13 @@ bool ui::checkbox(const char* label, const char* id, bool& value, const char* ti
     return ImGui::Checkbox(id, &value);
 }
 
-bool ui::combo(const char* label, const char* id, int& value, const char* const* items, int count, const char* tip)
+bool ui::combo(
+    const char*        label,
+    const char*        id,
+    int&               value,
+    const char* const* items,
+    const size_t       count,
+    const char*        tip)
 {
     const float initialCursorX = ImGui::GetCursorPosX();
     ImGui::Text("%s", label);
@@ -51,7 +57,7 @@ bool ui::combo(const char* label, const char* id, int& value, const char* const*
     ImGui::SameLine();
     ImGui::SetCursorPosX(initialCursorX + labelOffset);
     ImGui::PushItemWidth(fieldWidth);
-    const bool result = ImGui::Combo(id, &value, items, count);
+    const bool result = ImGui::Combo(id, &value, items, static_cast<int32_t>(count));
     ImGui::PopItemWidth();
     return result;
 }
@@ -63,8 +69,7 @@ bool ui::sliderInt(
     const int32_t min,
     const int32_t max,
     const char*   fmt,
-    const char*   tip
-)
+    const char*   tip)
 {
     const float initialCursorX = ImGui::GetCursorPosX();
     ImGui::Text("%s", label);
@@ -84,8 +89,7 @@ bool ui::sliderFloat(
     const float min,
     const float max,
     const char* fmt,
-    const char* tip
-)
+    const char* tip)
 {
     const float initialCursorX = ImGui::GetCursorPosX();
     ImGui::Text("%s", label);
@@ -111,7 +115,7 @@ bool ui::textbox(const char* tag, char* buffer, const size_t bufferSize)
     return result;
 }
 
-bool ui::textboxbutton(const char* tag, const char* hint, char* buffer, const size_t bufferSize, const char* buttonText)
+bool ui::textboxButton(const char* tag, const char* hint, char* buffer, const size_t bufferSize, const char* buttonText)
 {
     const float initialCursorX = ImGui::GetCursorPosX();
     const auto  width          = labelOffset - ImGui::GetStyle().ItemSpacing.x;
@@ -189,8 +193,7 @@ bool ui::textLink(const char* label, const bool centered)
             ImVec2(pos.x, pos.y + textSize.y),
             ImVec2(pos.x + textSize.x, pos.y + textSize.y),
             color,
-            1.0f
-        );
+            1.0f);
     }
 
     return clicked;
@@ -295,9 +298,9 @@ static std::vector<const char*> profileOptions {};
 static void renderProfileOptions()
 {
     const auto& settings = *unpc::settings;
-    auto& profile  = settings.profile();
+    auto&       profile  = settings.profile();
 
-    static char profileNameBuffer[64] { 0 };
+    static char profileNameBuffer[64] {};
     int         selected = unpc::settings->ActiveProfile.get();
 
     if (profileOptions.empty())
@@ -317,20 +320,18 @@ static void renderProfileOptions()
         ++re::forceVisibility;
     }
 
-    if (ui::textboxbutton(
+    if (ui::textboxButton(
         "##profileName",
         "New Profile Name",
         profileNameBuffer,
         std::size(profileNameBuffer),
-        "Rename Profile"
-    ))
+        "Rename Profile"))
     {
         if (unpc::settings->ActiveProfile.get() > 0 && profileNameBuffer[0])
         {
             unpc::settings->renameProfile(
                 unpc::settings->children()[unpc::settings->ActiveProfile.get()]->name(),
-                profileNameBuffer
-            );
+                profileNameBuffer);
             profileOptions.clear();
             ++re::forceVisibility;
         }
@@ -339,7 +340,7 @@ static void renderProfileOptions()
     if (ui::button("New Profile"))
     {
         const char* newName = profileNameBuffer[0] ? profileNameBuffer : "Profile";
-        auto i       = 0;
+        auto        i       = 0;
         auto        name    = fmt::format("{}", newName);
         while (unpc::settings->profileExists(name))
         {
@@ -347,7 +348,7 @@ static void renderProfileOptions()
             name = fmt::format("{} {}", newName, i);
         }
         unpc::settings->addProfile(name);
-        unpc::settings->ActiveProfile.set(unpc::settings->children().size() - 1);
+        unpc::settings->ActiveProfile.set(static_cast<int32_t>(unpc::settings->children().size()) - 1);
         profileOptions.clear();
         ++re::forceVisibility;
     }
@@ -411,8 +412,7 @@ void ui::renderOptions()
             { "Players", profile.UnhidePlayers.description().c_str(), &unhidePlayers, &unhidePlayersChanged },
             { "Player-Owned", profile.PlayerOwned.description().c_str(), &playerOwned, &playerOwnedChanged },
             { "Target", profile.AlwaysShowTarget.description().c_str(), &alwaysShowTarget, &alwaysShowTargetChanged }
-        }
-    ))
+        }))
     {
         if (unhideNpcsChanged)
         {
@@ -434,55 +434,51 @@ void ui::renderOptions()
 
     bool unhideLowQuality = profile.UnhideLowQuality.get();
     ImGui::NewLine();
-    if (ui::checkbox(
+    if (checkbox(
         "Low Quality Models",
         "##unhideLowQualityModels",
         unhideLowQuality,
-        profile.UnhideLowQuality.description().c_str()
-    ))
+        profile.UnhideLowQuality.description().c_str()))
     {
         profile.UnhideLowQuality.set(unhideLowQuality);
     }
-    if (auto maxDistance = static_cast<int32_t>(profile.MaximumDistance.get()); ui::sliderInt(
+    if (auto maxDistance = static_cast<int32_t>(profile.MaximumDistance.get()); sliderInt(
         "Max Distance",
         "##maxDistance",
         maxDistance,
         0,
         1000,
         maxDistance == 0 ? "Unlimited" : "%d meters",
-        profile.MaximumDistance.description().c_str()
-    ))
+        profile.MaximumDistance.description().c_str()))
     {
         profile.MaximumDistance.set(static_cast<float>(maxDistance));
     }
 
     int minimumRank = profile.MinimumRank.get();
-    if (ui::combo(
+    if (combo(
         "Minimum Rank",
         "##minRank",
         minimumRank,
         ranks,
         IM_ARRAYSIZE(ranks),
-        profile.MinimumRank.description().c_str()
-    ))
+        profile.MinimumRank.description().c_str()))
     {
         profile.MinimumRank.set(minimumRank);
     }
 
     int attackable = profile.Attackable.get();
-    if (ui::combo(
+    if (combo(
         "Attackable",
         "##attackable",
         attackable,
         modes,
         IM_ARRAYSIZE(modes),
-        profile.Attackable.description().c_str()
-    ))
+        profile.Attackable.description().c_str()))
     {
         profile.Attackable.set(attackable);
     }
 
-    ui::separatorText("Hide");
+    separatorText("Hide");
     bool hideAllPlayersChanged {}, hideBlockedPlayersChanged {}, hideNonGroupPlayersChanged {}, hideStrangersChanged {},
          hideNonGuildPlayersChanged {}, hideNonFriendPlayersChanged {};
     bool hidePlayers = profile.HidePlayers.get();
@@ -522,8 +518,7 @@ void ui::renderOptions()
                 &hideNonFriends,
                 &hideNonFriendPlayersChanged
             }
-        }
-    ))
+        }))
     {
         if (hideAllPlayersChanged)
         {
@@ -599,8 +594,7 @@ void ui::renderOptions()
                 &hideNonFriendPlayerOwnedChanged
             },
             { "Mine", profile.HidePlayerOwnedSelf.description().c_str(), &hidePlayerOwnedSelf, &hideMyOwnedChanged }
-        }
-    ))
+        }))
     {
         if (hideAllPlayerOwnedChanged)
         {
@@ -652,8 +646,7 @@ void ui::renderOptions()
                 &hidePlayerOwnedInCombat,
                 &hidePlayerOwnedInCombatChanged
             }
-        }
-    ))
+        }))
     {
         if (hidePlayersInCombatChanged)
         {
@@ -667,57 +660,53 @@ void ui::renderOptions()
 
     ImGui::NewLine();
     int32_t maxPlayersVisible = profile.MaxPlayersVisible.get();
-    if (ui::sliderInt(
+    if (sliderInt(
         "Max Players",
         "##MaxPlayersVisible",
         maxPlayersVisible,
         0,
         250,
         maxPlayersVisible == 0 ? "Unlimited" : "%d",
-        profile.MaxPlayersVisible.description().c_str()
-    ))
+        profile.MaxPlayersVisible.description().c_str()))
     {
         profile.MaxPlayersVisible.set(maxPlayersVisible);
     }
 
     int32_t maxPlayerOwnedVisible = profile.MaxPlayerOwnedVisible.get();
-    if (ui::sliderInt(
+    if (sliderInt(
         "Max Player-Owned",
         "##MaxPlayerOwnedVisible",
         maxPlayerOwnedVisible,
         0,
         100,
         maxPlayerOwnedVisible == 0 ? "Unlimited" : "%d",
-        profile.MaxPlayerOwnedVisible.description().c_str()
-    ))
+        profile.MaxPlayerOwnedVisible.description().c_str()))
     {
         profile.MaxPlayerOwnedVisible.set(maxPlayerOwnedVisible);
     }
 
     int32_t maxNpcs = profile.MaxNpcs.get();
-    if (ui::sliderInt(
+    if (sliderInt(
         "Max NPCs",
         "##maxNpcs",
         maxNpcs,
         0,
         1000,
         maxNpcs == 0 ? "Unlimited" : "%d",
-        profile.MaxNpcs.description().c_str()
-    ))
+        profile.MaxNpcs.description().c_str()))
     {
         profile.MaxNpcs.set(maxNpcs);
     }
     ImGui::NewLine();
 
     int instanceBehaviour = profile.InstanceBehaviour.get();
-    if (ui::combo(
+    if (combo(
         "Instance Behaviour",
         "##instances",
         instanceBehaviour,
         instanceModes,
         IM_ARRAYSIZE(instanceModes),
-        profile.InstanceBehaviour.description().c_str()
-    ))
+        profile.InstanceBehaviour.description().c_str()))
     {
         profile.InstanceBehaviour.set(instanceBehaviour);
     }
@@ -733,14 +722,12 @@ void ui::renderOptions()
         "Loading Boost",
         settings.LoadScreenBoost.description().c_str(),
         &loadScreenBoost,
-        &loadScreenBoostChanged
-    );
+        &loadScreenBoostChanged);
     entries.emplace_back(
         "Esc To Close",
         settings.CloseOnEscape.description().c_str(),
         &closeOnEscape,
-        &closeOnEscapeChanged
-    );
+        &closeOnEscapeChanged);
 
     if (unpc::mode == unpc::EMode::Nexus)
     {
@@ -769,15 +756,14 @@ footer:
     if (unpc::mode == unpc::EMode::Proxy || unpc::mode == unpc::EMode::Injected)
     {
         float overlayFontSize = settings.OverlayFontSize.get();
-        if (ui::sliderFloat(
+        if (sliderFloat(
             "Font Size",
             "##OverlayFontSize",
             overlayFontSize,
             10,
             20,
             "%.0f",
-            settings.OverlayFontSize.description().c_str()
-        ))
+            settings.OverlayFontSize.description().c_str()))
         {
             settings.OverlayFontSize.set(std::roundf(overlayFontSize));
         }
@@ -789,8 +775,7 @@ footer:
     }
     tooltip(
         "Forces all characters to be visible for the next frame\n"
-        "Useful for \"resetting\" things after modifying any settings."
-    );
+        "Useful for \"resetting\" things after modifying any settings.");
 
     if (ImGui::TreeNodeEx("Hotkeys", ImGuiTreeNodeFlags_NoTreePushOnOpen))
     {
@@ -805,11 +790,10 @@ footer:
         "PLR:%-3d OWN:%-3d NPC:%-3d",
         unpc::numPlayersVisible,
         unpc::numPlayerOwnedVisible,
-        unpc::numNpcsVisible
-    );
+        unpc::numNPCVisible);
 
 #ifndef BUILDING_ON_GITHUB
-    ui::separatorText("Debug");
+    separatorText("Debug");
     re::debugMenu();
 #endif
 
@@ -824,7 +808,7 @@ footer:
 
     const std::string version   = fmt::format("v{}", unpc::version::STRING);
     const float       textWidth = ImGui::CalcTextSize(version.c_str()).x;
-    ImGui::SetCursorPosX(ImGui::GetWindowWidth() - textWidth - (2 * ImGui::GetStyle().ItemSpacing.x));
+    ImGui::SetCursorPosX(ImGui::GetWindowWidth() - textWidth - 2 * ImGui::GetStyle().ItemSpacing.x);
     ImGui::TextUnformatted(version.c_str());
 }
 
@@ -876,10 +860,10 @@ void ui::renderWindow()
             const auto& io     = ImGui::GetIO();
             const auto  window = ImGui::GetCurrentWindow();
 
-            const auto min = ImVec2(0.0f, 0.0f);
+            const auto   min = ImVec2(0.0f, 0.0f);
             const ImVec2 max = io.DisplaySize;
 
-            ImVec2 pos  = window->Pos;
+            ImVec2       pos  = window->Pos;
             const ImVec2 size = window->Size;
 
             auto clamped = false;
@@ -921,12 +905,12 @@ void ui::renderWindow()
     }
 }
 
-static SHORT lastState[256] = { 0 };
+static SHORT lastState[256] = {};
 
 bool ui::wasKeyPressed(const int vKey)
 {
     const SHORT current = GetAsyncKeyState(vKey);
-    const bool  pressed = (current & 0x8000) && !(lastState[vKey] & 0x8000);
+    const bool  pressed = current & 0x8000 && !(lastState[vKey] & 0x8000);
     lastState[vKey]     = current;
     return pressed;
 }
@@ -954,7 +938,7 @@ bool ui::wasComboPressed(const std::initializer_list<int>& combo)
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND, UINT, WPARAM, LPARAM);
 
-uintptr_t ui::onWndProc(HWND hWnd, const UINT msg, const WPARAM wParam, const LPARAM lParam)
+uintptr_t ui::onWndProc(const HWND hWnd, const UINT msg, const WPARAM wParam, const LPARAM lParam)
 {
     if (unpc::exit)
     {
@@ -1012,9 +996,11 @@ uintptr_t ui::onWndProc(HWND hWnd, const UINT msg, const WPARAM wParam, const LP
                 case WM_XBUTTONUP:
                 case WM_MOUSEWHEEL:
                 case WM_MOUSEHWHEEL:
-                case WM_SETCURSOR: ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
+                case WM_SETCURSOR:
+                    ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
                     return 0;
-                default: break;
+                default:
+                    break;
             }
         }
 
@@ -1025,13 +1011,15 @@ uintptr_t ui::onWndProc(HWND hWnd, const UINT msg, const WPARAM wParam, const LP
                 case WM_KEYDOWN:
                 case WM_SYSKEYDOWN:
                 case WM_CHAR:
-                case WM_SYSCHAR: ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
+                case WM_SYSCHAR:
+                    ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
                     if (io.WantTextInput)
                     {
                         return 0;
                     }
                     break;
-                default: break;
+                default:
+                    break;
             }
         }
 
@@ -1044,7 +1032,7 @@ uintptr_t ui::onWndProc(HWND hWnd, const UINT msg, const WPARAM wParam, const LP
     return msg;
 }
 
-u32 ui::onWndProcNexus(HWND hWnd, const UINT msg, const WPARAM wParam, const LPARAM lParam)
+u32 ui::onWndProcNexus(const HWND hWnd, const UINT msg, const WPARAM wParam, const LPARAM lParam)
 {
     return onWndProc(hWnd, msg, wParam, lParam);
 }

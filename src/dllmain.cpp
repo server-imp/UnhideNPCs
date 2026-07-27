@@ -30,8 +30,7 @@ bool isInGameFolder(const HMODULE hModule)
         [&](const std::filesystem::path& p)
         {
             return dllPath == p;
-        }
-    );
+        });
 }
 
 BOOL APIENTRY DllMain(const HMODULE hModule, const DWORD ulReasonForCall, PVOID)

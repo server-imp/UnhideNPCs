@@ -14,7 +14,7 @@ inline void forceVisibility([[maybe_unused]] fw::SettingRefVariant& setting)
 class SettingsProfile : public fw::Settings
 {
 protected:
-    std::unique_ptr<fw::Settings> createChild(const std::string& name) override;
+    std::unique_ptr<Settings> createChild(const std::string& name) override;
 
 public:
     fw::Setting<bool>& UnhideNPCs = add<bool>(true, "UnhideNPCs", "Unhide NPCs").onChanged(forceVisibility);
@@ -171,7 +171,7 @@ public:
             }
         });
 
-    explicit SettingsProfile(fw::Settings* owner, const std::string& name) : fw::Settings(owner, name, "") {}
+    explicit SettingsProfile(Settings* owner, const std::string& name) : Settings(owner, name, "") {}
 };
 
 class Settings : public fw::Settings

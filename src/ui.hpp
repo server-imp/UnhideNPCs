@@ -15,7 +15,7 @@ namespace ui
 
     bool checkbox(const char* label, const char* id, bool& value, const char* tip);
 
-    bool combo(const char* label, const char* id, int& value, const char* const* items, int count, const char* tip);
+    bool combo(const char* label, const char* id, int& value, const char* const* items, size_t count, const char* tip);
 
     bool sliderInt(
         const char* label,
@@ -24,8 +24,7 @@ namespace ui
         int32_t     min,
         int32_t     max,
         const char* fmt,
-        const char* tip
-    );
+        const char* tip);
 
     bool sliderFloat(
         const char* label,
@@ -34,14 +33,13 @@ namespace ui
         float       min,
         float       max,
         const char* fmt,
-        const char* tip
-    );
+        const char* tip);
 
     bool button(const char* label);
 
     bool textbox(const char* tag, char* buffer, size_t bufferSize);
 
-    bool textboxbutton(const char* tag, const char* hint, char* buffer, size_t bufferSize, const char* buttonText);
+    bool textboxButton(const char* tag, const char* hint, char* buffer, size_t bufferSize, const char* buttonText);
 
     void separatorText(const char* text);
 

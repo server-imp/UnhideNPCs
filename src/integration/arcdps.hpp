@@ -34,8 +34,7 @@ extern "C" __declspec(dllexport) void* get_init_addr(
     HANDLE   arcdll,
     void*    mallocfn,
     void*    freefn,
-    uint32_t d3dversion
-);
+    uint32_t d3dversion);
 
 extern "C" __declspec(dllexport) void* get_release_addr();
 

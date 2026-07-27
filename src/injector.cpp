@@ -48,8 +48,7 @@ static bool findModule(const DWORD dwPid, const std::string& name)
             [](const unsigned char c)
             {
                 return std::tolower(c);
-            }
-        );
+            });
 
         constexpr std::string_view suffix = ".dll";
         if (s.size() >= suffix.size() && s.compare(s.size() - suffix.size(), suffix.size(), suffix) == 0)
@@ -142,8 +141,7 @@ int main()
         reinterpret_cast<LPTHREAD_START_ROUTINE>(loadLibraryA),
         buffer,
         0,
-        nullptr
-    );
+        nullptr);
     if (hThread == nullptr)
     {
         printf("CreateRemoteThread failed: %ld\n", GetLastError());

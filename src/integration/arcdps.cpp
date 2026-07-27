@@ -54,8 +54,7 @@ void* get_init_addr(
     HANDLE   arcdll,
     void*    mallocfn,
     void*    freefn,
-    uint32_t d3dversion
-)
+    uint32_t d3dversion)
 {
     if (!unpc::nexusPresent && !unpc::hProxyModule && !unpc::injected)
     {

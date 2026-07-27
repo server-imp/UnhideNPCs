@@ -45,7 +45,7 @@ namespace unpc
 
     extern uint32_t numPlayersVisible;
     extern uint32_t numPlayerOwnedVisible;
-    extern uint32_t numNpcsVisible;
+    extern uint32_t numNPCVisible;
     extern uint32_t numPlayersInArea;
 
     void onHookTick();
@@ -64,8 +64,7 @@ namespace unpc
         bool    isActiveGuildMember,
         bool    isGuildMember,
         bool    isPartyMember,
-        bool    isSquadMember
-    );
+        bool    isSquadMember);
 
     // This function is called first, returning true means the character will be forced visible
     // if returning false, it will go on to call shouldHide
@@ -82,8 +81,7 @@ namespace unpc
         bool    isActiveGuildMember,
         bool    isGuildMember,
         bool    isPartyMember,
-        bool    isSquadMember
-    );
+        bool    isSquadMember);
 
     void start();
 
@@ -98,8 +96,7 @@ namespace unpc
         i32                          num,
         const std::string&           a,
         const std::string&           b,
-        std::vector<memory::Handle>& results
-    );
+        std::vector<memory::Handle>& results);
 }
 
 #endif //UNHIDENPCS_UNPC_HPP

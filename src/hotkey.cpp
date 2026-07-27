@@ -71,7 +71,7 @@ HotkeyManager::HotkeyManager(const std::string& requiredWndClassName, std::files
     _filePath = std::move(filePath);
 }
 
-uintptr_t HotkeyManager::onWndProc(HWND hWnd, const UINT msg, const WPARAM wParam, LPARAM lParam)
+uintptr_t HotkeyManager::onWndProc(HWND hWnd, const UINT msg, const WPARAM wParam, const LPARAM lParam)
 {
     if (msg != WM_KEYDOWN)
     {
@@ -84,7 +84,7 @@ uintptr_t HotkeyManager::onWndProc(HWND hWnd, const UINT msg, const WPARAM wPara
         return msg;
     }
 
-    if (unpc::mumbleLink&& unpc::mumbleLink->getContext().isTextboxFocused())
+    if (unpc::mumbleLink && unpc::mumbleLink->getContext().isTextboxFocused())
     {
         return msg;
     }
@@ -128,8 +128,10 @@ uintptr_t HotkeyManager::onWndProc(HWND hWnd, const UINT msg, const WPARAM wPara
         case VK_RSHIFT:
         case VK_MENU:
         case VK_LMENU:
-        case VK_RMENU: return msg;
-        default: break;
+        case VK_RMENU:
+            return msg;
+        default:
+            break;
     }
 
     const bool ctrl  = (GetKeyState(VK_CONTROL) & 0x8000) != 0;
@@ -217,10 +219,8 @@ void HotkeyManager::unregisterHotkey(const std::string& id)
             [&](const auto& pair)
             {
                 return pair.first == id;
-            }
-        ),
-        _hotkeys.end()
-    );
+            }),
+        _hotkeys.end());
 }
 
 void HotkeyManager::triggerCallbacks(const std::string& id) const
@@ -231,7 +231,7 @@ void HotkeyManager::triggerCallbacks(const std::string& id) const
     }
 }
 
-void HotkeyManager::registerCallback(const std::function < void(const std::string &) > &callback)
+void HotkeyManager::registerCallback(const std::function<void(const std::string&)>& callback)
 {
     _callbacks.push_back(callback);
 }
@@ -285,8 +285,7 @@ void HotkeyManager::renderHotkeys()
         "hotkey_table",
         2,
         ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_ScrollY,
-        ImVec2(0, 300)
-    ))
+        ImVec2(0, 300)))
     {
         ImGui::TableSetupColumn("Text", ImGuiTableColumnFlags_WidthStretch);
         ImGui::TableSetupColumn("Button", ImGuiTableColumnFlags_WidthFixed, ui::fieldWidth);

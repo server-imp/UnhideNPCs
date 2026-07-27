@@ -21,8 +21,7 @@ std::optional<Detour>          unpc::npcHook {};
 
 HotkeyManager unpc::hotkeyManager(
     "ArenaNet_Gr_Window_Class",
-    std::filesystem::current_path() / "addons" / "UnhideNPCs" / "hotkeys.json"
-);
+    std::filesystem::current_path() / "addons" / "UnhideNPCs" / "hotkeys.json");
 HANDLE  unpc::hMutex {};
 HMODULE unpc::hModule {};
 
@@ -35,7 +34,7 @@ int32_t*    unpc::loadingScreenActive {};
 
 uint32_t unpc::numPlayersVisible {};
 uint32_t unpc::numPlayerOwnedVisible {};
-uint32_t unpc::numNpcsVisible {};
+uint32_t unpc::numNPCVisible {};
 uint32_t unpc::numPlayersInArea {};
 
 #include "re.hpp"
@@ -67,8 +66,7 @@ static void hotkeyCallback(const std::string& id)
                         matched = true;
                     }
                 },
-                _setting
-            );
+                _setting);
 
             if (matched)
             {
@@ -129,8 +127,7 @@ static void initializeHotkeys()
 
                     hotkeyManager.registerHotkey(setting->name(), setting->description());
                 },
-                _setting
-            );
+                _setting);
         }
     };
 
@@ -185,8 +182,7 @@ static bool initialize()
             re::vtableIndex = ptr.add(2).deref<uint32_t>() / 8;
             LOG_DBG("VTable Index: {}", re::vtableIndex);
             return true;
-        }
-    );
+        });
 
     if (!pattern1.resolve(game, ptr))
     {
@@ -208,8 +204,7 @@ static bool initialize()
             ptr                 = Handle(loadingScreenActive);
             LOG_DBG("Loading screen active: {}", ptr.formatted());
             return true;
-        }
-    );
+        });
     if (!pattern3.resolve(game, ptr))
     {
         return false;
@@ -286,8 +281,7 @@ void unpc::onHookTick()
                 ui::onD3DPresent,
                 ui::onD3DResizeBuffers,
                 ui::onD3DStarted,
-                ui::onD3DShutdown
-            );
+                ui::onD3DShutdown);
 
             if (!ui::d3dHook || !ui::d3dHook.value()->enable())
             {
@@ -313,8 +307,7 @@ bool unpc::shouldHide(
     const bool    isActiveGuildMember,
     const bool    isGuildMember,
     const bool    isPartyMember,
-    const bool    isSquadMember
-)
+    const bool    isSquadMember)
 {
     if (!settings)
     {
@@ -428,7 +421,7 @@ bool unpc::shouldHide(
         return false;
     }
 
-    if (profile.MaxNpcs.get() > 0 && numNpcsVisible > static_cast<uint32_t>(profile.MaxNpcs.get()))
+    if (profile.MaxNpcs.get() > 0 && numNPCVisible > static_cast<uint32_t>(profile.MaxNpcs.get()))
     {
         return true;
     }
@@ -449,8 +442,7 @@ bool unpc::shouldShow(
     const bool    isActiveGuildMember,
     const bool    isGuildMember,
     const bool    isPartyMember,
-    const bool    isSquadMember
-)
+    const bool    isSquadMember)
 {
     if (!settings)
     {
@@ -579,7 +571,7 @@ bool unpc::shouldShow(
         return false;
     }
 
-    if (profile.MaxNpcs.get() > 0 && numNpcsVisible >= static_cast<uint32_t>(profile.MaxNpcs.get()))
+    if (profile.MaxNpcs.get() > 0 && numNPCVisible >= static_cast<uint32_t>(profile.MaxNpcs.get()))
     {
         return false;
     }
@@ -624,8 +616,7 @@ void unpc::start()
     logger.emplace(
         "UnhideNPCs",
         std::filesystem::current_path() / "addons" / "UnhideNPCs" / "unhidenpcs.log",
-        logLevel
-    );
+        logLevel);
 
     LOG_INFO("Starting");
     LOG_INFO("Version {}", version::STRING);
@@ -657,7 +648,7 @@ void unpc::start()
 
     const auto result   = initialize();
     const auto end      = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    auto       duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
     if (!result)
     {
@@ -744,8 +735,7 @@ void unpc::entrypoint()
         },
         nullptr,
         0,
-        nullptr
-    );
+        nullptr);
 }
 
 bool unpc::findAsserts(
@@ -753,8 +743,7 @@ bool unpc::findAsserts(
     const i32            num,
     const std::string&   a,
     const std::string&   b,
-    std::vector<Handle>& results
-)
+    std::vector<Handle>& results)
 {
     LOG_DBG("Looking for asserts [0x{:X}, \"{}\", \"{}\"]", num, a, b);
     results.clear();

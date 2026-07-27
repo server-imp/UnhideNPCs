@@ -45,7 +45,7 @@ if (BUILDING_ON_GITHUB)
             GIT_SHALLOW TRUE
     )
     FetchContent_MakeAvailable(fw)
-else()
+else ()
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../fw ${CMAKE_BINARY_DIR}/_deps/fw-build)
 endif ()
 

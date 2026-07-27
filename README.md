@@ -6,6 +6,7 @@ UnhideNPCs keeps them visible.
 Using this, you could even put `Character Model Limit` to `Lowest` and still see all enemies/bosses/NPCs!
 
 ## Notes
+
 UnhideNPCs does nothing while in PvP or WvW.
 
 Tested on Windows 11 25H2 and Fedora Linux 43 (GE-Proton10-30).
@@ -15,23 +16,27 @@ Tested on Windows 11 25H2 and Fedora Linux 43 (GE-Proton10-30).
 This add-on includes an in-game configuration interface.
 
 > **Note:** You can CTRL+Click the sliders if you prefer typing the numbers.
-> 
+>
 > The images below may or may not show an older version of the plugin
 
-<img src="https://github.com/user-attachments/assets/e8013d39-b235-4b42-b6af-809ffa2ddedb" width="33%">
+<img src="https://github.com/user-attachments/assets/e8013d39-b235-4b42-b6af-809ffa2ddedb" width="33%" alt="Screenshot of in-game UI of UnhideNPCs">
 
 ## Installation
+
 There are four different ways to use UnhideNPCs; only follow one of them.
 
 ### 1) Nexus (recommended)
+
 1. It's available in-game in the Nexus Library
 
 ### 2) ArcDPS
+
 1. Download `UnhideNPCs_ArcDps.dll` from [Releases](https://github.com/server-imp/UnhideNPCs/releases).
 2. Place it in your game folder (e.g. `C:\Program Files\Guild Wars 2`).
 3. ArcDPS will load the plugin automatically on the next launch.
 
 ### 3) DLL Proxy
+
 1. Download `UnhideNPCs.dll` from [Releases](https://github.com/server-imp/UnhideNPCs/releases).
 2. Rename it to one of the following: `dxgi.dll`/`midimap.dll`/`d3d9.dll`.
     - Note: `midimap.dll` does not appear to work on Linux/Proton in my tests
@@ -39,6 +44,7 @@ There are four different ways to use UnhideNPCs; only follow one of them.
 4. The game will load it automatically on the next launch.
 
 ### 4) Manual injection (for developers/testing mainly)
+
 1. Inject `UnhideNPCs.dll` using your injector of choice, a simple one is included in the project for convenience.
 2. When injected:
     - Press `END` to unload the plugin so it can be reloaded without restarting the game.
