@@ -116,7 +116,7 @@ function(add_unhidenpcs_dll TARGET_NAME IMGUI_TARGET OUTPUT_NAME)
             -O2
     )
 
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         target_compile_options(${TARGET_NAME} PRIVATE
                 -ffunction-sections
                 -fdata-sections
@@ -132,7 +132,27 @@ function(add_unhidenpcs_dll TARGET_NAME IMGUI_TARGET OUTPUT_NAME)
                 "${CMAKE_SOURCE_DIR}/src/proxy/dxgi.def"
                 "${CMAKE_SOURCE_DIR}/src/proxy/midimap.def"
         )
-    endif()
+    endif ()
+
+    if (MSVC)
+        target_compile_options(${TARGET_NAME} PRIVATE
+                /O2
+                /Ob2
+                /Oi
+                /Ot
+                /GL
+                /Gw
+                /Gy
+                /Zi
+        )
+
+        target_link_options(${TARGET_NAME} PRIVATE
+                /LTCG
+                /OPT:REF
+                /OPT:ICF
+                /DEBUG
+        )
+    endif ()
 
     set_target_properties(${TARGET_NAME} PROPERTIES
             PREFIX ""
@@ -175,7 +195,7 @@ function(add_unhidenpcs_dll TARGET_NAME IMGUI_TARGET OUTPUT_NAME)
                 COMMAND ${CMAKE_STRIP} --strip-debug $<TARGET_FILE:${TARGET_NAME}>
                 COMMAND ${CMAKE_OBJCOPY} --add-gnu-debuglink=$<TARGET_FILE_NAME:${TARGET_NAME}>.debug $<TARGET_FILE:${TARGET_NAME}>
         )
-    endif()
+    endif ()
 endfunction()
 
 set(UNPC_IMGUI_VERSION 1800)
