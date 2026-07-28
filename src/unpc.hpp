@@ -31,8 +31,8 @@ namespace unpc
 
     extern std::optional<logging::Logger> logger;
     extern std::optional<Settings>        settings;
-    extern std::optional<memory::Detour>  npcHook;
-    extern std::optional<memory::Detour>  w2sHook;
+    extern std::optional<memory::Detour>  hook;
+    extern std::optional<memory::Detour>  hook2;
     extern HotkeyManager                  hotkeyManager;
 
     extern HANDLE      hMutex;
