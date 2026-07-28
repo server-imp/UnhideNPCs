@@ -122,17 +122,17 @@ function(add_unhidenpcs_dll TARGET_NAME IMGUI_TARGET OUTPUT_NAME)
                 -fdata-sections
                 -fno-strict-aliasing
         )
-    endif()
 
-    target_link_options(${TARGET_NAME} PRIVATE
-            -static
-            -static-libgcc
-            -static-libstdc++
-            -Wl,--gc-sections
-            "${CMAKE_SOURCE_DIR}/src/proxy/d3d9.def"
-            "${CMAKE_SOURCE_DIR}/src/proxy/dxgi.def"
-            "${CMAKE_SOURCE_DIR}/src/proxy/midimap.def"
-    )
+        target_link_options(${TARGET_NAME} PRIVATE
+                -static
+                -static-libgcc
+                -static-libstdc++
+                -Wl,--gc-sections
+                "${CMAKE_SOURCE_DIR}/src/proxy/d3d9.def"
+                "${CMAKE_SOURCE_DIR}/src/proxy/dxgi.def"
+                "${CMAKE_SOURCE_DIR}/src/proxy/midimap.def"
+        )
+    endif()
 
     set_target_properties(${TARGET_NAME} PROPERTIES
             PREFIX ""
