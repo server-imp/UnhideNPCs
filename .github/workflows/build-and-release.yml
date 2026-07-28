@@ -22,7 +22,7 @@ jobs:
           cmake -S . -B build
           -G "Visual Studio 18 2026"
           -A x64
-          -DCMAKE_CXX_STANDARD=17
+          -DCMAKE_CXX_STANDARD=20
 
       - name: Build
         run: cmake --build build --config RelWithDebInfo
