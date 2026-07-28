@@ -18,6 +18,7 @@ std::atomic_bool               unpc::stopping {};
 std::optional<logging::Logger> unpc::logger;
 std::optional<Settings>        unpc::settings;
 std::optional<Detour>          unpc::npcHook {};
+std::optional<Detour>          unpc::w2sHook {};
 
 HotkeyManager unpc::hotkeyManager(
     "ArenaNet_Gr_Window_Class",
@@ -228,7 +229,33 @@ static bool initialize()
     re::gw2::getAvContext = reinterpret_cast<re::gw2::GetAvContextFn>(ref.instruction().add(12).resolve_relative_call().
                                                                           raw());
 
+    if (!findAsserts(
+        game,
+        R"(D:\Perforce\Live\NAEU\v2\Code\Gw2\Game\WorldView\WvGameRenderer.cpp)",
+        "screenPoint",
+        asserts) && !findAsserts(
+        game,
+        R"(D:\Perforce\Live\China\v4\Code\Gw2\Game\WorldView\WvGameRenderer.cpp)",
+        "screenPoint",
+        asserts))
+    {
+        LOG_ERR("Unable to find pattern 6");
+        return false;
+    }
+    if (!findFunctionStart(asserts[0], ptr))
+    {
+        LOG_ERR("Unable to find pattern 6 [2]");
+        return false;
+    }
+    w2sHook.emplace("WorldToScreen Hook", ptr.to_ptr<void*>(), reinterpret_cast<void*>(re::worldToScreenHook));
+
     if (!npcHook->enable())
+    {
+        LOG_ERR("Failed to enable hook");
+        return false;
+    }
+
+    if (!w2sHook->enable())
     {
         LOG_ERR("Failed to enable hook");
         return false;
@@ -295,6 +322,7 @@ void unpc::onHookTick()
 }
 
 bool unpc::shouldHide(
+    const bool    isOnScreen,
     const bool    isPlayer,
     const bool    isPlayerOwned,
     const bool    isOwnerLocalPlayer,
@@ -315,6 +343,11 @@ bool unpc::shouldHide(
     }
 
     const auto& profile = settings->profile();
+
+    if (!isOnScreen && profile.HideOffScreen.get())
+    {
+        return true;
+    }
 
     if (isTarget && profile.AlwaysShowTarget.get())
     {
@@ -430,6 +463,7 @@ bool unpc::shouldHide(
 }
 
 bool unpc::shouldShow(
+    const bool    isOnScreen,
     const bool    isPlayer,
     const bool    isPlayerOwned,
     const bool    isOwnerLocalPlayer,
@@ -450,6 +484,11 @@ bool unpc::shouldShow(
     }
 
     const auto& profile = settings->profile();
+
+    if (!isOnScreen && profile.HideOffScreen.get())
+    {
+        return false;
+    }
 
     if (isTarget && profile.AlwaysShowTarget.get())
     {
@@ -673,11 +712,22 @@ void unpc::stop()
 
     if (npcHook)
     {
-        npcHook->disable();
-
-        while (re::hookInFlight.load(std::memory_order_acquire) != 0)
+        if (npcHook->enabled())
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            npcHook->disable();
+
+            while (re::hookInFlight.load(std::memory_order_acquire) != 0)
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+        }
+    }
+
+    if (w2sHook)
+    {
+        if (w2sHook->enabled())
+        {
+            w2sHook->disable();
         }
     }
 
@@ -740,47 +790,55 @@ void unpc::entrypoint()
 
 bool unpc::findAsserts(
     Module&              module,
-    const i32            num,
-    const std::string&   a,
-    const std::string&   b,
+    const size_t         lineNumber,
+    const std::string&   file,
+    const std::string&   message,
     std::vector<Handle>& results)
 {
-    LOG_DBG("Looking for asserts [0x{:X}, \"{}\", \"{}\"]", num, a, b);
+    if (lineNumber != SIZE_MAX)
+    {
+        LOG_DBG("Looking for asserts [0x{:X}, \"{}\", \"{}\"]", lineNumber, file, message);
+    } else
+    {
+        LOG_DBG("Looking for asserts [\"{}\", \"{}\"]", file, message);
+    }
     results.clear();
 
-    std::vector<RefData> aRefs {};
-    std::vector<RefData> bRefs {};
+    std::vector<RefData> fileRefs {};
+    std::vector<RefData> messageRefs {};
 
-    if (!module.findStringReferences(a, aRefs))
+    if (!module.findStringReferences(file, fileRefs))
     {
         return false;
     }
 
-    if (!module.findStringReferences(b, bRefs))
+    if (!module.findStringReferences(message, messageRefs))
     {
         return false;
     }
 
-    for (const auto& bRefData : bRefs)
+    for (const auto& messageRefData : messageRefs)
     {
-        for (const auto& aRefData : aRefs)
+        for (const auto& fileRefData : fileRefs)
         {
-            const auto& aRef = aRefData.instruction();
-            const auto& bRef = bRefData.instruction();
+            const auto& fileRef    = fileRefData.instruction();
+            const auto& messageRef = messageRefData.instruction();
 
-            // 7 bytes before the reference to b should be a reference to a
-            if (bRef.sub(7) != aRef)
+            // 7 bytes before the reference to the message should be a reference to the file
+            if (messageRef.sub(7) != fileRef)
             {
                 continue;
             }
 
             // the subsequent instruction should be a call
-            if (bRef.add(7).deref<uint8_t>() != 0xE8)
+            if (messageRef.add(7).deref<uint8_t>() != 0xE8)
                 continue;
 
             // the preceding instruction should be a mov, matching the number
-            const auto mov = aRef.sub(5);
-            if (mov.deref<uint8_t>() != 0xB8 || mov.add(1).deref<i32>() != num)
+            const auto mov = fileRef.sub(5);
+            if (mov.deref<uint8_t>() != 0xB8)
+                continue;
+            if (lineNumber != SIZE_MAX && mov.add(1).deref<i32>() != lineNumber)
                 continue;
 
             // check if mov is rex prefixed
@@ -793,4 +851,13 @@ bool unpc::findAsserts(
 
     LOG_DBG("Found {} asserts", results.size());
     return !results.empty();
+}
+
+bool unpc::findAsserts(
+    Module&              module,
+    const std::string&   file,
+    const std::string&   message,
+    std::vector<Handle>& results)
+{
+    return findAsserts(module, SIZE_MAX, file, message, results);
 }

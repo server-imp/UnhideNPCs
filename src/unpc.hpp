@@ -32,6 +32,7 @@ namespace unpc
     extern std::optional<logging::Logger> logger;
     extern std::optional<Settings>        settings;
     extern std::optional<memory::Detour>  npcHook;
+    extern std::optional<memory::Detour>  w2sHook;
     extern HotkeyManager                  hotkeyManager;
 
     extern HANDLE      hMutex;
@@ -52,6 +53,7 @@ namespace unpc
 
     // This function may be called second, returning true means the character will be forced invisible
     bool shouldHide(
+        bool    isOnScreen,
         bool    isPlayer,
         bool    isPlayerOwned,
         bool    isOwnerLocalPlayer,
@@ -69,6 +71,7 @@ namespace unpc
     // This function is called first, returning true means the character will be forced visible
     // if returning false, it will go on to call shouldHide
     bool shouldShow(
+        bool    isOnScreen,
         bool    isPlayer,
         bool    isPlayerOwned,
         bool    isOwnerLocalPlayer,
@@ -90,12 +93,19 @@ namespace unpc
     void entrypoint();
 
     // Locate asserts/errors with the specified values
+    // if lineNumber is equal to SIZE_MAX then it ignores the line number check
     // returns the address of the first instruction (mov)
     bool findAsserts(
         memory::Module&              module,
-        i32                          num,
-        const std::string&           a,
-        const std::string&           b,
+        size_t                       lineNumber,
+        const std::string&           file,
+        const std::string&           message,
+        std::vector<memory::Handle>& results);
+
+    bool findAsserts(
+        memory::Module&              module,
+        const std::string&           file,
+        const std::string&           message,
         std::vector<memory::Handle>& results);
 }
 
