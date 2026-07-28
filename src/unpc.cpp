@@ -357,7 +357,7 @@ bool unpc::shouldHide(
     if (isPlayer)
     {
         if (profile.MaxPlayersVisible.get() > 0 && numPlayersVisible > static_cast<uint32_t>(profile.MaxPlayersVisible.
-            get()))
+            get()) - 1)
         {
             return true;
         }
@@ -454,7 +454,7 @@ bool unpc::shouldHide(
         return false;
     }
 
-    if (profile.MaxNpcs.get() > 0 && numNPCVisible > static_cast<uint32_t>(profile.MaxNpcs.get()))
+    if (profile.MaxNpcs.get() > 0 && numNPCVisible > static_cast<uint32_t>(profile.MaxNpcs.get()) - 1)
     {
         return true;
     }
@@ -503,7 +503,7 @@ bool unpc::shouldShow(
         }
 
         if (profile.MaxPlayersVisible.get() > 0 && numPlayersVisible > static_cast<uint32_t>(profile.MaxPlayersVisible.
-            get()))
+            get()) - 1)
         {
             return false;
         }
@@ -610,7 +610,7 @@ bool unpc::shouldShow(
         return false;
     }
 
-    if (profile.MaxNpcs.get() > 0 && numNPCVisible >= static_cast<uint32_t>(profile.MaxNpcs.get()))
+    if (profile.MaxNpcs.get() > 0 && numNPCVisible >= static_cast<uint32_t>(profile.MaxNpcs.get()) - 1)
     {
         return false;
     }
