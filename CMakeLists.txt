@@ -114,10 +114,15 @@ function(add_unhidenpcs_dll TARGET_NAME IMGUI_TARGET OUTPUT_NAME)
 
     target_compile_options(${TARGET_NAME} PRIVATE
             -O2
-            -ffunction-sections
-            -fdata-sections
-            -fno-strict-aliasing
     )
+
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        target_compile_options(${TARGET_NAME} PRIVATE
+                -ffunction-sections
+                -fdata-sections
+                -fno-strict-aliasing
+        )
+    endif()
 
     target_link_options(${TARGET_NAME} PRIVATE
             -static
