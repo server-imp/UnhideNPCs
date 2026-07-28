@@ -28,8 +28,8 @@ private:
         bool pressed[256] {};
     } _keyStates {};
 
-    std::vector<std::pair<std::string, Hotkey>>           _hotkeys {};
-    std::vector<std::function<void(const std::string &)>> _callbacks {};
+    std::vector<std::pair<std::string, Hotkey>>          _hotkeys {};
+    std::vector<std::function<void(const std::string&)>> _callbacks {};
 
     std::string _requiredWndClassName {};
     bool        _wndClassActive = true;
@@ -53,7 +53,7 @@ public:
     void                  registerHotkey(const std::string& id, const std::string& label);
     void                  unregisterHotkey(const std::string& id);
     void                  triggerCallbacks(const std::string& id) const;
-    void                  registerCallback(const std::function<void(const std::string &)>& callback);
+    void                  registerCallback(const std::function<void(const std::string&)>& callback);
     void                  update();
     void                  renderHotkey(const std::string& id, Hotkey& hotkey);
     void                  renderHotkeys();

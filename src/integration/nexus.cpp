@@ -15,7 +15,7 @@ namespace nexus
             return true;
         }
 
-        if (util::shmExists(fmt::format("DL_NEXUS_LINK_{}", GetCurrentProcessId())))
+        if (util::shmExists(std::format("DL_NEXUS_LINK_{}", GetCurrentProcessId())))
         {
             return true;
         }

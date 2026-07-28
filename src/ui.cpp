@@ -341,11 +341,11 @@ static void renderProfileOptions()
     {
         const char* newName = profileNameBuffer[0] ? profileNameBuffer : "Profile";
         auto        i       = 0;
-        auto        name    = fmt::format("{}", newName);
+        auto        name    = std::format("{}", newName);
         while (unpc::settings->profileExists(name))
         {
             ++i;
-            name = fmt::format("{} {}", newName, i);
+            name = std::format("{} {}", newName, i);
         }
         unpc::settings->addProfile(name);
         unpc::settings->ActiveProfile.set(static_cast<int32_t>(unpc::settings->children().size()) - 1);
@@ -806,7 +806,7 @@ footer:
     }
     ImGui::SameLine();
 
-    const std::string version   = fmt::format("v{}", unpc::version::STRING);
+    const std::string version   = std::format("v{}", unpc::version::STRING);
     const float       textWidth = ImGui::CalcTextSize(version.c_str()).x;
     ImGui::SetCursorPosX(ImGui::GetWindowWidth() - textWidth - 2 * ImGui::GetStyle().ItemSpacing.x);
     ImGui::TextUnformatted(version.c_str());

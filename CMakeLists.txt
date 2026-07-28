@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.31)
 set(PROJECT_NAME "UnhideNPCs")
-project(${PROJECT_NAME})
-set(CMAKE_CXX_STANDARD 17)
+project(${PROJECT_NAME} LANGUAGES C CXX)
+set(CMAKE_CXX_STANDARD 20)
 
 string(TIMESTAMP UNPC_VER_YEAR "%Y" UTC)
 string(TIMESTAMP UNPC_VER_MONTH "%m" UTC)
@@ -113,7 +113,7 @@ function(add_unhidenpcs_dll TARGET_NAME IMGUI_TARGET OUTPUT_NAME)
     endif ()
 
     target_compile_options(${TARGET_NAME} PRIVATE
-            -Os
+            -O2
             -ffunction-sections
             -fdata-sections
             -fno-strict-aliasing
@@ -158,8 +158,6 @@ function(add_unhidenpcs_dll TARGET_NAME IMGUI_TARGET OUTPUT_NAME)
             ${CMAKE_CURRENT_BINARY_DIR}
             ${fw_SOURCE_DIR}/include
     )
-
-    target_sources(${TARGET_NAME} PRIVATE ${SRC_RE})
 
     target_link_libraries(${TARGET_NAME} PRIVATE
             ${IMGUI_TARGET}
