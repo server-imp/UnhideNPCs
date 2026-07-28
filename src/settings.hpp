@@ -50,7 +50,7 @@ public:
             }
         });
 
-    S(float, MaximumDistance, 0, "Characters outside of this distance won't be unhidden. (0=unlimited)").onChanged(
+    S(float, MaximumDistance, 0.0f, "Characters outside of this distance won't be unhidden. (0=unlimited)").onChanged(
         forceVisibility).validator(
         [](auto& value)
         {
@@ -119,6 +119,8 @@ public:
     S(bool, HidePlayerOwnedSelf, false, "Hide characters that are owned by you").onChanged(forceVisibility);
 
     S(bool, HidePlayersInCombat, false, "Hide players when you are in combat").onChanged(forceVisibility);
+
+    S(bool, HideOffScreen, true, "Hide any off-screen characters").onChanged(forceVisibility);
 
     S(bool, HidePlayerOwnedInCombat, false, "Hide player-owned characters when you are in combat").onChanged(
         forceVisibility);
