@@ -17,8 +17,8 @@ std::atomic_bool               unpc::exit {};
 std::atomic_bool               unpc::stopping {};
 std::optional<logging::Logger> unpc::logger;
 std::optional<Settings>        unpc::settings;
-std::optional<Detour>          unpc::npcHook {};
-std::optional<Detour>          unpc::w2sHook {};
+std::optional<Detour>          unpc::hook {};
+std::optional<Detour>          unpc::hook2 {};
 
 HotkeyManager unpc::hotkeyManager(
     "ArenaNet_Gr_Window_Class",
@@ -195,7 +195,7 @@ static bool initialize()
     {
         return false;
     }
-    npcHook.emplace("Character Hook", ptr.to_ptr<void*>(), reinterpret_cast<void*>(re::hook));
+    hook.emplace("Hook 1", ptr.to_ptr<void*>(), reinterpret_cast<void*>(re::hook));
 
     auto pattern3 = Pattern("pattern3", re::pattern3).callback(
         [&](Handle& ptr)
@@ -212,10 +212,19 @@ static bool initialize()
     }
 
     std::vector<Handle> asserts {};
-    if (!findAsserts(game, 0x107, R"(D:\Perforce\Live\NAEU\v2\Code\Gw2\Core\Common\Random.cpp)", "context", asserts) &&
-        !findAsserts(game, 0x107, R"(D:\Perforce\Live\China\v4\Code\Gw2\Core\Common\Random.cpp)", "context", asserts))
+    if (!findAsserts(
+        game,
+        std::get<0>(re::pattern7_1),
+        std::get<1>(re::pattern7_1),
+        std::get<2>(re::pattern7_1),
+        asserts) && !findAsserts(
+        game,
+        std::get<0>(re::pattern7_2),
+        std::get<1>(re::pattern7_2),
+        std::get<2>(re::pattern7_2),
+        asserts))
     {
-        LOG_ERR("Unable to find pattern 4");
+        LOG_ERR("Unable to find pattern 7");
         return false;
     }
     re::gw2::getContextCollection = reinterpret_cast<re::gw2::GetContextCollectionFn>(asserts[0].sub(13).
@@ -231,31 +240,33 @@ static bool initialize()
 
     if (!findAsserts(
         game,
-        R"(D:\Perforce\Live\NAEU\v2\Code\Gw2\Game\WorldView\WvGameRenderer.cpp)",
-        "screenPoint",
+        std::get<0>(re::pattern8_1),
+        std::get<1>(re::pattern8_1),
+        std::get<2>(re::pattern8_1),
         asserts) && !findAsserts(
         game,
-        R"(D:\Perforce\Live\China\v4\Code\Gw2\Game\WorldView\WvGameRenderer.cpp)",
-        "screenPoint",
+        std::get<0>(re::pattern8_2),
+        std::get<1>(re::pattern8_2),
+        std::get<2>(re::pattern8_2),
         asserts))
     {
-        LOG_ERR("Unable to find pattern 6");
+        LOG_ERR("Unable to find pattern 8");
         return false;
     }
-    if (!findFunctionStart(asserts[0], ptr))
+    if (!game.findFunctionStart(asserts[0], ptr))
     {
-        LOG_ERR("Unable to find pattern 6 [2]");
+        LOG_ERR("Unable to find pattern 8 [2]");
         return false;
     }
-    w2sHook.emplace("WorldToScreen Hook", ptr.to_ptr<void*>(), reinterpret_cast<void*>(re::worldToScreenHook));
+    hook2.emplace("Hook 2", ptr.to_ptr<void*>(), reinterpret_cast<void*>(re::hook2));
 
-    if (!npcHook->enable())
+    if (!hook->enable())
     {
         LOG_ERR("Failed to enable hook");
         return false;
     }
 
-    if (!w2sHook->enable())
+    if (!hook2->enable())
     {
         LOG_ERR("Failed to enable hook");
         return false;
@@ -641,7 +652,7 @@ void unpc::start()
 {
     const auto start = std::chrono::high_resolution_clock::now();
 
-    if (settings && logger && npcHook)
+    if (settings && logger && hook)
     {
         return;
     }
@@ -710,11 +721,11 @@ void unpc::stop()
 
     stopping.store(true, std::memory_order_release);
 
-    if (npcHook)
+    if (hook)
     {
-        if (npcHook->enabled())
+        if (hook->enabled())
         {
-            npcHook->disable();
+            hook->disable();
 
             while (re::hookInFlight.load(std::memory_order_acquire) != 0)
             {
@@ -723,11 +734,11 @@ void unpc::stop()
         }
     }
 
-    if (w2sHook)
+    if (hook2)
     {
-        if (w2sHook->enabled())
+        if (hook2->enabled())
         {
-            w2sHook->disable();
+            hook2->disable();
         }
     }
 
