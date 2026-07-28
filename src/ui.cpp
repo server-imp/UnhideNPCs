@@ -479,6 +479,13 @@ void ui::renderOptions()
     }
 
     separatorText("Hide");
+
+    bool hideOffScreen = profile.HideOffScreen.get();
+    if (checkbox("Hide Off-Screen", "##hideOffScreen", hideOffScreen, profile.HideOffScreen.description().c_str()))
+    {
+        profile.HideOffScreen.set(hideOffScreen);
+    }
+
     bool hideAllPlayersChanged {}, hideBlockedPlayersChanged {}, hideNonGroupPlayersChanged {}, hideStrangersChanged {},
          hideNonGuildPlayersChanged {}, hideNonFriendPlayersChanged {};
     bool hidePlayers = profile.HidePlayers.get();
