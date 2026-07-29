@@ -19,11 +19,11 @@ protected:
 public:
     fw::Setting<bool>& UnhideNPCs = add<bool>(true, "UnhideNPCs", "Unhide NPCs").onChanged(forceVisibility);
 
-    S(bool, UnhidePlayers, false, "Unhide players").onChanged(forceVisibility);
+    S(bool, UnhidePlayers, true, "Unhide players").onChanged(forceVisibility);
     S(
         bool,
         PlayerOwned,
-        false,
+        true,
         "Characters that players own (pets, clones, minis etc) will also be unhidden.").onChanged(forceVisibility);
 
     S(bool, AlwaysShowTarget, true, "Always show the targeted character, even if it would be hidden.").onChanged(
@@ -71,11 +71,11 @@ public:
         false,
         "Hide all characters owned by players, except yourself (pets, clones, minis etc)").onChanged(forceVisibility);
 
-    S(bool, HideBlockedPlayers, false, "Hide any players that you have blocked").onChanged(forceVisibility);
+    S(bool, HideBlockedPlayers, true, "Hide any players that you have blocked").onChanged(forceVisibility);
     S(
         bool,
         HideBlockedPlayersOwned,
-        false,
+        true,
         "Hide any characters that are owned by blocked players (pets, clones, minis etc)").onChanged(forceVisibility);
 
     S(
@@ -103,7 +103,7 @@ public:
     S(
         bool,
         HideNonFriendsOwned,
-        false,
+        true,
         "Hide any characters that are owned by non-friend players (pets, clones, minis etc)").
     onChanged(forceVisibility);
 
@@ -118,6 +118,8 @@ public:
 
     S(bool, HidePlayerOwnedSelf, false, "Hide characters that are owned by you").onChanged(forceVisibility);
 
+    S(bool, HideOwnedInstances, false, "Hide characters owned by other players while you are in an instance").onChanged(forceVisibility);
+
     S(bool, HidePlayersInCombat, false, "Hide players when you are in combat").onChanged(forceVisibility);
 
     S(bool, HideOffScreen, true, "Hide any off-screen characters").onChanged(forceVisibility);
@@ -125,7 +127,7 @@ public:
     S(bool, HidePlayerOwnedInCombat, false, "Hide player-owned characters when you are in combat").onChanged(
         forceVisibility);
 
-    S(int32_t, MaxPlayersVisible, 0, "Maximum number of visible players. (0=unlimited)").onChanged(forceVisibility).
+    S(int32_t, MaxPlayersVisible, 50, "Maximum number of visible players. (0=unlimited)").onChanged(forceVisibility).
     validator(
         [](auto& value)
         {
