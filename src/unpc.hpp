@@ -52,39 +52,11 @@ namespace unpc
     void onHookTick();
 
     // This function may be called second, returning true means the character will be forced invisible
-    bool shouldHide(
-        bool    isOnScreen,
-        bool    isPlayer,
-        bool    isPlayerOwned,
-        bool    isOwnerLocalPlayer,
-        bool    isTarget,
-        bool    isAttackable,
-        uint8_t rank,
-        float   distance,
-        bool    isFriend,
-        bool    isBlocked,
-        bool    isActiveGuildMember,
-        bool    isGuildMember,
-        bool    isPartyMember,
-        bool    isSquadMember);
+    bool shouldHide(const re::CharacterEntry& c, bool instanced);
 
     // This function is called first, returning true means the character will be forced visible
     // if returning false, it will go on to call shouldHide
-    bool shouldShow(
-        bool    isOnScreen,
-        bool    isPlayer,
-        bool    isPlayerOwned,
-        bool    isOwnerLocalPlayer,
-        bool    isTarget,
-        bool    isAttackable,
-        uint8_t rank,
-        float   distance,
-        bool    isFriend,
-        bool    isBlocked,
-        bool    isActiveGuildMember,
-        bool    isGuildMember,
-        bool    isPartyMember,
-        bool    isSquadMember);
+    bool shouldShow(const re::CharacterEntry& c, bool instanced);
 
     void start();
 
