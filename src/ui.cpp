@@ -556,7 +556,7 @@ void ui::renderOptions()
 
     bool hideAllPlayerOwnedChanged {}, hideBlockedPlayerOwnedChanged {}, hideNonGroupPlayerOwnedChanged {},
          hideStrangersOwnedChanged {}, hideNonGuildPlayerOwnedChanged {}, hideNonFriendPlayerOwnedChanged {},
-         hideMyOwnedChanged {};
+         hideMyOwnedChanged {}, hideOwnedInstancesChanged {};
     bool hidePlayerOwned          = profile.HidePlayerOwned.get();
     bool hideBlockedPlayersOwned  = profile.HideBlockedPlayersOwned.get();
     bool hideNonGroupMembersOwned = profile.HideNonGroupMembersOwned.get();
@@ -564,6 +564,7 @@ void ui::renderOptions()
     bool hideNonGuildMembersOwned = profile.HideNonGuildMembersOwned.get();
     bool hideNonFriendsOwned      = profile.HideNonFriendsOwned.get();
     bool hidePlayerOwnedSelf      = profile.HidePlayerOwnedSelf.get();
+    bool hideOwnedInstance        = profile.HideOwnedInstances.get();
 
     if (checkboxGroup(
         "Player-Owned",
@@ -600,7 +601,8 @@ void ui::renderOptions()
                 &hideNonFriendsOwned,
                 &hideNonFriendPlayerOwnedChanged
             },
-            { "Mine", profile.HidePlayerOwnedSelf.description().c_str(), &hidePlayerOwnedSelf, &hideMyOwnedChanged }
+            { "Mine", profile.HidePlayerOwnedSelf.description().c_str(), &hidePlayerOwnedSelf, &hideMyOwnedChanged },
+            { "Instances", profile.HideOwnedInstances.description().c_str(), &hideOwnedInstance, &hideOwnedInstancesChanged }
         }))
     {
         if (hideAllPlayerOwnedChanged)
@@ -630,6 +632,10 @@ void ui::renderOptions()
         if (hideMyOwnedChanged)
         {
             profile.HidePlayerOwnedSelf.set(hidePlayerOwnedSelf);
+        }
+        if (hideOwnedInstancesChanged)
+        {
+            profile.HideOwnedInstances.set(hideOwnedInstance);
         }
     }
     ImGui::NewLine();
@@ -787,7 +793,6 @@ footer:
     if (ImGui::TreeNodeEx("Hotkeys", ImGuiTreeNodeFlags_NoTreePushOnOpen))
     {
         unpc::hotkeyManager.renderHotkeys();
-        ImGui::TreePop();
     } else
     {
         unpc::hotkeyManager.stopCapturing();
@@ -819,6 +824,7 @@ footer:
     ImGui::TextUnformatted(version.c_str());
 }
 
+static std::atomic_bool ctrlDown {};
 void ui::renderWindow()
 {
     if (unpc::exit)
@@ -853,6 +859,7 @@ void ui::renderWindow()
         return;
     }
 
+    auto& io     = ImGui::GetIO();
     ImGui::SetNextWindowSize(ImVec2 { 0, 0 }); // Auto size
     if (ImGui::Begin("UnhideNPCs [ ALT+SHIFT+U ]", &open, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize))
     {
@@ -864,7 +871,6 @@ void ui::renderWindow()
                 tmp                                      = nullptr;
             }
 
-            const auto& io     = ImGui::GetIO();
             const auto  window = ImGui::GetCurrentWindow();
 
             const auto   min = ImVec2(0.0f, 0.0f);
@@ -900,6 +906,11 @@ void ui::renderWindow()
             {
                 ImGui::GetCurrentWindow()->Pos = pos;
             }
+        }
+
+        if (unpc::mode == unpc::EMode::Injected || unpc::mode == unpc::EMode::Proxy)
+        {
+            io.KeyCtrl = ctrlDown;
         }
 
         renderOptions();
@@ -976,64 +987,95 @@ uintptr_t ui::onWndProc(const HWND hWnd, const UINT msg, const WPARAM wParam, co
         }
     }
 
-    if (unpc::mode == unpc::EMode::Proxy || unpc::mode == unpc::EMode::Injected)
+    if (unpc::mode != unpc::EMode::Proxy && unpc::mode != unpc::EMode::Injected)
     {
-        auto& io = ImGui::GetIO();
+        return msg;
+    }
 
-        if (msg == WM_MOUSEMOVE)
+    if (msg == WM_KEYDOWN)
+    {
+        switch (wParam)
         {
-            io.MousePos = ImVec2 { static_cast<float>(LOWORD(lParam)), static_cast<float>(HIWORD(lParam)) };
-        }
-
-        if (io.WantCaptureMouse)
-        {
-            switch (msg)
+            case VK_LCONTROL:
+            case VK_RCONTROL:
+            case VK_CONTROL:
             {
-                case WM_LBUTTONDOWN:
-                case WM_LBUTTONDBLCLK:
-                case WM_RBUTTONDOWN:
-                case WM_RBUTTONDBLCLK:
-                case WM_MBUTTONDOWN:
-                case WM_MBUTTONDBLCLK:
-                case WM_XBUTTONDOWN:
-                case WM_XBUTTONDBLCLK:
-                case WM_LBUTTONUP:
-                case WM_RBUTTONUP:
-                case WM_MBUTTONUP:
-                case WM_XBUTTONUP:
-                case WM_MOUSEWHEEL:
-                case WM_MOUSEHWHEEL:
-                case WM_SETCURSOR:
-                    ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
+                ctrlDown = true;
+                break;
+            }
+            default:
+                break;
+        }
+    }
+    else if (msg == WM_KEYUP)
+    {
+        switch (wParam)
+        {
+            case VK_LCONTROL:
+            case VK_RCONTROL:
+            case VK_CONTROL:
+            {
+                ctrlDown = false;
+                break;
+            }
+            default: break;
+        }
+    }
+    auto& io = ImGui::GetIO();
+
+    if (msg == WM_MOUSEMOVE)
+    {
+        io.MousePos = ImVec2 { static_cast<float>(LOWORD(lParam)), static_cast<float>(HIWORD(lParam)) };
+    }
+
+    if (io.WantCaptureMouse)
+    {
+        switch (msg)
+        {
+            case WM_LBUTTONDOWN:
+            case WM_LBUTTONDBLCLK:
+            case WM_RBUTTONDOWN:
+            case WM_RBUTTONDBLCLK:
+            case WM_MBUTTONDOWN:
+            case WM_MBUTTONDBLCLK:
+            case WM_XBUTTONDOWN:
+            case WM_XBUTTONDBLCLK:
+            case WM_LBUTTONUP:
+            case WM_RBUTTONUP:
+            case WM_MBUTTONUP:
+            case WM_XBUTTONUP:
+            case WM_MOUSEWHEEL:
+            case WM_MOUSEHWHEEL:
+            case WM_SETCURSOR:
+                ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
+                return 0;
+            default:
+                break;
+        }
+    }
+
+    if (io.WantCaptureKeyboard || io.WantTextInput)
+    {
+        switch (msg)
+        {
+            case WM_KEYDOWN:
+            case WM_SYSKEYDOWN:
+            case WM_CHAR:
+            case WM_SYSCHAR:
+                ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
+                if (io.WantTextInput)
+                {
                     return 0;
-                default:
-                    break;
-            }
+                }
+                break;
+            default:
+                break;
         }
+    }
 
-        if (io.WantCaptureKeyboard || io.WantTextInput)
-        {
-            switch (msg)
-            {
-                case WM_KEYDOWN:
-                case WM_SYSKEYDOWN:
-                case WM_CHAR:
-                case WM_SYSCHAR:
-                    ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
-                    if (io.WantTextInput)
-                    {
-                        return 0;
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        if (msg == WM_KEYUP || msg == WM_SYSKEYUP)
-        {
-            ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
-        }
+    if (msg == WM_KEYUP || msg == WM_SYSKEYUP)
+    {
+        ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
     }
 
     return msg;
@@ -1069,7 +1111,7 @@ void ui::onD3DResizeBuffers(const memory::hooks::D3D11* hk, const bool pre)
     }
 }
 
-void ApplyTheme()
+static void ApplyTheme()
 {
     ImGuiStyle& style = ImGui::GetStyle();
 
