@@ -11,6 +11,11 @@ inline void forceVisibility([[maybe_unused]] fw::SettingRefVariant& setting)
     ++re::forceVisibility;
 }
 
+inline void forceInvisibility([[maybe_unused]] fw::SettingRefVariant& setting)
+{
+    ++re::forceInvisibility;
+}
+
 class SettingsProfile : public fw::Settings
 {
 protected:
@@ -51,7 +56,7 @@ public:
         });
 
     S(float, MaximumDistance, 0.0f, "Characters outside of this distance won't be unhidden. (0=unlimited)").onChanged(
-        forceVisibility).validator(
+        forceInvisibility).validator(
         [](auto& value)
         {
             if (value < 0)
