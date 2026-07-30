@@ -708,6 +708,12 @@ void unpc::stop()
         ui::d3dHook.reset();
     }
 
+    // force visibility before exit to prevent leaving characters permanently invisible
+    ++re::forceVisibility;
+    while (re::forceVisibility > 0)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
     stopping.store(true, std::memory_order_release);
 
     if (hook)
