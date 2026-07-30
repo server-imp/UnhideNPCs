@@ -25,11 +25,8 @@ public:
     fw::Setting<bool>& UnhideNPCs = add<bool>(true, "UnhideNPCs", "Unhide NPCs").onChanged(forceVisibility);
 
     S(bool, UnhidePlayers, true, "Unhide players").onChanged(forceVisibility);
-    S(
-        bool,
-        PlayerOwned,
-        true,
-        "Characters that players own (pets, clones, minis etc) will also be unhidden.").onChanged(forceVisibility);
+    S(bool, PlayerOwned, true, "Characters that players own (pets, clones, minis etc) will also be unhidden.").
+    onChanged(forceVisibility);
 
     S(bool, AlwaysShowTarget, true, "Always show the targeted character, even if it would be hidden.").onChanged(
         forceVisibility);
@@ -123,7 +120,8 @@ public:
 
     S(bool, HidePlayerOwnedSelf, false, "Hide characters that are owned by you").onChanged(forceVisibility);
 
-    S(bool, HideOwnedInstances, false, "Hide characters owned by other players while you are in an instance").onChanged(forceVisibility);
+    S(bool, HideOwnedInstances, false, "Hide characters owned by other players while you are in an instance").onChanged(
+        forceVisibility);
 
     S(bool, HidePlayersInCombat, false, "Hide players when you are in combat").onChanged(forceVisibility);
 

@@ -38,8 +38,8 @@ uint32_t unpc::numPlayerOwnedVisible {};
 uint32_t unpc::numNPCVisible {};
 uint32_t unpc::numPlayersInArea {};
 
-std::shared_mutex unpc::renderCirclesMutex{};
-std::vector<std::pair<vec2, vec4>> unpc::renderCircles{};
+std::shared_mutex                  unpc::renderCirclesMutex {};
+std::vector<std::pair<vec2, vec4>> unpc::renderCircles {};
 
 #include "re.hpp"
 
@@ -163,6 +163,16 @@ static bool initialize()
     {
         LOG_ERR("Settings Failed");
         return false;
+    }
+
+    if (auto& profile = settings->profile(); profile.HideOffScreen.get())
+    {
+        if (!profile.UnhidePlayers.get())
+            profile.UnhidePlayers.set(true);
+        if (!profile.UnhideNPCs.get())
+            profile.UnhideNPCs.set(true);
+        if (!profile.PlayerOwned.get())
+            profile.PlayerOwned.set(true);
     }
 
     if (settings->ForceConsole.get())

@@ -404,6 +404,8 @@ void ui::renderOptions()
     bool playerOwned      = profile.PlayerOwned.get();
     bool alwaysShowTarget = profile.AlwaysShowTarget.get();
 
+    bool hideOffScreen = profile.HideOffScreen.get();
+
     if (checkboxGroup(
         "Unhide",
         "The selected will be unhidden",
@@ -416,14 +418,23 @@ void ui::renderOptions()
     {
         if (unhideNpcsChanged)
         {
+            if (hideOffScreen)
+                unhideNpcs = true;
+
             profile.UnhideNPCs.set(unhideNpcs);
         }
         if (unhidePlayersChanged)
         {
+            if (hideOffScreen)
+                unhidePlayers = true;
+
             profile.UnhidePlayers.set(unhidePlayers);
         }
         if (playerOwnedChanged)
         {
+            if (hideOffScreen)
+                playerOwned = true;
+
             profile.PlayerOwned.set(playerOwned);
         }
         if (alwaysShowTargetChanged)
@@ -480,9 +491,20 @@ void ui::renderOptions()
 
     separatorText("Hide");
 
-    bool hideOffScreen = profile.HideOffScreen.get();
     if (checkbox("Hide Off-Screen", "##hideOffScreen", hideOffScreen, profile.HideOffScreen.description().c_str()))
     {
+        if (!unhideNpcs)
+        {
+            profile.UnhideNPCs.set(true);
+        }
+        if (!unhidePlayers)
+        {
+            profile.UnhidePlayers.set(true);
+        }
+        if (!playerOwned)
+        {
+            profile.PlayerOwned.set(true);
+        }
         profile.HideOffScreen.set(hideOffScreen);
     }
 
