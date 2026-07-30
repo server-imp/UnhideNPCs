@@ -10,5 +10,6 @@
 #include <windows.h>
 #include <format>
 #include <mutex>
+#include <shared_mutex>
 
 #endif //UNHIDENPCS_PCH_HPP
