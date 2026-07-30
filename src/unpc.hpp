@@ -49,6 +49,9 @@ namespace unpc
     extern uint32_t numNPCVisible;
     extern uint32_t numPlayersInArea;
 
+    extern std::shared_mutex renderCirclesMutex;
+    extern std::vector<std::pair<vec2, vec4>> renderCircles;
+
     void onHookTick();
 
     // This function may be called second, returning true means the character will be forced invisible

@@ -38,6 +38,9 @@ uint32_t unpc::numPlayerOwnedVisible {};
 uint32_t unpc::numNPCVisible {};
 uint32_t unpc::numPlayersInArea {};
 
+std::shared_mutex unpc::renderCirclesMutex{};
+std::vector<std::pair<vec2, vec4>> unpc::renderCircles{};
+
 #include "re.hpp"
 
 static void hotkeyCallback(const std::string& id)

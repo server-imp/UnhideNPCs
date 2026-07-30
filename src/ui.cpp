@@ -557,14 +557,14 @@ void ui::renderOptions()
     bool hideAllPlayerOwnedChanged {}, hideBlockedPlayerOwnedChanged {}, hideNonGroupPlayerOwnedChanged {},
          hideStrangersOwnedChanged {}, hideNonGuildPlayerOwnedChanged {}, hideNonFriendPlayerOwnedChanged {},
          hideMyOwnedChanged {}, hideOwnedInstancesChanged {};
-    bool hidePlayerOwned          = profile.HidePlayerOwned.get();
-    bool hideBlockedPlayersOwned  = profile.HideBlockedPlayersOwned.get();
+    bool hidePlayerOwned = profile.HidePlayerOwned.get();
+    bool hideBlockedPlayersOwned = profile.HideBlockedPlayersOwned.get();
     bool hideNonGroupMembersOwned = profile.HideNonGroupMembersOwned.get();
-    bool hideStrangersOwned       = profile.HideStrangersOwned.get();
+    bool hideStrangersOwned = profile.HideStrangersOwned.get();
     bool hideNonGuildMembersOwned = profile.HideNonGuildMembersOwned.get();
-    bool hideNonFriendsOwned      = profile.HideNonFriendsOwned.get();
-    bool hidePlayerOwnedSelf      = profile.HidePlayerOwnedSelf.get();
-    bool hideOwnedInstance        = profile.HideOwnedInstances.get();
+    bool hideNonFriendsOwned = profile.HideNonFriendsOwned.get();
+    bool hidePlayerOwnedSelf = profile.HidePlayerOwnedSelf.get();
+    bool hideOwnedInstance = profile.HideOwnedInstances.get();
 
     if (checkboxGroup(
         "Player-Owned",
@@ -602,7 +602,12 @@ void ui::renderOptions()
                 &hideNonFriendPlayerOwnedChanged
             },
             { "Mine", profile.HidePlayerOwnedSelf.description().c_str(), &hidePlayerOwnedSelf, &hideMyOwnedChanged },
-            { "Instances", profile.HideOwnedInstances.description().c_str(), &hideOwnedInstance, &hideOwnedInstancesChanged }
+            {
+                "Instances",
+                profile.HideOwnedInstances.description().c_str(),
+                &hideOwnedInstance,
+                &hideOwnedInstancesChanged
+            }
         }))
     {
         if (hideAllPlayerOwnedChanged)
@@ -825,6 +830,7 @@ footer:
 }
 
 static std::atomic_bool ctrlDown {};
+
 void ui::renderWindow()
 {
     if (unpc::exit)
@@ -854,12 +860,34 @@ void ui::renderWindow()
         return;
     }
 
+    auto& io = ImGui::GetIO();
+
+#ifndef BUILDING_ON_GITHUB
+    {
+        // render any dots submitted to be rendered for debug purposes
+        const auto       drawList = ImGui::GetBackgroundDrawList();
+        std::unique_lock lock(unpc::renderCirclesMutex);
+        for (const auto& [screen, color] : unpc::renderCircles)
+        {
+            const auto displaySize = io.DisplaySize;
+
+            auto screenPos = ImVec2(
+                (screen.x * 0.5f + 0.5f) * displaySize.x,
+                (1.0f - (screen.y * 0.5f + 0.5f)) * displaySize.y);
+
+            drawList->AddCircleFilled(
+                screenPos,
+                4.0f,
+                ImGui::ColorConvertFloat4ToU32({ color.x, color.y, color.z, color.w }));
+        }
+    }
+#endif
+
     if (!open)
     {
         return;
     }
 
-    auto& io     = ImGui::GetIO();
     ImGui::SetNextWindowSize(ImVec2 { 0, 0 }); // Auto size
     if (ImGui::Begin("UnhideNPCs [ ALT+SHIFT+U ]", &open, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize))
     {
@@ -871,7 +899,7 @@ void ui::renderWindow()
                 tmp                                      = nullptr;
             }
 
-            const auto  window = ImGui::GetCurrentWindow();
+            const auto window = ImGui::GetCurrentWindow();
 
             const auto   min = ImVec2(0.0f, 0.0f);
             const ImVec2 max = io.DisplaySize;
@@ -1006,8 +1034,7 @@ uintptr_t ui::onWndProc(const HWND hWnd, const UINT msg, const WPARAM wParam, co
             default:
                 break;
         }
-    }
-    else if (msg == WM_KEYUP)
+    } else if (msg == WM_KEYUP)
     {
         switch (wParam)
         {
@@ -1018,7 +1045,8 @@ uintptr_t ui::onWndProc(const HWND hWnd, const UINT msg, const WPARAM wParam, co
                 ctrlDown = false;
                 break;
             }
-            default: break;
+            default:
+                break;
         }
     }
     auto& io = ImGui::GetIO();
