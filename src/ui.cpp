@@ -442,17 +442,35 @@ void ui::renderOptions()
             profile.AlwaysShowTarget.set(alwaysShowTarget);
         }
     }
-
-    bool unhideLowQuality = profile.UnhideLowQuality.get();
     ImGui::NewLine();
-    if (checkbox(
-        "Low Quality Models",
-        "##unhideLowQualityModels",
-        unhideLowQuality,
-        profile.UnhideLowQuality.description().c_str()))
+
+    bool unhideLowQuality      = profile.UnhideLowQuality.get();
+    bool unhideMountLowQuality = profile.UnhideMountLowQuality.get();
+    bool unhideLowQualityChanged {}, unhideMountLowQualityChanged {};
+
+    if (checkboxGroup(
+        "Basic Models",
+        "Use basic models when unhiding",
+        std::vector<CheckboxGroupEntry> {
+            { "All", profile.UnhideLowQuality.description().c_str(), &unhideLowQuality, &unhideLowQualityChanged },
+            {
+                "Mounts",
+                profile.UnhideMountLowQuality.description().c_str(),
+                &unhideMountLowQuality,
+                &unhideMountLowQualityChanged
+            }
+        }))
     {
-        profile.UnhideLowQuality.set(unhideLowQuality);
+        if (unhideLowQualityChanged)
+        {
+            profile.UnhideLowQuality.set(unhideLowQuality);
+        }
+        if (unhideMountLowQualityChanged)
+        {
+            profile.UnhideMountLowQuality.set(unhideMountLowQuality);
+        }
     }
+    ImGui::NewLine();
     if (auto maxDistance = static_cast<int32_t>(profile.MaximumDistance.get()); sliderInt(
         "Max Distance",
         "##maxDistance",
@@ -825,11 +843,32 @@ footer:
         unpc::hotkeyManager.stopCapturing();
     }
 
-    ImGui::Text(
-        "PLR:%-3d OWN:%-3d NPC:%-3d",
-        unpc::numPlayersVisible,
-        unpc::numPlayerOwnedVisible,
-        unpc::numNPCVisible);
+    if (ImGui::TreeNodeEx("Debug Stats", ImGuiTreeNodeFlags_NoTreePushOnOpen))
+    {
+        if (ImGui::BeginTable("DebugStats", 3, ImGuiTableFlags_SizingFixedFit))
+        {
+            ImGui::TableSetupColumn("Type");
+            ImGui::TableSetupColumn("Visible");
+            ImGui::TableSetupColumn("Hidden");
+            ImGui::TableHeadersRow();
+
+            auto Row = [](const char* name, const uint32_t visible, const uint32_t culled)
+            {
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0); ImGui::TextUnformatted(name);
+                ImGui::TableSetColumnIndex(1); ImGui::Text("%d", visible);
+                ImGui::TableSetColumnIndex(2); ImGui::Text("%d", culled);
+            };
+
+            Row("Players", unpc::numPlayersVisible, unpc::numPlayersCulled);
+            Row("Mounts",  unpc::numMountsVisible, unpc::numMountsCulled);
+            Row("Owned",   unpc::numPlayerOwnedVisible, unpc::numPlayerOwnedCulled);
+            Row("NPCs",    unpc::numNPCVisible, unpc::numNPCCulled);
+
+            ImGui::EndTable();
+        }
+        ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+    }
 
 #ifndef BUILDING_ON_GITHUB
     separatorText("Debug");

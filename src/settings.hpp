@@ -6,11 +6,6 @@
 
 #define S(type, name, value, comment) fw::Setting<type>& name = add<type>(value, #name, comment)
 
-inline void forceVisibility([[maybe_unused]] fw::SettingRefVariant& setting)
-{
-    ++re::forceVisibility;
-}
-
 inline void forceInvisibility([[maybe_unused]] fw::SettingRefVariant& setting)
 {
     ++re::forceInvisibility;
@@ -22,18 +17,19 @@ protected:
     std::unique_ptr<Settings> createChild(const std::string& name) override;
 
 public:
-    fw::Setting<bool>& UnhideNPCs = add<bool>(true, "UnhideNPCs", "Unhide NPCs").onChanged(forceVisibility);
+    fw::Setting<bool>& UnhideNPCs = add<bool>(true, "UnhideNPCs", "Unhide NPCs").onChanged(forceInvisibility);
 
-    S(bool, UnhidePlayers, true, "Unhide players").onChanged(forceVisibility);
+    S(bool, UnhidePlayers, true, "Unhide players").onChanged(forceInvisibility);
     S(bool, PlayerOwned, true, "Characters that players own (pets, clones, minis etc) will also be unhidden.").
-    onChanged(forceVisibility);
+    onChanged(forceInvisibility);
 
     S(bool, AlwaysShowTarget, true, "Always show the targeted character, even if it would be hidden.").onChanged(
-        forceVisibility);
+        forceInvisibility);
 
-    S(bool, UnhideLowQuality, false, "Use low quality models when unhiding characters").onChanged(forceVisibility);
+    S(bool, UnhideLowQuality, false, "Use basic models when unhiding all characters").onChanged(forceInvisibility);
+    S(bool, UnhideMountLowQuality, false, "Use basic models when unhiding mounts").onChanged(forceInvisibility);
 
-    S(int32_t, MinimumRank, 0, "Only NPCs that have at least this rank get unhidden.").onChanged(forceVisibility).
+    S(int32_t, MinimumRank, 0, "Only NPCs that have at least this rank get unhidden.").onChanged(forceInvisibility).
     validator(
         [](auto& value)
         {
@@ -43,7 +39,7 @@ public:
             }
         });
 
-    S(int32_t, Attackable, 0, "Only NPCs that match this get unhidden.").onChanged(forceVisibility).validator(
+    S(int32_t, Attackable, 0, "Only NPCs that match this get unhidden.").onChanged(forceInvisibility).validator(
         [](auto& value)
         {
             if (value < 0 || value > 2)
@@ -52,7 +48,7 @@ public:
             }
         });
 
-    S(float, MaximumDistance, 0.0f, "Characters outside of this distance won't be unhidden. (0=unlimited)").onChanged(
+    S(float, MaximumDistance, 0.0f, "Characters outside of this distance won't be shown. (0=unlimited)").onChanged(
         forceInvisibility).validator(
         [](auto& value)
         {
@@ -65,72 +61,74 @@ public:
             }
         });
 
-    S(bool, HidePlayers, false, "Hide all players (Not yourself)").onChanged(forceVisibility);
+    S(bool, HidePlayers, false, "Hide all players (Not yourself)").onChanged(forceInvisibility);
 
     S(
         bool,
         HidePlayerOwned,
         false,
-        "Hide all characters owned by players, except yourself (pets, clones, minis etc)").onChanged(forceVisibility);
+        "Hide all characters owned by players, except yourself (pets, clones, minis etc)").onChanged(forceInvisibility);
 
-    S(bool, HideBlockedPlayers, true, "Hide any players that you have blocked").onChanged(forceVisibility);
+    S(bool, HideBlockedPlayers, true, "Hide any players that you have blocked").onChanged(forceInvisibility);
     S(
         bool,
         HideBlockedPlayersOwned,
         true,
-        "Hide any characters that are owned by blocked players (pets, clones, minis etc)").onChanged(forceVisibility);
+        "Hide any characters that are owned by blocked players (pets, clones, minis etc)").onChanged(forceInvisibility);
 
     S(
         bool,
         HideNonGroupMembers,
         false,
-        "Hide any players who are not in the same group as you (Party or Squad)").onChanged(forceVisibility);
+        "Hide any players who are not in the same group as you (Party or Squad)").onChanged(forceInvisibility);
 
     S(
         bool,
         HideNonGroupMembersOwned,
         false,
-        "Hide any characters that are owned by non-group members (pets, clones, minis etc)").onChanged(forceVisibility);
+        "Hide any characters that are owned by non-group members (pets, clones, minis etc)").onChanged(
+        forceInvisibility);
 
-    S(bool, HideNonGuildMembers, false, "Hide any players that aren't guild members").onChanged(forceVisibility);
+    S(bool, HideNonGuildMembers, false, "Hide any players that aren't guild members").onChanged(forceInvisibility);
 
     S(
         bool,
         HideNonGuildMembersOwned,
         false,
-        "Hide any characters that are owned by non-guild members (pets, clones, minis etc)").onChanged(forceVisibility);
+        "Hide any characters that are owned by non-guild members (pets, clones, minis etc)").onChanged(
+        forceInvisibility);
 
-    S(bool, HideNonFriends, false, "Hide any players that aren't friends").onChanged(forceVisibility);
+    S(bool, HideNonFriends, false, "Hide any players that aren't friends").onChanged(forceInvisibility);
 
     S(
         bool,
         HideNonFriendsOwned,
         true,
-        "Hide any characters that are owned by non-friend players (pets, clones, minis etc)").
-    onChanged(forceVisibility);
+        "Hide any characters that are owned by non-friend players (pets, clones, minis etc)").onChanged(
+        forceInvisibility);
 
     S(bool, HideStrangers, false, "Hide any players who are not: friends, guild, party or squad members").onChanged(
-        forceVisibility);
+        forceInvisibility);
 
     S(
         bool,
         HideStrangersOwned,
         false,
-        "Hide any characters that are owned by strangers (pets, clones, minis etc)").onChanged(forceVisibility);
+        "Hide any characters that are owned by strangers (pets, clones, minis etc)").onChanged(forceInvisibility);
 
-    S(bool, HidePlayerOwnedSelf, false, "Hide characters that are owned by you").onChanged(forceVisibility);
+    S(bool, HidePlayerOwnedSelf, false, "Hide characters that are owned by you").onChanged(forceInvisibility);
 
     S(bool, HideOwnedInstances, false, "Hide characters owned by other players while you are in an instance").onChanged(
-        forceVisibility);
+        forceInvisibility);
 
-    S(bool, HidePlayersInCombat, false, "Hide players when you are in combat").onChanged(forceVisibility);
+    S(bool, HidePlayersInCombat, false, "Hide players when you are in combat").onChanged(forceInvisibility);
 
-    S(bool, HideOffScreen, true, "Hide any off-screen characters").onChanged(forceVisibility);
+    S(bool, HideOffScreen, true, "Hide any off-screen characters").onChanged(forceInvisibility);
 
     S(bool, HidePlayerOwnedInCombat, false, "Hide player-owned characters when you are in combat").onChanged(
-        forceVisibility);
+        forceInvisibility);
 
-    S(int32_t, MaxPlayersVisible, 50, "Maximum number of visible players. (0=unlimited)").onChanged(forceVisibility).
+    S(int32_t, MaxPlayersVisible, 50, "Maximum number of visible players. (0=unlimited)").onChanged(forceInvisibility).
     validator(
         [](auto& value)
         {
@@ -144,7 +142,7 @@ public:
         });
 
     S(int32_t, MaxPlayerOwnedVisible, 0, "Maximum number of visible player-owned characters. (0=unlimited)").onChanged(
-        forceVisibility).validator(
+        forceInvisibility).validator(
         [](auto& value)
         {
             if (value < 0)
@@ -156,7 +154,7 @@ public:
             }
         });
 
-    S(int32_t, MaxNpcs, 0, "Maximum number of visible NPCs. (0=unlimited)").onChanged(forceVisibility).validator(
+    S(int32_t, MaxNpcs, 0, "Maximum number of visible NPCs. (0=unlimited)").onChanged(forceInvisibility).validator(
         [](auto& value)
         {
             if (value < 0)
@@ -169,7 +167,7 @@ public:
         });
 
     S(int32_t, InstanceBehaviour, 0, "0: Always On\n1: Disabled in instances\n2: Instances only").onChanged(
-        forceVisibility).validator(
+        forceInvisibility).validator(
         [](auto& value)
         {
             if (value < 0 || value > 2)
