@@ -176,6 +176,10 @@ public:
             }
         });
 
+#ifndef BUILDING_ON_GITHUB
+    S(bool, RenderDebugCircles, false, "Render debug circles");
+#endif
+
     explicit SettingsProfile(Settings* owner, const std::string& name) : Settings(owner, name, "") {}
 };
 

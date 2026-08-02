@@ -923,27 +923,6 @@ void ui::renderWindow()
 
     auto& io = ImGui::GetIO();
 
-#ifndef BUILDING_ON_GITHUB
-    {
-        // render any dots submitted to be rendered for debug purposes
-        const auto       drawList = ImGui::GetBackgroundDrawList();
-        std::unique_lock lock(unpc::renderCirclesMutex);
-        for (const auto& [screen, color] : unpc::renderCircles)
-        {
-            const auto displaySize = io.DisplaySize;
-
-            auto screenPos = ImVec2(
-                (screen.x * 0.5f + 0.5f) * displaySize.x,
-                (1.0f - (screen.y * 0.5f + 0.5f)) * displaySize.y);
-
-            drawList->AddCircleFilled(
-                screenPos,
-                4.0f,
-                ImGui::ColorConvertFloat4ToU32({ color.x, color.y, color.z, color.w }));
-        }
-    }
-#endif
-
     if (!open)
     {
         return;
