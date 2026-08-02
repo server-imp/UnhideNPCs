@@ -45,11 +45,15 @@ namespace unpc
     extern int32_t*    loadingScreenActive;
 
     extern uint32_t numPlayersVisible;
+    extern uint32_t numPlayersCulled;
+    extern uint32_t numMountsVisible;
+    extern uint32_t numMountsCulled;
     extern uint32_t numPlayerOwnedVisible;
+    extern uint32_t numPlayerOwnedCulled;
     extern uint32_t numNPCVisible;
-    extern uint32_t numPlayersInArea;
+    extern uint32_t numNPCCulled;
 
-    extern std::shared_mutex renderCirclesMutex;
+    extern std::shared_mutex                  renderCirclesMutex;
     extern std::vector<std::pair<vec2, vec4>> renderCircles;
 
     void onHookTick();

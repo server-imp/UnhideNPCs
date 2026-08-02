@@ -34,9 +34,13 @@ MumbleLink* unpc::mumbleLink {};
 int32_t*    unpc::loadingScreenActive {};
 
 uint32_t unpc::numPlayersVisible {};
+uint32_t unpc::numPlayersCulled {};
+uint32_t unpc::numMountsVisible {};
+uint32_t unpc::numMountsCulled {};
 uint32_t unpc::numPlayerOwnedVisible {};
+uint32_t unpc::numPlayerOwnedCulled {};
 uint32_t unpc::numNPCVisible {};
-uint32_t unpc::numPlayersInArea {};
+uint32_t unpc::numNPCCulled {};
 
 std::shared_mutex                  unpc::renderCirclesMutex {};
 std::vector<std::pair<vec2, vec4>> unpc::renderCircles {};
@@ -364,6 +368,11 @@ bool unpc::shouldHide(const re::CharacterEntry& c, const bool instanced)
         return false;
     }
 
+    if (profile.MaximumDistance.get() > 0 && c.distance >= profile.MaximumDistance.get())
+    {
+        return true;
+    }
+
     if (c.isPlayer)
     {
         const auto maxVisible = profile.MaxPlayersVisible.get();
@@ -496,6 +505,11 @@ bool unpc::shouldShow(const re::CharacterEntry& c, const bool instanced)
     if (c.isTarget && profile.AlwaysShowTarget.get())
     {
         return true;
+    }
+
+    if (profile.MaximumDistance.get() > 0 && c.distance >= profile.MaximumDistance.get())
+    {
+        return false;
     }
 
     if (c.isPlayer)
@@ -639,11 +653,6 @@ bool unpc::shouldShow(const re::CharacterEntry& c, const bool instanced)
         return false;
     }
 
-    if (profile.MaximumDistance.get() > 0 && c.distance >= profile.MaximumDistance.get())
-    {
-        return false;
-    }
-
     return true;
 }
 
@@ -713,11 +722,11 @@ void unpc::stop()
 {
     LOG_INFO("Stopping");
 
-    // force visibility before exit to prevent leaving characters permanently invisible
-    ++re::forceVisibility;
+    // invalidate character states so that the game will apply its own settings
+    ++re::forceInvalidate;
     stopping.store(true, std::memory_order_release);
 
-    while (re::forceVisibility > 0)
+    while (re::forceInvalidate > 0)
     {
         ;
     }
