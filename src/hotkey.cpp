@@ -1,9 +1,9 @@
 #include "hotkey.hpp"
 
+#include "fw.hpp"
 #include "imgui.h"
 #include "ui.hpp"
 #include "unpc.hpp"
-#include "fw.hpp"
 
 std::string Hotkey::toString() const
 {
@@ -27,7 +27,7 @@ std::string Hotkey::toString() const
         s += "Alt + ";
     }
 
-    char       name[64];
+    char       name[64] {};
     const auto scan = MapVirtualKey(vkCode, MAPVK_VK_TO_VSC);
     GetKeyNameTextA(scan << 16, name, 64);
 
@@ -48,8 +48,8 @@ bool HotkeyManager::isHotkeyPressed(Hotkey& hotkey) const
         return false;
     }
 
-    const bool pressed = _keyStates.down[hotkey.vkCode] && _keyStates.down[VK_CONTROL] == hotkey.ctrl && _keyStates.down
-    [VK_SHIFT] == hotkey.shift && _keyStates.down[VK_MENU] == hotkey.alt;
+    const bool pressed = _keyStates.down[hotkey.vkCode] && _keyStates.down[VK_CONTROL] == hotkey.ctrl
+                      && _keyStates.down[VK_SHIFT] == hotkey.shift && _keyStates.down[VK_MENU] == hotkey.alt;
 
     if (pressed && !hotkey.active)
     {
@@ -108,30 +108,30 @@ uintptr_t HotkeyManager::onWndProc(HWND hWnd, const UINT msg, const WPARAM wPara
 
     switch (vkCode)
     {
-        case 0:
-        case VK_LBUTTON:
-        case VK_RBUTTON:
-        case VK_MBUTTON:
-        case VK_XBUTTON1:
-        case VK_XBUTTON2:
-        case VK_BACK:
-        case VK_TAB:
-        case VK_RETURN:
-        case VK_PAUSE:
-        case VK_CAPITAL:
-        case VK_NONAME:
-        case VK_CONTROL:
-        case VK_LCONTROL:
-        case VK_RCONTROL:
-        case VK_SHIFT:
-        case VK_LSHIFT:
-        case VK_RSHIFT:
-        case VK_MENU:
-        case VK_LMENU:
-        case VK_RMENU:
-            return msg;
-        default:
-            break;
+    case 0:
+    case VK_LBUTTON:
+    case VK_RBUTTON:
+    case VK_MBUTTON:
+    case VK_XBUTTON1:
+    case VK_XBUTTON2:
+    case VK_BACK:
+    case VK_TAB:
+    case VK_RETURN:
+    case VK_PAUSE:
+    case VK_CAPITAL:
+    case VK_NONAME:
+    case VK_CONTROL:
+    case VK_LCONTROL:
+    case VK_RCONTROL:
+    case VK_SHIFT:
+    case VK_LSHIFT:
+    case VK_RSHIFT:
+    case VK_MENU:
+    case VK_LMENU:
+    case VK_RMENU:
+        return msg;
+    default:
+        break;
     }
 
     const bool ctrl  = (GetKeyState(VK_CONTROL) & 0x8000) != 0;
@@ -207,20 +207,18 @@ void HotkeyManager::registerHotkey(const std::string& id, const std::string& lab
         return;
     }
 
-    _hotkeys.emplace_back(id, Hotkey { .label = label });
+    _hotkeys.emplace_back(id, Hotkey {.label = label});
 }
 
 void HotkeyManager::unregisterHotkey(const std::string& id)
 {
-    _hotkeys.erase(
-        std::remove_if(
-            _hotkeys.begin(),
-            _hotkeys.end(),
-            [&](const auto& pair)
-            {
-                return pair.first == id;
-            }),
-        _hotkeys.end());
+    _hotkeys.erase(std::remove_if(_hotkeys.begin(),
+                                  _hotkeys.end(),
+                                  [&](const auto& pair)
+                                  {
+                                      return pair.first == id;
+                                  }),
+                   _hotkeys.end());
 }
 
 void HotkeyManager::triggerCallbacks(const std::string& id) const
@@ -266,7 +264,8 @@ void HotkeyManager::renderHotkey(const std::string& id, Hotkey& hotkey)
             LOG_INFO("Updated hotkey \"{}\" to {}", id, hotkey.toString());
             _needSave = true;
         }
-    } else
+    }
+    else
     {
         ImGui::PushID(id.c_str());
         if (ImGui::Button(hotkey.toString().c_str(), ImVec2(-FLT_MIN, 0)))
@@ -281,11 +280,10 @@ void HotkeyManager::renderHotkey(const std::string& id, Hotkey& hotkey)
 
 void HotkeyManager::renderHotkeys()
 {
-    if (ImGui::BeginTable(
-        "hotkey_table",
-        2,
-        ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_ScrollY,
-        ImVec2(0, 300)))
+    if (ImGui::BeginTable("hotkey_table",
+                          2,
+                          ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_ScrollY,
+                          ImVec2(0, 300)))
     {
         ImGui::TableSetupColumn("Text", ImGuiTableColumnFlags_WidthStretch);
         ImGui::TableSetupColumn("Button", ImGuiTableColumnFlags_WidthFixed, ui::fieldWidth);
@@ -392,6 +390,8 @@ void HotkeyManager::load()
         hk->alt    = temp.alt;
 
         if (hk->vkCode)
+        {
             LOG_INFO("Loaded hotkey \"{}\": {}", id, hk->toString());
+        }
     }
 }

@@ -1,9 +1,10 @@
 #include "unpc.hpp"
+#include <version.hpp>
 
 #include "hook.hpp"
 #include "hotkey.hpp"
-#include "ui.hpp"
 #include "integration/nexus.hpp"
+#include "ui.hpp"
 
 using namespace std::chrono_literals;
 using namespace memory;
@@ -20,11 +21,10 @@ std::optional<Settings>        unpc::settings;
 std::optional<Detour>          unpc::hook {};
 std::optional<Detour>          unpc::hook2 {};
 
-HotkeyManager unpc::hotkeyManager(
-    "ArenaNet_Gr_Window_Class",
-    std::filesystem::current_path() / "addons" / "UnhideNPCs" / "hotkeys.json");
-HANDLE  unpc::hMutex {};
-HMODULE unpc::hModule {};
+HotkeyManager unpc::hotkeyManager("ArenaNet_Gr_Window_Class",
+                                  std::filesystem::current_path() / "addons" / "UnhideNPCs" / "hotkeys.json");
+HANDLE        unpc::hMutex {};
+HMODULE       unpc::hModule {};
 
 HANDLE unpc::hThread {};
 
@@ -93,7 +93,8 @@ static void hotkeyCallback(const std::string& id)
     if (id == "ForceVisibility")
     {
         ++re::forceVisibility;
-    } else if (id == "ToggleOverlay")
+    }
+    else if (id == "ToggleOverlay")
     {
         if (settings->OverlayOpen.get() && hotkeyManager.isCapturing())
         {
@@ -101,7 +102,8 @@ static void hotkeyCallback(const std::string& id)
         }
 
         settings->OverlayOpen.set(!settings->OverlayOpen.get());
-    } else if (id == "SwitchProfile")
+    }
+    else if (id == "SwitchProfile")
     {
         auto idx = settings->ActiveProfile.get();
         ++idx;
@@ -172,11 +174,17 @@ static bool initialize()
     if (auto& profile = settings->profile(); profile.HideOffScreen.get())
     {
         if (!profile.UnhidePlayers.get())
+        {
             profile.UnhidePlayers.set(true);
+        }
         if (!profile.UnhideNPCs.get())
+        {
             profile.UnhideNPCs.set(true);
+        }
         if (!profile.PlayerOwned.get())
+        {
             profile.PlayerOwned.set(true);
+        }
     }
 
     if (settings->ForceConsole.get())
@@ -194,13 +202,14 @@ static bool initialize()
     Handle  ptr {};
     RefData ref {};
 
-    auto pattern1 = Pattern("pattern1", re::pattern1).callback(
-        [&](const Handle& ptr)
-        {
-            re::vtableIndex = ptr.add(2).deref<uint32_t>() / 8;
-            LOG_DBG("VTable Index: {}", re::vtableIndex);
-            return true;
-        });
+    auto pattern1 = Pattern("pattern1", re::pattern1)
+                        .callback(
+                            [&](const Handle& ptr)
+                            {
+                                re::vtableIndex = ptr.add(2).deref<uint32_t>() / 8;
+                                LOG_DBG("VTable Index: {}", re::vtableIndex);
+                                return true;
+                            });
 
     if (!pattern1.resolve(game, ptr))
     {
@@ -214,15 +223,16 @@ static bool initialize()
     }
     hook.emplace("Hook 1", ptr.to_ptr<void*>(), reinterpret_cast<void*>(re::hook));
 
-    auto pattern3 = Pattern("pattern3", re::pattern3).callback(
-        [&](Handle& ptr)
-        {
-            ptr                 = ptr.add(5);
-            loadingScreenActive = ptr.add(6).add(ptr.add(2).deref<int32_t>()).to_ptr<int32_t*>();
-            ptr                 = Handle(loadingScreenActive);
-            LOG_DBG("Loading screen active: {}", ptr.formatted());
-            return true;
-        });
+    auto pattern3 = Pattern("pattern3", re::pattern3)
+                        .callback(
+                            [&](Handle& ptr)
+                            {
+                                ptr                 = ptr.add(5);
+                                loadingScreenActive = ptr.add(6).add(ptr.add(2).deref<int32_t>()).to_ptr<int32_t*>();
+                                ptr                 = Handle(loadingScreenActive);
+                                LOG_DBG("Loading screen active: {}", ptr.formatted());
+                                return true;
+                            });
     if (!pattern3.resolve(game, ptr))
     {
         return false;
@@ -230,42 +240,28 @@ static bool initialize()
 
     std::vector<Handle> asserts {};
     if (!findAsserts(
-        game,
-        std::get<0>(re::pattern7_1),
-        std::get<1>(re::pattern7_1),
-        std::get<2>(re::pattern7_1),
-        asserts) && !findAsserts(
-        game,
-        std::get<0>(re::pattern7_2),
-        std::get<1>(re::pattern7_2),
-        std::get<2>(re::pattern7_2),
-        asserts))
+            game, std::get<0>(re::pattern7_1), std::get<1>(re::pattern7_1), std::get<2>(re::pattern7_1), asserts)
+        && !findAsserts(
+            game, std::get<0>(re::pattern7_2), std::get<1>(re::pattern7_2), std::get<2>(re::pattern7_2), asserts))
     {
         LOG_ERR("Unable to find pattern 7");
         return false;
     }
-    re::gw2::getContextCollection = reinterpret_cast<re::gw2::GetContextCollectionFn>(asserts[0].sub(13).
-        resolve_relative_call().raw());
+    re::gw2::getContextCollection =
+        reinterpret_cast<re::gw2::GetContextCollectionFn>(asserts[0].sub(13).resolve_relative_call().raw());
 
     if (!game.findStringReference(re::pattern5, ref))
     {
         LOG_ERR("Unable to find pattern 5");
         return false;
     }
-    re::gw2::getAvContext = reinterpret_cast<re::gw2::GetAvContextFn>(ref.instruction().add(12).resolve_relative_call().
-                                                                          raw());
+    re::gw2::getAvContext =
+        reinterpret_cast<re::gw2::GetAvContextFn>(ref.instruction().add(12).resolve_relative_call().raw());
 
     if (!findAsserts(
-        game,
-        std::get<0>(re::pattern8_1),
-        std::get<1>(re::pattern8_1),
-        std::get<2>(re::pattern8_1),
-        asserts) && !findAsserts(
-        game,
-        std::get<0>(re::pattern8_2),
-        std::get<1>(re::pattern8_2),
-        std::get<2>(re::pattern8_2),
-        asserts))
+            game, std::get<0>(re::pattern8_1), std::get<1>(re::pattern8_1), std::get<2>(re::pattern8_1), asserts)
+        && !findAsserts(
+            game, std::get<0>(re::pattern8_2), std::get<1>(re::pattern8_2), std::get<2>(re::pattern8_2), asserts))
     {
         LOG_ERR("Unable to find pattern 8");
         return false;
@@ -330,18 +326,18 @@ void unpc::onHookTick()
 
         if (!ui::d3dHook && (mode == EMode::Proxy || mode == EMode::Injected))
         {
-            ui::d3dHook = hooks::D3D11::create(
-                "ArenaNet_Gr_Window_Class",
-                "",
-                ui::onD3DPresent,
-                ui::onD3DResizeBuffers,
-                ui::onD3DStarted,
-                ui::onD3DShutdown);
+            ui::d3dHook = hooks::D3D11::create("ArenaNet_Gr_Window_Class",
+                                               "",
+                                               ui::onD3DPresent,
+                                               ui::onD3DResizeBuffers,
+                                               ui::onD3DStarted,
+                                               ui::onD3DShutdown);
 
             if (!ui::d3dHook || !ui::d3dHook.value()->enable())
             {
                 LOG_INFO("Overlay Not OK");
-            } else
+            }
+            else
             {
                 LOG_INFO("Overlay OK");
             }
@@ -464,14 +460,14 @@ bool unpc::shouldHide(const re::CharacterEntry& c, const bool instanced)
             return true;
         }
 
-        if (profile.HideStrangersOwned.get() && !c.isOwnerLocalPlayer && !c.isFriend && !c.isPartyMember && !c.
-            isSquadMember)
+        if (profile.HideStrangersOwned.get() && !c.isOwnerLocalPlayer && !c.isFriend && !c.isPartyMember
+            && !c.isSquadMember)
         {
             return true;
         }
 
-        if (!c.isOwnerLocalPlayer && profile.HidePlayerOwnedInCombat.get() && mumbleLink && mumbleLink->getContext().
-            isInCombat())
+        if (!c.isOwnerLocalPlayer && profile.HidePlayerOwnedInCombat.get() && mumbleLink
+            && mumbleLink->getContext().isInCombat())
         {
             return true;
         }
@@ -613,14 +609,14 @@ bool unpc::shouldShow(const re::CharacterEntry& c, const bool instanced)
             return false;
         }
 
-        if (profile.HideStrangersOwned.get() && !c.isOwnerLocalPlayer && !c.isFriend && !c.isPartyMember && !c.
-            isSquadMember)
+        if (profile.HideStrangersOwned.get() && !c.isOwnerLocalPlayer && !c.isFriend && !c.isPartyMember
+            && !c.isSquadMember)
         {
             return false;
         }
 
-        if (!c.isOwnerLocalPlayer && profile.HidePlayerOwnedInCombat.get() && mumbleLink && mumbleLink->getContext().
-            isInCombat())
+        if (!c.isOwnerLocalPlayer && profile.HidePlayerOwnedInCombat.get() && mumbleLink
+            && mumbleLink->getContext().isInCombat())
         {
             return false;
         }
@@ -672,9 +668,7 @@ void unpc::start()
 #endif
 
     logger.emplace(
-        "UnhideNPCs",
-        std::filesystem::current_path() / "addons" / "UnhideNPCs" / "unhidenpcs.log",
-        logLevel);
+        "UnhideNPCs", std::filesystem::current_path() / "addons" / "UnhideNPCs" / "unhidenpcs.log", logLevel);
 
     LOG_INFO("Starting");
     LOG_INFO("Version {}", version::STRING);
@@ -683,20 +677,24 @@ void unpc::start()
     {
         LOG_INFO("Mode: Injected");
         mode = EMode::Injected;
-    } else if (hProxyModule)
+    }
+    else if (hProxyModule)
     {
         LOG_INFO("Mode: Proxy({})", proxyModuleName);
         mode = EMode::Proxy;
-    } else if (nexusPresent && util::isModuleInAnyDirsRelativeToExe(hModule, { "addons" }))
+    }
+    else if (nexusPresent && util::isModuleInAnyDirsRelativeToExe(hModule, {"addons"}))
     {
         LOG_INFO("Mode: Nexus");
         mode = EMode::Nexus;
         logger->registerCallback(nexus::logCallback);
-    } else if (arcDpsPresent && util::isModuleInAnyDirsRelativeToExe(hModule, { "", "bin64" }))
+    }
+    else if (arcDpsPresent && util::isModuleInAnyDirsRelativeToExe(hModule, {"", "bin64"}))
     {
         LOG_INFO("Mode: ArcDPS");
         mode = EMode::ArcDps;
-    } else
+    }
+    else
     {
         LOG_INFO("Mode: Unknown");
         mode = EMode::Unknown;
@@ -814,17 +812,17 @@ void unpc::entrypoint()
         nullptr);
 }
 
-bool unpc::findAsserts(
-    Module&              module,
-    const size_t         lineNumber,
-    const std::string&   file,
-    const std::string&   message,
-    std::vector<Handle>& results)
+bool unpc::findAsserts(Module&              module,
+                       const size_t         lineNumber,
+                       const std::string&   file,
+                       const std::string&   message,
+                       std::vector<Handle>& results)
 {
     if (lineNumber != SIZE_MAX)
     {
         LOG_DBG("Looking for asserts [0x{:X}, \"{}\", \"{}\"]", lineNumber, file, message);
-    } else
+    }
+    else
     {
         LOG_DBG("Looking for asserts [\"{}\", \"{}\"]", file, message);
     }
@@ -858,20 +856,30 @@ bool unpc::findAsserts(
 
             // the subsequent instruction should be a call
             if (messageRef.add(7).deref<uint8_t>() != 0xE8)
+            {
                 continue;
+            }
 
             // the preceding instruction should be a mov, matching the number
             const auto mov = fileRef.sub(5);
             if (mov.deref<uint8_t>() != 0xB8)
+            {
                 continue;
+            }
             if (lineNumber != SIZE_MAX && mov.add(1).deref<i32>() != lineNumber)
+            {
                 continue;
+            }
 
             // check if mov is rex prefixed
             if ((mov.sub(1).deref<uint8_t>() & 0xF0) == 0x40)
+            {
                 results.push_back(mov.sub(1));
+            }
             else
+            {
                 results.push_back(mov);
+            }
         }
     }
 
@@ -879,11 +887,8 @@ bool unpc::findAsserts(
     return !results.empty();
 }
 
-bool unpc::findAsserts(
-    Module&              module,
-    const std::string&   file,
-    const std::string&   message,
-    std::vector<Handle>& results)
+bool
+unpc::findAsserts(Module& module, const std::string& file, const std::string& message, std::vector<Handle>& results)
 {
     return findAsserts(module, SIZE_MAX, file, message, results);
 }

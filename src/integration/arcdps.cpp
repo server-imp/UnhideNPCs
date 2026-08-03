@@ -1,7 +1,8 @@
 #include "arcdps.hpp"
+#include "../ui.hpp"
 #include "../unpc.hpp"
 #include "imgui.h"
-#include "../ui.hpp"
+#include "version.hpp"
 
 bool isArcDps()
 {
@@ -48,19 +49,13 @@ uintptr_t mod_release()
 }
 
 void* get_init_addr(
-    char*    arcversion,
-    void*    imguictx,
-    void*    id3dptr,
-    HANDLE   arcdll,
-    void*    mallocfn,
-    void*    freefn,
-    uint32_t d3dversion)
+    char* arcversion, void* imguictx, void* id3dptr, HANDLE arcdll, void* mallocfn, void* freefn, uint32_t d3dversion)
 {
     if (!unpc::nexusPresent && !unpc::hProxyModule && !unpc::injected)
     {
         ImGui::SetCurrentContext(static_cast<ImGuiContext*>(imguictx));
-        const auto allocatorFn = reinterpret_cast<void*(*)(size_t, void*)>(reinterpret_cast<std::uintptr_t>(mallocfn));
-        const auto freeFn      = reinterpret_cast<void(*)(void*, void*)>(reinterpret_cast<std::uintptr_t>(freefn));
+        const auto allocatorFn = reinterpret_cast<void* (*)(size_t, void*)>(reinterpret_cast<std::uintptr_t>(mallocfn));
+        const auto freeFn      = reinterpret_cast<void (*)(void*, void*)>(reinterpret_cast<std::uintptr_t>(freefn));
         ImGui::SetAllocatorFunctions(allocatorFn, freeFn);
     }
 

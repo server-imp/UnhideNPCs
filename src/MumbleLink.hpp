@@ -1,8 +1,10 @@
 #ifndef UNHIDENPCS_MUMBLELINK_HPP
 #define UNHIDENPCS_MUMBLELINK_HPP
 #pragma once
-#include "pch.hpp"
+#include "logger.hpp"
 #include "nlohmann/json.hpp"
+#include "pch.hpp"
+#include "util.hpp"
 
 enum class EMapType : uint32_t
 {
@@ -28,6 +30,7 @@ enum class EMapType : uint32_t
 };
 
 #pragma pack(push, 1)
+
 struct MumbleContext
 {
     unsigned char serverAddress[28]; // contains sockaddr_in or sockaddr_in6
@@ -38,7 +41,8 @@ struct MumbleContext
     uint32_t      buildId;
     // Additional data beyond the <context_len> bytes the game instructs Mumble to use to distinguish between instances.
     uint32_t      uiState;
-    // Bitmask: Bit 1 = IsMapOpen, Bit 2 = IsCompassTopRight, Bit 3 = DoesCompassHaveRotationEnabled, Bit 4 = Game has focus, Bit 5 = Is in Competitive game mode, Bit 6 = Textbox has focus, Bit 7 = Is in Combat
+    // Bitmask: Bit 1 = IsMapOpen, Bit 2 = IsCompassTopRight, Bit 3 = DoesCompassHaveRotationEnabled, Bit 4 = Game has
+    // focus, Bit 5 = Is in Competitive game mode, Bit 6 = Textbox has focus, Bit 7 = Is in Combat
     uint16_t      compassWidth;    // pixels
     uint16_t      compassHeight;   // pixels
     float         compassRotation; // radians
@@ -85,9 +89,11 @@ struct MumbleContext
         return uiState & (1 << 6);
     }
 };
+
 #pragma pack(pop)
 
 #pragma pack(push, 1)
+
 struct MumbleLink
 {
     uint32_t      uiVersion;
@@ -136,6 +142,7 @@ struct MumbleLink
         return cachedFov;
     }
 };
+
 #pragma pack(pop)
 
 inline MumbleLink* getMumbleLink()
@@ -151,12 +158,7 @@ inline MumbleLink* getMumbleLink()
     {
         LOG_DBG("OpenFileMappingW failed: \"{}\", {}", mappingName, GetLastError());
         hMap = CreateFileMappingA(
-            INVALID_HANDLE_VALUE,
-            nullptr,
-            PAGE_READWRITE,
-            0,
-            sizeof(MumbleLink),
-            mappingName.c_str());
+            INVALID_HANDLE_VALUE, nullptr, PAGE_READWRITE, 0, sizeof(MumbleLink), mappingName.c_str());
 
         if (!hMap)
         {
@@ -180,4 +182,4 @@ inline MumbleLink* getMumbleLink()
 
     return static_cast<MumbleLink*>(ptr);
 }
-#endif //UNHIDENPCS_MUMBLELINK_HPP
+#endif // UNHIDENPCS_MUMBLELINK_HPP

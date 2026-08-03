@@ -1,17 +1,14 @@
 #include "ui.hpp"
 
-#include <map>
-#include <set>
-
+#include "MumbleLink.hpp"
+#include "backends/imgui_impl_dx11.h"
+#include "backends/imgui_impl_win32.h"
 #include "hook.hpp"
 #include "imgui.h"
 #include "unpc.hpp"
-#include "backends/imgui_impl_dx11.h"
-#include "backends/imgui_impl_win32.h"
-#include "dumping.hpp"
-#include "MumbleLink.hpp"
 
 #include <shellapi.h>
+#include <version.hpp>
 
 #include "imgui_internal.h"
 
@@ -43,13 +40,8 @@ bool ui::checkbox(const char* label, const char* id, bool& value, const char* ti
     return ImGui::Checkbox(id, &value);
 }
 
-bool ui::combo(
-    const char*        label,
-    const char*        id,
-    int&               value,
-    const char* const* items,
-    const size_t       count,
-    const char*        tip)
+bool
+ui::combo(const char* label, const char* id, int& value, const char* const* items, const size_t count, const char* tip)
 {
     const float initialCursorX = ImGui::GetCursorPosX();
     ImGui::Text("%s", label);
@@ -62,14 +54,13 @@ bool ui::combo(
     return result;
 }
 
-bool ui::sliderInt(
-    const char*   label,
-    const char*   id,
-    int32_t&      value,
-    const int32_t min,
-    const int32_t max,
-    const char*   fmt,
-    const char*   tip)
+bool ui::sliderInt(const char*   label,
+                   const char*   id,
+                   int32_t&      value,
+                   const int32_t min,
+                   const int32_t max,
+                   const char*   fmt,
+                   const char*   tip)
 {
     const float initialCursorX = ImGui::GetCursorPosX();
     ImGui::Text("%s", label);
@@ -83,13 +74,7 @@ bool ui::sliderInt(
 }
 
 bool ui::sliderFloat(
-    const char* label,
-    const char* id,
-    float&      value,
-    const float min,
-    const float max,
-    const char* fmt,
-    const char* tip)
+    const char* label, const char* id, float& value, const float min, const float max, const char* fmt, const char* tip)
 {
     const float initialCursorX = ImGui::GetCursorPosX();
     ImGui::Text("%s", label);
@@ -104,7 +89,7 @@ bool ui::sliderFloat(
 
 bool ui::button(const char* label)
 {
-    return ImGui::Button(label, { labelOffset + fieldWidth, 30 });
+    return ImGui::Button(label, {labelOffset + fieldWidth, 30});
 }
 
 bool ui::textbox(const char* tag, char* buffer, const size_t bufferSize)
@@ -125,7 +110,7 @@ bool ui::textboxButton(const char* tag, const char* hint, char* buffer, const si
     tooltip(hint);
     ImGui::SameLine();
     ImGui::SetCursorPosX(initialCursorX + width + ImGui::GetStyle().ItemSpacing.x);
-    if (ImGui::Button(buttonText, { fieldWidth, 30 }))
+    if (ImGui::Button(buttonText, {fieldWidth, 30}))
     {
         return true;
     }
@@ -190,25 +175,27 @@ bool ui::textLink(const char* label, const bool centered)
     if (hovered)
     {
         ImGui::GetWindowDrawList()->AddLine(
-            ImVec2(pos.x, pos.y + textSize.y),
-            ImVec2(pos.x + textSize.x, pos.y + textSize.y),
-            color,
-            1.0f);
+            ImVec2(pos.x, pos.y + textSize.y), ImVec2(pos.x + textSize.x, pos.y + textSize.y), color, 1.0f);
     }
 
     return clicked;
 }
 
-struct CheckboxGroupEntry
+namespace
 {
-    const char* label {};
-    const char* tooltip {};
-    bool*       value {};
-    bool*       changed {};
+    struct CheckboxGroupEntry
+    {
+        const char* label {};
+        const char* tooltip {};
+        bool*       value {};
+        bool*       changed {};
 
-    CheckboxGroupEntry(const char* label, const char* tooltip, bool* value, bool* changed)
-        : label(label), tooltip(tooltip), value(value), changed(changed) {}
-};
+        CheckboxGroupEntry(const char* label, const char* tooltip, bool* value, bool* changed)
+            : label(label), tooltip(tooltip), value(value), changed(changed)
+        {
+        }
+    };
+} // namespace
 
 static bool checkboxGroup(const char* label, const char* tooltip, const std::vector<CheckboxGroupEntry>& items)
 {
@@ -219,9 +206,9 @@ static bool checkboxGroup(const char* label, const char* tooltip, const std::vec
         return false;
     }
 
-    char id[32];
     if (count == 1)
     {
+        char id[32];
         snprintf(id, sizeof(id), "##%p", static_cast<void*>(items[0].value));
         const auto result = ui::checkbox(items[0].label, id, *items[0].value, items[0].tooltip);
         if (result)
@@ -288,18 +275,15 @@ static bool checkboxGroup(const char* label, const char* tooltip, const std::vec
     return result;
 }
 
-static const char* ranks[] = { "Normal", "Veteran", "Elite", "Champion", "Legendary" };
-static const char* modes[] = { "Both", "Attackable", "Non-Attackable" };
+static const char* ranks[] = {"Normal", "Veteran", "Elite", "Champion", "Legendary"};
+static const char* modes[] = {"Both", "Attackable", "Non-Attackable"};
 
-static const char* instanceModes[] = { "Always On", "Disabled in instances", "Instances only" };
+static const char* instanceModes[] = {"Always On", "Disabled in instances", "Instances only"};
 
 static std::vector<const char*> profileOptions {};
 
 static void renderProfileOptions()
 {
-    const auto& settings = *unpc::settings;
-    auto&       profile  = settings.profile();
-
     static char profileNameBuffer[64] {};
     int         selected = unpc::settings->ActiveProfile.get();
 
@@ -321,17 +305,12 @@ static void renderProfileOptions()
     }
 
     if (ui::textboxButton(
-        "##profileName",
-        "New Profile Name",
-        profileNameBuffer,
-        std::size(profileNameBuffer),
-        "Rename Profile"))
+            "##profileName", "New Profile Name", profileNameBuffer, std::size(profileNameBuffer), "Rename Profile"))
     {
         if (unpc::settings->ActiveProfile.get() > 0 && profileNameBuffer[0])
         {
-            unpc::settings->renameProfile(
-                unpc::settings->children()[unpc::settings->ActiveProfile.get()]->name(),
-                profileNameBuffer);
+            unpc::settings->renameProfile(unpc::settings->children()[unpc::settings->ActiveProfile.get()]->name(),
+                                          profileNameBuffer);
             profileOptions.clear();
             ++re::forceVisibility;
         }
@@ -398,8 +377,8 @@ void ui::renderOptions()
 
     separatorText("Show");
 
-    bool unhideNpcsChanged {}, unhidePlayersChanged {}, playerOwnedChanged {}, alwaysShowTargetChanged {};
-    bool unhideNpcs       = profile.UnhideNPCs.get();
+    bool unhideNPCsChanged {}, unhidePlayersChanged {}, playerOwnedChanged {}, alwaysShowTargetChanged {};
+    bool unhideNPCs       = profile.UnhideNPCs.get();
     bool unhidePlayers    = profile.UnhidePlayers.get();
     bool playerOwned      = profile.PlayerOwned.get();
     bool alwaysShowTarget = profile.AlwaysShowTarget.get();
@@ -407,33 +386,42 @@ void ui::renderOptions()
     bool hideOffScreen = profile.HideOffScreen.get();
 
     if (checkboxGroup(
-        "Unhide",
-        "The selected will be unhidden",
-        std::vector<CheckboxGroupEntry> {
-            { "NPCs", profile.UnhideNPCs.description().c_str(), &unhideNpcs, &unhideNpcsChanged },
-            { "Players", profile.UnhidePlayers.description().c_str(), &unhidePlayers, &unhidePlayersChanged },
-            { "Player-Owned", profile.PlayerOwned.description().c_str(), &playerOwned, &playerOwnedChanged },
-            { "Target", profile.AlwaysShowTarget.description().c_str(), &alwaysShowTarget, &alwaysShowTargetChanged }
-        }))
+            "Unhide",
+            "The selected will be unhidden",
+            std::vector<CheckboxGroupEntry> {
+                {        "NPCs",profile.UnhideNPCs.description().c_str(),&unhideNPCs,&unhideNPCsChanged                                                                                             },
+                {     "Players", profile.UnhidePlayers.description().c_str(), &unhidePlayers,    &unhidePlayersChanged},
+                {"Player-Owned",   profile.PlayerOwned.description().c_str(),   &playerOwned,      &playerOwnedChanged},
+                {      "Target",
+                 profile.AlwaysShowTarget.description().c_str(),
+                 &alwaysShowTarget,
+                 &alwaysShowTargetChanged                                                                             }
+    }))
     {
-        if (unhideNpcsChanged)
+        if (unhideNPCsChanged)
         {
             if (hideOffScreen)
-                unhideNpcs = true;
+            {
+                unhideNPCs = true;
+            }
 
-            profile.UnhideNPCs.set(unhideNpcs);
+            profile.UnhideNPCs.set(unhideNPCs);
         }
         if (unhidePlayersChanged)
         {
             if (hideOffScreen)
+            {
                 unhidePlayers = true;
+            }
 
             profile.UnhidePlayers.set(unhidePlayers);
         }
         if (playerOwnedChanged)
         {
             if (hideOffScreen)
+            {
                 playerOwned = true;
+            }
 
             profile.PlayerOwned.set(playerOwned);
         }
@@ -449,17 +437,15 @@ void ui::renderOptions()
     bool unhideLowQualityChanged {}, unhideMountLowQualityChanged {};
 
     if (checkboxGroup(
-        "Basic Models",
-        "Use basic models when unhiding",
-        std::vector<CheckboxGroupEntry> {
-            { "All", profile.UnhideLowQuality.description().c_str(), &unhideLowQuality, &unhideLowQualityChanged },
-            {
-                "Mounts",
-                profile.UnhideMountLowQuality.description().c_str(),
-                &unhideMountLowQuality,
-                &unhideMountLowQualityChanged
-            }
-        }))
+            "Basic Models",
+            "Use basic models when unhiding",
+            std::vector<CheckboxGroupEntry> {
+                {   "All",profile.UnhideLowQuality.description().c_str(),&unhideLowQuality,&unhideLowQualityChanged                   },
+                {"Mounts",
+                 profile.UnhideMountLowQuality.description().c_str(),
+                 &unhideMountLowQuality,
+                 &unhideMountLowQualityChanged}
+    }))
     {
         if (unhideLowQualityChanged)
         {
@@ -471,38 +457,36 @@ void ui::renderOptions()
         }
     }
     ImGui::NewLine();
-    if (auto maxDistance = static_cast<int32_t>(profile.MaximumDistance.get()); sliderInt(
-        "Max Distance",
-        "##maxDistance",
-        maxDistance,
-        0,
-        1000,
-        maxDistance == 0 ? "Unlimited" : "%d meters",
-        profile.MaximumDistance.description().c_str()))
+    if (auto maxDistance = static_cast<int32_t>(profile.MaximumDistance.get());
+        sliderInt("Max Distance",
+                  "##maxDistance",
+                  maxDistance,
+                  0,
+                  1000,
+                  maxDistance == 0 ? "Unlimited" : "%d meters",
+                  profile.MaximumDistance.description().c_str()))
     {
         profile.MaximumDistance.set(static_cast<float>(maxDistance));
     }
 
     int minimumRank = profile.MinimumRank.get();
-    if (combo(
-        "Minimum Rank",
-        "##minRank",
-        minimumRank,
-        ranks,
-        IM_ARRAYSIZE(ranks),
-        profile.MinimumRank.description().c_str()))
+    if (combo("Minimum Rank",
+              "##minRank",
+              minimumRank,
+              ranks,
+              IM_ARRAYSIZE(ranks),
+              profile.MinimumRank.description().c_str()))
     {
         profile.MinimumRank.set(minimumRank);
     }
 
     int attackable = profile.Attackable.get();
-    if (combo(
-        "Attackable",
-        "##attackable",
-        attackable,
-        modes,
-        IM_ARRAYSIZE(modes),
-        profile.Attackable.description().c_str()))
+    if (combo("Attackable",
+              "##attackable",
+              attackable,
+              modes,
+              IM_ARRAYSIZE(modes),
+              profile.Attackable.description().c_str()))
     {
         profile.Attackable.set(attackable);
     }
@@ -511,7 +495,7 @@ void ui::renderOptions()
 
     if (checkbox("Hide Off-Screen", "##hideOffScreen", hideOffScreen, profile.HideOffScreen.description().c_str()))
     {
-        if (!unhideNpcs)
+        if (!unhideNPCs)
         {
             profile.UnhideNPCs.set(true);
         }
@@ -527,45 +511,37 @@ void ui::renderOptions()
     }
 
     bool hideAllPlayersChanged {}, hideBlockedPlayersChanged {}, hideNonGroupPlayersChanged {}, hideStrangersChanged {},
-         hideNonGuildPlayersChanged {}, hideNonFriendPlayersChanged {};
-    bool hidePlayers = profile.HidePlayers.get();
-    bool hideBlockedPlayers = profile.HideBlockedPlayers.get();
+        hideNonGuildPlayersChanged {}, hideNonFriendPlayersChanged {};
+    bool hidePlayers         = profile.HidePlayers.get();
+    bool hideBlockedPlayers  = profile.HideBlockedPlayers.get();
     bool hideNonGroupMembers = profile.HideNonGroupMembers.get();
-    bool hideStrangers = profile.HideStrangers.get();
+    bool hideStrangers       = profile.HideStrangers.get();
     bool hideNonGuildMembers = profile.HideNonGuildMembers.get();
-    bool hideNonFriends = profile.HideNonFriends.get();
+    bool hideNonFriends      = profile.HideNonFriends.get();
 
     if (checkboxGroup(
-        "Players",
-        "Players that match the selected critera will be hidden",
-        std::vector<CheckboxGroupEntry> {
-            { "All", profile.HidePlayers.description().c_str(), &hidePlayers, &hideAllPlayersChanged },
-            {
-                "Blocked",
-                profile.HideBlockedPlayers.description().c_str(),
-                &hideBlockedPlayers,
-                &hideBlockedPlayersChanged
-            },
-            {
-                "Non-Group",
-                profile.HideNonGroupMembers.description().c_str(),
-                &hideNonGroupMembers,
-                &hideNonGroupPlayersChanged
-            },
-            { "Strangers", profile.HideStrangers.description().c_str(), &hideStrangers, &hideStrangersChanged },
-            {
-                "Non-Guild",
-                profile.HideNonGuildMembers.description().c_str(),
-                &hideNonGuildMembers,
-                &hideNonGuildPlayersChanged
-            },
-            {
-                "Non-Friends",
-                profile.HideNonFriends.description().c_str(),
-                &hideNonFriends,
-                &hideNonFriendPlayersChanged
-            }
-        }))
+            "Players",
+            "Players that match the selected criteria will be hidden",
+            std::vector<CheckboxGroupEntry> {
+                {        "All",profile.HidePlayers.description().c_str(),&hidePlayers,&hideAllPlayersChanged                                                                                            },
+                {    "Blocked",
+                 profile.HideBlockedPlayers.description().c_str(),
+                 &hideBlockedPlayers,
+                 &hideBlockedPlayersChanged                                                                              },
+                {  "Non-Group",
+                 profile.HideNonGroupMembers.description().c_str(),
+                 &hideNonGroupMembers,
+                 &hideNonGroupPlayersChanged                                                                             },
+                {  "Strangers", profile.HideStrangers.description().c_str(), &hideStrangers,        &hideStrangersChanged},
+                {  "Non-Guild",
+                 profile.HideNonGuildMembers.description().c_str(),
+                 &hideNonGuildMembers,
+                 &hideNonGuildPlayersChanged                                                                             },
+                {"Non-Friends",
+                 profile.HideNonFriends.description().c_str(),
+                 &hideNonFriends,
+                 &hideNonFriendPlayersChanged                                                                            }
+    }))
     {
         if (hideAllPlayersChanged)
         {
@@ -595,60 +571,48 @@ void ui::renderOptions()
     ImGui::NewLine();
 
     bool hideAllPlayerOwnedChanged {}, hideBlockedPlayerOwnedChanged {}, hideNonGroupPlayerOwnedChanged {},
-         hideStrangersOwnedChanged {}, hideNonGuildPlayerOwnedChanged {}, hideNonFriendPlayerOwnedChanged {},
-         hideMyOwnedChanged {}, hideOwnedInstancesChanged {};
-    bool hidePlayerOwned = profile.HidePlayerOwned.get();
-    bool hideBlockedPlayersOwned = profile.HideBlockedPlayersOwned.get();
+        hideStrangersOwnedChanged {}, hideNonGuildPlayerOwnedChanged {}, hideNonFriendPlayerOwnedChanged {},
+        hideMyOwnedChanged {}, hideOwnedInstancesChanged {};
+    bool hidePlayerOwned          = profile.HidePlayerOwned.get();
+    bool hideBlockedPlayersOwned  = profile.HideBlockedPlayersOwned.get();
     bool hideNonGroupMembersOwned = profile.HideNonGroupMembersOwned.get();
-    bool hideStrangersOwned = profile.HideStrangersOwned.get();
+    bool hideStrangersOwned       = profile.HideStrangersOwned.get();
     bool hideNonGuildMembersOwned = profile.HideNonGuildMembersOwned.get();
-    bool hideNonFriendsOwned = profile.HideNonFriendsOwned.get();
-    bool hidePlayerOwnedSelf = profile.HidePlayerOwnedSelf.get();
-    bool hideOwnedInstance = profile.HideOwnedInstances.get();
+    bool hideNonFriendsOwned      = profile.HideNonFriendsOwned.get();
+    bool hidePlayerOwnedSelf      = profile.HidePlayerOwnedSelf.get();
+    bool hideOwnedInstance        = profile.HideOwnedInstances.get();
 
     if (checkboxGroup(
-        "Player-Owned",
-        "Characters that are owned by the selected type of players will be hidden",
-        std::vector<CheckboxGroupEntry> {
-            { "All", profile.HidePlayerOwned.description().c_str(), &hidePlayerOwned, &hideAllPlayerOwnedChanged },
-            {
-                "Blocked",
-                profile.HideBlockedPlayersOwned.description().c_str(),
-                &hideBlockedPlayersOwned,
-                &hideBlockedPlayerOwnedChanged
-            },
-            {
-                "Non-Group",
-                profile.HideNonGroupMembersOwned.description().c_str(),
-                &hideNonGroupMembersOwned,
-                &hideNonGroupPlayerOwnedChanged
-            },
-            {
-                "Strangers",
-                profile.HideStrangersOwned.description().c_str(),
-                &hideStrangersOwned,
-                &hideStrangersOwnedChanged
-            },
-            {
-                "Non-Guild",
-                profile.HideNonGuildMembersOwned.description().c_str(),
-                &hideNonGuildMembersOwned,
-                &hideNonGuildPlayerOwnedChanged
-            },
-            {
-                "Non-Friends",
-                profile.HideNonFriendsOwned.description().c_str(),
-                &hideNonFriendsOwned,
-                &hideNonFriendPlayerOwnedChanged
-            },
-            { "Mine", profile.HidePlayerOwnedSelf.description().c_str(), &hidePlayerOwnedSelf, &hideMyOwnedChanged },
-            {
-                "Instances",
-                profile.HideOwnedInstances.description().c_str(),
-                &hideOwnedInstance,
-                &hideOwnedInstancesChanged
-            }
-        }))
+            "Player-Owned",
+            "Characters that are owned by the selected type of players will be hidden",
+            std::vector<CheckboxGroupEntry> {
+                {        "All",profile.HidePlayerOwned.description().c_str(),&hidePlayerOwned,&hideAllPlayerOwnedChanged                                                                                                        },
+                {    "Blocked",
+                 profile.HideBlockedPlayersOwned.description().c_str(),
+                 &hideBlockedPlayersOwned,
+                 &hideBlockedPlayerOwnedChanged                                                                                    },
+                {  "Non-Group",
+                 profile.HideNonGroupMembersOwned.description().c_str(),
+                 &hideNonGroupMembersOwned,
+                 &hideNonGroupPlayerOwnedChanged                                                                                   },
+                {  "Strangers",
+                 profile.HideStrangersOwned.description().c_str(),
+                 &hideStrangersOwned,
+                 &hideStrangersOwnedChanged                                                                                        },
+                {  "Non-Guild",
+                 profile.HideNonGuildMembersOwned.description().c_str(),
+                 &hideNonGuildMembersOwned,
+                 &hideNonGuildPlayerOwnedChanged                                                                                   },
+                {"Non-Friends",
+                 profile.HideNonFriendsOwned.description().c_str(),
+                 &hideNonFriendsOwned,
+                 &hideNonFriendPlayerOwnedChanged                                                                                  },
+                {       "Mine", profile.HidePlayerOwnedSelf.description().c_str(), &hidePlayerOwnedSelf,        &hideMyOwnedChanged},
+                {  "Instances",
+                 profile.HideOwnedInstances.description().c_str(),
+                 &hideOwnedInstance,
+                 &hideOwnedInstancesChanged                                                                                        }
+    }))
     {
         if (hideAllPlayerOwnedChanged)
         {
@@ -688,23 +652,18 @@ void ui::renderOptions()
     bool hidePlayersInCombatChanged {}, hidePlayerOwnedInCombatChanged {};
     bool hidePlayersInCombat     = profile.HidePlayersInCombat.get();
     bool hidePlayerOwnedInCombat = profile.HidePlayerOwnedInCombat.get();
-    if (checkboxGroup(
-        "In Combat",
-        "When in combat, hide the following",
-        std::vector<CheckboxGroupEntry> {
-            {
-                "Players",
-                profile.HidePlayersInCombat.description().c_str(),
-                &hidePlayersInCombat,
-                &hidePlayersInCombatChanged
-            },
-            {
-                "Player-Owned",
-                profile.HidePlayerOwnedInCombat.description().c_str(),
-                &hidePlayerOwnedInCombat,
-                &hidePlayerOwnedInCombatChanged
-            }
-        }))
+    if (checkboxGroup("In Combat",
+                      "When in combat, hide the following",
+                      std::vector<CheckboxGroupEntry> {
+                          {     "Players",
+                           profile.HidePlayersInCombat.description().c_str(),
+                           &hidePlayersInCombat,
+                           &hidePlayersInCombatChanged    },
+                          {"Player-Owned",
+                           profile.HidePlayerOwnedInCombat.description().c_str(),
+                           &hidePlayerOwnedInCombat,
+                           &hidePlayerOwnedInCombatChanged}
+    }))
     {
         if (hidePlayersInCombatChanged)
         {
@@ -718,74 +677,64 @@ void ui::renderOptions()
 
     ImGui::NewLine();
     int32_t maxPlayersVisible = profile.MaxPlayersVisible.get();
-    if (sliderInt(
-        "Max Players",
-        "##MaxPlayersVisible",
-        maxPlayersVisible,
-        0,
-        250,
-        maxPlayersVisible == 0 ? "Unlimited" : "%d",
-        profile.MaxPlayersVisible.description().c_str()))
+    if (sliderInt("Max Players",
+                  "##MaxPlayersVisible",
+                  maxPlayersVisible,
+                  0,
+                  250,
+                  maxPlayersVisible == 0 ? "Unlimited" : "%d",
+                  profile.MaxPlayersVisible.description().c_str()))
     {
         profile.MaxPlayersVisible.set(maxPlayersVisible);
     }
 
     int32_t maxPlayerOwnedVisible = profile.MaxPlayerOwnedVisible.get();
-    if (sliderInt(
-        "Max Player-Owned",
-        "##MaxPlayerOwnedVisible",
-        maxPlayerOwnedVisible,
-        0,
-        100,
-        maxPlayerOwnedVisible == 0 ? "Unlimited" : "%d",
-        profile.MaxPlayerOwnedVisible.description().c_str()))
+    if (sliderInt("Max Player-Owned",
+                  "##MaxPlayerOwnedVisible",
+                  maxPlayerOwnedVisible,
+                  0,
+                  100,
+                  maxPlayerOwnedVisible == 0 ? "Unlimited" : "%d",
+                  profile.MaxPlayerOwnedVisible.description().c_str()))
     {
         profile.MaxPlayerOwnedVisible.set(maxPlayerOwnedVisible);
     }
 
-    int32_t maxNpcs = profile.MaxNpcs.get();
-    if (sliderInt(
-        "Max NPCs",
-        "##maxNpcs",
-        maxNpcs,
-        0,
-        1000,
-        maxNpcs == 0 ? "Unlimited" : "%d",
-        profile.MaxNpcs.description().c_str()))
+    int32_t maxNPCs = profile.MaxNpcs.get();
+    if (sliderInt("Max NPCs",
+                  "##maxNPCs",
+                  maxNPCs,
+                  0,
+                  1000,
+                  maxNPCs == 0 ? "Unlimited" : "%d",
+                  profile.MaxNpcs.description().c_str()))
     {
-        profile.MaxNpcs.set(maxNpcs);
+        profile.MaxNpcs.set(maxNPCs);
     }
     ImGui::NewLine();
 
     int instanceBehaviour = profile.InstanceBehaviour.get();
-    if (combo(
-        "Instance Behaviour",
-        "##instances",
-        instanceBehaviour,
-        instanceModes,
-        IM_ARRAYSIZE(instanceModes),
-        profile.InstanceBehaviour.description().c_str()))
+    if (combo("Instance Behaviour",
+              "##instances",
+              instanceBehaviour,
+              instanceModes,
+              IM_ARRAYSIZE(instanceModes),
+              profile.InstanceBehaviour.description().c_str()))
     {
         profile.InstanceBehaviour.set(instanceBehaviour);
     }
     separatorText("Misc");
     std::vector<CheckboxGroupEntry> entries {};
-    bool forceConsoleChanged {}, loadScreenBoostChanged {}, disableOverlayChanged {}, closeOnEscapeChanged {};
-    bool forceConsole = settings.ForceConsole.get();
-    bool loadScreenBoost = settings.LoadScreenBoost.get();
-    bool closeOnEscape = settings.CloseOnEscape.get();
+    bool                            forceConsoleChanged {}, loadScreenBoostChanged {}, closeOnEscapeChanged {};
+    bool                            forceConsole    = settings.ForceConsole.get();
+    bool                            loadScreenBoost = settings.LoadScreenBoost.get();
+    bool                            closeOnEscape   = settings.CloseOnEscape.get();
 
     entries.emplace_back("Console", settings.ForceConsole.description().c_str(), &forceConsole, &forceConsoleChanged);
     entries.emplace_back(
-        "Loading Boost",
-        settings.LoadScreenBoost.description().c_str(),
-        &loadScreenBoost,
-        &loadScreenBoostChanged);
+        "Loading Boost", settings.LoadScreenBoost.description().c_str(), &loadScreenBoost, &loadScreenBoostChanged);
     entries.emplace_back(
-        "Esc To Close",
-        settings.CloseOnEscape.description().c_str(),
-        &closeOnEscape,
-        &closeOnEscapeChanged);
+        "Esc To Close", settings.CloseOnEscape.description().c_str(), &closeOnEscape, &closeOnEscapeChanged);
 
     if (unpc::mode == unpc::EMode::Nexus)
     {
@@ -814,31 +763,30 @@ footer:
     if (unpc::mode == unpc::EMode::Proxy || unpc::mode == unpc::EMode::Injected)
     {
         float overlayFontSize = settings.OverlayFontSize.get();
-        if (sliderFloat(
-            "Font Size",
-            "##OverlayFontSize",
-            overlayFontSize,
-            10,
-            20,
-            "%.0f",
-            settings.OverlayFontSize.description().c_str()))
+        if (sliderFloat("Font Size",
+                        "##OverlayFontSize",
+                        overlayFontSize,
+                        10,
+                        20,
+                        "%.0f",
+                        settings.OverlayFontSize.description().c_str()))
         {
             settings.OverlayFontSize.set(std::roundf(overlayFontSize));
         }
     }
 
-    if (ImGui::Button("Force Visibility", { labelOffset + fieldWidth, 30 }))
+    if (ImGui::Button("Force Visibility", {labelOffset + fieldWidth, 30}))
     {
         ++re::forceVisibility;
     }
-    tooltip(
-        "Forces all characters to be visible for the next frame\n"
-        "Useful for \"resetting\" things after modifying any settings.");
+    tooltip("Forces all characters to be visible for the next frame\n"
+            "Useful for \"resetting\" things after modifying any settings.");
 
     if (ImGui::TreeNodeEx("Hotkeys", ImGuiTreeNodeFlags_NoTreePushOnOpen))
     {
         unpc::hotkeyManager.renderHotkeys();
-    } else
+    }
+    else
     {
         unpc::hotkeyManager.stopCapturing();
     }
@@ -855,15 +803,18 @@ footer:
             auto Row = [](const char* name, const uint32_t visible, const uint32_t culled)
             {
                 ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0); ImGui::TextUnformatted(name);
-                ImGui::TableSetColumnIndex(1); ImGui::Text("%d", visible);
-                ImGui::TableSetColumnIndex(2); ImGui::Text("%d", culled);
+                ImGui::TableSetColumnIndex(0);
+                ImGui::TextUnformatted(name);
+                ImGui::TableSetColumnIndex(1);
+                ImGui::Text("%d", visible);
+                ImGui::TableSetColumnIndex(2);
+                ImGui::Text("%d", culled);
             };
 
             Row("Players", unpc::numPlayersVisible, unpc::numPlayersCulled);
-            Row("Mounts",  unpc::numMountsVisible, unpc::numMountsCulled);
-            Row("Owned",   unpc::numPlayerOwnedVisible, unpc::numPlayerOwnedCulled);
-            Row("NPCs",    unpc::numNPCVisible, unpc::numNPCCulled);
+            Row("Mounts", unpc::numMountsVisible, unpc::numMountsCulled);
+            Row("Owned", unpc::numPlayerOwnedVisible, unpc::numPlayerOwnedCulled);
+            Row("NPCs", unpc::numNPCVisible, unpc::numNPCCulled);
 
             ImGui::EndTable();
         }
@@ -910,7 +861,7 @@ void ui::renderWindow()
     bool       open       = unpc::settings->OverlayOpen.get();
     const bool startState = open;
 
-    if (wasComboPressed({ VK_LMENU, VK_LSHIFT, 'U' }))
+    if (wasComboPressed({VK_LMENU, VK_LSHIFT, 'U'}))
     {
         open = !open;
         unpc::settings->OverlayOpen.set(open);
@@ -928,7 +879,7 @@ void ui::renderWindow()
         return;
     }
 
-    ImGui::SetNextWindowSize(ImVec2 { 0, 0 }); // Auto size
+    ImGui::SetNextWindowSize(ImVec2 {0, 0}); // Auto size
     if (ImGui::Begin("UnhideNPCs [ ALT+SHIFT+U ]", &open, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize))
     {
         {
@@ -1064,61 +1015,62 @@ uintptr_t ui::onWndProc(const HWND hWnd, const UINT msg, const WPARAM wParam, co
     {
         switch (wParam)
         {
-            case VK_LCONTROL:
-            case VK_RCONTROL:
-            case VK_CONTROL:
-            {
-                ctrlDown = true;
-                break;
-            }
-            default:
-                break;
+        case VK_LCONTROL:
+        case VK_RCONTROL:
+        case VK_CONTROL:
+        {
+            ctrlDown = true;
+            break;
         }
-    } else if (msg == WM_KEYUP)
+        default:
+            break;
+        }
+    }
+    else if (msg == WM_KEYUP)
     {
         switch (wParam)
         {
-            case VK_LCONTROL:
-            case VK_RCONTROL:
-            case VK_CONTROL:
-            {
-                ctrlDown = false;
-                break;
-            }
-            default:
-                break;
+        case VK_LCONTROL:
+        case VK_RCONTROL:
+        case VK_CONTROL:
+        {
+            ctrlDown = false;
+            break;
+        }
+        default:
+            break;
         }
     }
     auto& io = ImGui::GetIO();
 
     if (msg == WM_MOUSEMOVE)
     {
-        io.MousePos = ImVec2 { static_cast<float>(LOWORD(lParam)), static_cast<float>(HIWORD(lParam)) };
+        io.MousePos = ImVec2 {static_cast<float>(LOWORD(lParam)), static_cast<float>(HIWORD(lParam))};
     }
 
     if (io.WantCaptureMouse)
     {
         switch (msg)
         {
-            case WM_LBUTTONDOWN:
-            case WM_LBUTTONDBLCLK:
-            case WM_RBUTTONDOWN:
-            case WM_RBUTTONDBLCLK:
-            case WM_MBUTTONDOWN:
-            case WM_MBUTTONDBLCLK:
-            case WM_XBUTTONDOWN:
-            case WM_XBUTTONDBLCLK:
-            case WM_LBUTTONUP:
-            case WM_RBUTTONUP:
-            case WM_MBUTTONUP:
-            case WM_XBUTTONUP:
-            case WM_MOUSEWHEEL:
-            case WM_MOUSEHWHEEL:
-            case WM_SETCURSOR:
-                ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
-                return 0;
-            default:
-                break;
+        case WM_LBUTTONDOWN:
+        case WM_LBUTTONDBLCLK:
+        case WM_RBUTTONDOWN:
+        case WM_RBUTTONDBLCLK:
+        case WM_MBUTTONDOWN:
+        case WM_MBUTTONDBLCLK:
+        case WM_XBUTTONDOWN:
+        case WM_XBUTTONDBLCLK:
+        case WM_LBUTTONUP:
+        case WM_RBUTTONUP:
+        case WM_MBUTTONUP:
+        case WM_XBUTTONUP:
+        case WM_MOUSEWHEEL:
+        case WM_MOUSEHWHEEL:
+        case WM_SETCURSOR:
+            ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
+            return 0;
+        default:
+            break;
         }
     }
 
@@ -1126,18 +1078,18 @@ uintptr_t ui::onWndProc(const HWND hWnd, const UINT msg, const WPARAM wParam, co
     {
         switch (msg)
         {
-            case WM_KEYDOWN:
-            case WM_SYSKEYDOWN:
-            case WM_CHAR:
-            case WM_SYSCHAR:
-                ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
-                if (io.WantTextInput)
-                {
-                    return 0;
-                }
-                break;
-            default:
-                break;
+        case WM_KEYDOWN:
+        case WM_SYSKEYDOWN:
+        case WM_CHAR:
+        case WM_SYSCHAR:
+            ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
+            if (io.WantTextInput)
+            {
+                return 0;
+            }
+            break;
+        default:
+            break;
         }
     }
 
@@ -1173,7 +1125,8 @@ void ui::onD3DResizeBuffers(const memory::hooks::D3D11* hk, const bool pre)
     if (pre)
     {
         ImGui_ImplDX11_InvalidateDeviceObjects();
-    } else
+    }
+    else
     {
         ImGui_ImplDX11_Init(hk->device(), hk->context());
     }

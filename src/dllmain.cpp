@@ -1,16 +1,16 @@
 #include <algorithm>
 
-#include "pch.hpp"
-#include "unpc.hpp"
 #include "fw.hpp"
+#include "pch.hpp"
+#include "proxy/d3d9.hpp"
 #include "proxy/dxgi.hpp"
 #include "proxy/midimap.hpp"
-#include "proxy/d3d9.hpp"
+#include "unpc.hpp"
 
 #include "integration/arcdps.hpp"
 #include "integration/nexus.hpp"
 
-bool isInGameFolder(const HMODULE hModule)
+static bool isInGameFolder(const HMODULE hModule)
 {
     std::filesystem::path exePath, dllPath;
     if (!util::getModuleFilePath(nullptr, exePath) || !util::getModuleFilePath(hModule, dllPath))
@@ -22,15 +22,13 @@ bool isInGameFolder(const HMODULE hModule)
     dllPath = dllPath.parent_path();
 
     // allowed folders relative to exe
-    const std::filesystem::path allowed[] = { exePath, exePath / "addons", exePath / "bin64" };
+    const std::filesystem::path allowed[] = {exePath, exePath / "addons", exePath / "bin64"};
 
-    return std::any_of(
-        std::begin(allowed),
-        std::end(allowed),
-        [&](const std::filesystem::path& p)
-        {
-            return dllPath == p;
-        });
+    return std::ranges::any_of(allowed,
+                               [&](const std::filesystem::path& p)
+                               {
+                                   return dllPath == p;
+                               });
 }
 
 BOOL APIENTRY DllMain(const HMODULE hModule, const DWORD ulReasonForCall, PVOID)
@@ -54,7 +52,7 @@ BOOL APIENTRY DllMain(const HMODULE hModule, const DWORD ulReasonForCall, PVOID)
         // attempts to determine if we are performing as a proxy dll
         // if we are, then we call LoadLibrary for our own module to
         // increase refcount, otherwise we might get unloaded prematurely
-        if (proxy::check({ "dxgi.dll", "midimap.dll", "d3d9.dll" }, unpc::proxyModuleName))
+        if (proxy::check({"dxgi.dll", "midimap.dll", "d3d9.dll"}, unpc::proxyModuleName))
         {
             if (!GetModuleHandleEx(0, unpc::proxyModuleName.c_str(), &unpc::hProxyModule))
             {

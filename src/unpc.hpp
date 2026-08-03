@@ -1,12 +1,11 @@
 #ifndef UNHIDENPCS_UNPC_HPP
 #define UNHIDENPCS_UNPC_HPP
 #pragma once
+#include "MumbleLink.hpp"
 #include "fw.hpp"
 #include "gw2.hpp"
 #include "hotkey.hpp"
-#include "MumbleLink.hpp"
 #include "settings.hpp"
-#include "version.hpp"
 
 namespace unpc
 {
@@ -74,18 +73,16 @@ namespace unpc
     // Locate asserts/errors with the specified values
     // if lineNumber is equal to SIZE_MAX then it ignores the line number check
     // returns the address of the first instruction (mov)
-    bool findAsserts(
-        memory::Module&              module,
-        size_t                       lineNumber,
-        const std::string&           file,
-        const std::string&           message,
-        std::vector<memory::Handle>& results);
+    bool findAsserts(memory::Module&              module,
+                     size_t                       lineNumber,
+                     const std::string&           file,
+                     const std::string&           message,
+                     std::vector<memory::Handle>& results);
 
-    bool findAsserts(
-        memory::Module&              module,
-        const std::string&           file,
-        const std::string&           message,
-        std::vector<memory::Handle>& results);
-}
+    bool findAsserts(memory::Module&              module,
+                     const std::string&           file,
+                     const std::string&           message,
+                     std::vector<memory::Handle>& results);
+} // namespace unpc
 
-#endif //UNHIDENPCS_UNPC_HPP
+#endif // UNHIDENPCS_UNPC_HPP

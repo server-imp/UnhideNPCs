@@ -1,10 +1,10 @@
 #define WIN32_LEAN_AND_MEAN
 #include <algorithm>
-#include <windows.h>
-#include <tlhelp32.h>
 #include <cstdio>
-#include <string>
 #include <filesystem>
+#include <string>
+#include <tlhelp32.h>
+#include <windows.h>
 
 #define MODULE_NAME ("UnhideNPCs.dll")
 #define TARGET_NAME ("Gw2-64.exe")
@@ -14,7 +14,7 @@ static DWORD getPidByName(const char* name)
     PROCESSENTRY32 entry;
     entry.dwSize = sizeof(PROCESSENTRY32);
 
-    const HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 
     if (Process32First(snapshot, &entry) == TRUE)
     {
@@ -25,7 +25,8 @@ static DWORD getPidByName(const char* name)
                 CloseHandle(snapshot);
                 return entry.th32ProcessID;
             }
-        } while (Process32Next(snapshot, &entry) == TRUE);
+        }
+        while (Process32Next(snapshot, &entry) == TRUE);
     }
 
     CloseHandle(snapshot);
@@ -41,14 +42,12 @@ static bool findModule(const DWORD dwPid, const std::string& name)
 
     auto normalize = [](std::string s) -> std::string
     {
-        std::transform(
-            s.begin(),
-            s.end(),
-            s.begin(),
-            [](const unsigned char c)
-            {
-                return std::tolower(c);
-            });
+        std::ranges::transform(s,
+                               s.begin(),
+                               [](const unsigned char c)
+                               {
+                                   return std::tolower(c);
+                               });
 
         constexpr std::string_view suffix = ".dll";
         if (s.size() >= suffix.size() && s.compare(s.size() - suffix.size(), suffix.size(), suffix) == 0)
@@ -70,7 +69,8 @@ static bool findModule(const DWORD dwPid, const std::string& name)
                 CloseHandle(snapshot);
                 return true;
             }
-        } while (Module32Next(snapshot, &entry));
+        }
+        while (Module32Next(snapshot, &entry));
     }
     CloseHandle(snapshot);
     return false;
@@ -78,7 +78,7 @@ static bool findModule(const DWORD dwPid, const std::string& name)
 
 int main()
 {
-    namespace fs = std::filesystem;
+    namespace fs    = std::filesystem;
     const auto path = fs::absolute(fs::path(MODULE_NAME));
 
     if (!fs::exists(path))
@@ -104,7 +104,7 @@ int main()
         return 3;
     }
 
-    const HANDLE hProc = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
+    HANDLE hProc = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
     if (!hProc)
     {
         printf("OpenProcess failed: %ld\n", GetLastError());
@@ -135,13 +135,7 @@ int main()
     }
 
     const auto hThread = CreateRemoteThread(
-        hProc,
-        nullptr,
-        0,
-        reinterpret_cast<LPTHREAD_START_ROUTINE>(loadLibraryA),
-        buffer,
-        0,
-        nullptr);
+        hProc, nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(loadLibraryA), buffer, 0, nullptr);
     if (hThread == nullptr)
     {
         printf("CreateRemoteThread failed: %ld\n", GetLastError());

@@ -1,8 +1,8 @@
 #ifndef UNHIDENPCS_SETTINGS_HPP
 #define UNHIDENPCS_SETTINGS_HPP
 #pragma once
-#include "hook.hpp"
 #include "fw.hpp"
+#include "hook.hpp"
 
 #define S(type, name, value, comment) fw::Setting<type>& name = add<type>(value, #name, comment)
 
@@ -20,161 +20,162 @@ public:
     fw::Setting<bool>& UnhideNPCs = add<bool>(true, "UnhideNPCs", "Unhide NPCs").onChanged(forceInvisibility);
 
     S(bool, UnhidePlayers, true, "Unhide players").onChanged(forceInvisibility);
-    S(bool, PlayerOwned, true, "Characters that players own (pets, clones, minis etc) will also be unhidden.").
-    onChanged(forceInvisibility);
+    S(bool, PlayerOwned, true, "Characters that players own (pets, clones, minis etc) will also be unhidden.")
+        .onChanged(forceInvisibility);
 
-    S(bool, AlwaysShowTarget, true, "Always show the targeted character, even if it would be hidden.").onChanged(
-        forceInvisibility);
+    S(bool, AlwaysShowTarget, true, "Always show the targeted character, even if it would be hidden.")
+        .onChanged(forceInvisibility);
 
     S(bool, UnhideLowQuality, false, "Use basic models when unhiding all characters").onChanged(forceInvisibility);
     S(bool, UnhideMountLowQuality, false, "Use basic models when unhiding mounts").onChanged(forceInvisibility);
 
-    S(int32_t, MinimumRank, 0, "Only NPCs that have at least this rank get unhidden.").onChanged(forceInvisibility).
-    validator(
-        [](auto& value)
-        {
-            if (value < 0 || value >= static_cast<int32_t>(re::gw2::ECharacterRankMax))
+    S(int32_t, MinimumRank, 0, "Only NPCs that have at least this rank get unhidden.")
+        .onChanged(forceInvisibility)
+        .validator(
+            [](auto& value)
             {
-                value = 0;
-            }
-        });
+                if (value < 0 || value >= static_cast<int32_t>(re::gw2::ECharacterRankMax))
+                {
+                    value = 0;
+                }
+            });
 
-    S(int32_t, Attackable, 0, "Only NPCs that match this get unhidden.").onChanged(forceInvisibility).validator(
-        [](auto& value)
-        {
-            if (value < 0 || value > 2)
+    S(int32_t, Attackable, 0, "Only NPCs that match this get unhidden.")
+        .onChanged(forceInvisibility)
+        .validator(
+            [](auto& value)
             {
-                value = 0;
-            }
-        });
+                if (value < 0 || value > 2)
+                {
+                    value = 0;
+                }
+            });
 
-    S(float, MaximumDistance, 0.0f, "Characters outside of this distance won't be shown. (0=unlimited)").onChanged(
-        forceInvisibility).validator(
-        [](auto& value)
-        {
-            if (value < 0)
+    S(float, MaximumDistance, 0.0f, "Characters outside of this distance won't be shown. (0=unlimited)")
+        .onChanged(forceInvisibility)
+        .validator(
+            [](auto& value)
             {
-                value = 0;
-            } else if (value > 1000)
-            {
-                value = 1000;
-            }
-        });
+                if (value < 0)
+                {
+                    value = 0;
+                }
+                else if (value > 1000)
+                {
+                    value = 1000;
+                }
+            });
 
     S(bool, HidePlayers, false, "Hide all players (Not yourself)").onChanged(forceInvisibility);
 
-    S(
-        bool,
-        HidePlayerOwned,
-        false,
-        "Hide all characters owned by players, except yourself (pets, clones, minis etc)").onChanged(forceInvisibility);
+    S(bool, HidePlayerOwned, false, "Hide all characters owned by players, except yourself (pets, clones, minis etc)")
+        .onChanged(forceInvisibility);
 
     S(bool, HideBlockedPlayers, true, "Hide any players that you have blocked").onChanged(forceInvisibility);
-    S(
-        bool,
-        HideBlockedPlayersOwned,
-        true,
-        "Hide any characters that are owned by blocked players (pets, clones, minis etc)").onChanged(forceInvisibility);
+    S(bool,
+      HideBlockedPlayersOwned,
+      true,
+      "Hide any characters that are owned by blocked players (pets, clones, minis etc)")
+        .onChanged(forceInvisibility);
 
-    S(
-        bool,
-        HideNonGroupMembers,
-        false,
-        "Hide any players who are not in the same group as you (Party or Squad)").onChanged(forceInvisibility);
+    S(bool, HideNonGroupMembers, false, "Hide any players who are not in the same group as you (Party or Squad)")
+        .onChanged(forceInvisibility);
 
-    S(
-        bool,
-        HideNonGroupMembersOwned,
-        false,
-        "Hide any characters that are owned by non-group members (pets, clones, minis etc)").onChanged(
-        forceInvisibility);
+    S(bool,
+      HideNonGroupMembersOwned,
+      false,
+      "Hide any characters that are owned by non-group members (pets, clones, minis etc)")
+        .onChanged(forceInvisibility);
 
     S(bool, HideNonGuildMembers, false, "Hide any players that aren't guild members").onChanged(forceInvisibility);
 
-    S(
-        bool,
-        HideNonGuildMembersOwned,
-        false,
-        "Hide any characters that are owned by non-guild members (pets, clones, minis etc)").onChanged(
-        forceInvisibility);
+    S(bool,
+      HideNonGuildMembersOwned,
+      false,
+      "Hide any characters that are owned by non-guild members (pets, clones, minis etc)")
+        .onChanged(forceInvisibility);
 
     S(bool, HideNonFriends, false, "Hide any players that aren't friends").onChanged(forceInvisibility);
 
-    S(
-        bool,
-        HideNonFriendsOwned,
-        true,
-        "Hide any characters that are owned by non-friend players (pets, clones, minis etc)").onChanged(
-        forceInvisibility);
+    S(bool,
+      HideNonFriendsOwned,
+      true,
+      "Hide any characters that are owned by non-friend players (pets, clones, minis etc)")
+        .onChanged(forceInvisibility);
 
-    S(bool, HideStrangers, false, "Hide any players who are not: friends, guild, party or squad members").onChanged(
-        forceInvisibility);
+    S(bool, HideStrangers, false, "Hide any players who are not: friends, guild, party or squad members")
+        .onChanged(forceInvisibility);
 
-    S(
-        bool,
-        HideStrangersOwned,
-        false,
-        "Hide any characters that are owned by strangers (pets, clones, minis etc)").onChanged(forceInvisibility);
+    S(bool, HideStrangersOwned, false, "Hide any characters that are owned by strangers (pets, clones, minis etc)")
+        .onChanged(forceInvisibility);
 
     S(bool, HidePlayerOwnedSelf, false, "Hide characters that are owned by you").onChanged(forceInvisibility);
 
-    S(bool, HideOwnedInstances, false, "Hide characters owned by other players while you are in an instance").onChanged(
-        forceInvisibility);
+    S(bool, HideOwnedInstances, false, "Hide characters owned by other players while you are in an instance")
+        .onChanged(forceInvisibility);
 
     S(bool, HidePlayersInCombat, false, "Hide players when you are in combat").onChanged(forceInvisibility);
 
     S(bool, HideOffScreen, true, "Hide any off-screen characters").onChanged(forceInvisibility);
 
-    S(bool, HidePlayerOwnedInCombat, false, "Hide player-owned characters when you are in combat").onChanged(
-        forceInvisibility);
+    S(bool, HidePlayerOwnedInCombat, false, "Hide player-owned characters when you are in combat")
+        .onChanged(forceInvisibility);
 
-    S(int32_t, MaxPlayersVisible, 50, "Maximum number of visible players. (0=unlimited)").onChanged(forceInvisibility).
-    validator(
-        [](auto& value)
-        {
-            if (value < 0)
+    S(int32_t, MaxPlayersVisible, 50, "Maximum number of visible players. (0=unlimited)")
+        .onChanged(forceInvisibility)
+        .validator(
+            [](auto& value)
             {
-                value = 0;
-            } else if (value > 1000)
-            {
-                value = 1000;
-            }
-        });
+                if (value < 0)
+                {
+                    value = 0;
+                }
+                else if (value > 1000)
+                {
+                    value = 1000;
+                }
+            });
 
-    S(int32_t, MaxPlayerOwnedVisible, 0, "Maximum number of visible player-owned characters. (0=unlimited)").onChanged(
-        forceInvisibility).validator(
-        [](auto& value)
-        {
-            if (value < 0)
+    S(int32_t, MaxPlayerOwnedVisible, 0, "Maximum number of visible player-owned characters. (0=unlimited)")
+        .onChanged(forceInvisibility)
+        .validator(
+            [](auto& value)
             {
-                value = 0;
-            } else if (value > 1000)
-            {
-                value = 1000;
-            }
-        });
+                if (value < 0)
+                {
+                    value = 0;
+                }
+                else if (value > 1000)
+                {
+                    value = 1000;
+                }
+            });
 
-    S(int32_t, MaxNpcs, 0, "Maximum number of visible NPCs. (0=unlimited)").onChanged(forceInvisibility).validator(
-        [](auto& value)
-        {
-            if (value < 0)
+    S(int32_t, MaxNpcs, 0, "Maximum number of visible NPCs. (0=unlimited)")
+        .onChanged(forceInvisibility)
+        .validator(
+            [](auto& value)
             {
-                value = 0;
-            } else if (value > 1000)
-            {
-                value = 1000;
-            }
-        });
+                if (value < 0)
+                {
+                    value = 0;
+                }
+                else if (value > 1000)
+                {
+                    value = 1000;
+                }
+            });
 
-    S(int32_t, InstanceBehaviour, 0, "0: Always On\n1: Disabled in instances\n2: Instances only").onChanged(
-        forceInvisibility).validator(
-        [](auto& value)
-        {
-            if (value < 0 || value > 2)
+    S(int32_t, InstanceBehaviour, 0, "0: Always On\n1: Disabled in instances\n2: Instances only")
+        .onChanged(forceInvisibility)
+        .validator(
+            [](auto& value)
             {
-                value = 0;
-            }
-        });
+                if (value < 0 || value > 2)
+                {
+                    value = 0;
+                }
+            });
 
 #ifndef BUILDING_ON_GITHUB
     S(bool, RenderDebugCircles, false, "Render debug circles");
@@ -189,42 +190,45 @@ protected:
     std::unique_ptr<fw::Settings> createChild(const std::string& name) override;
 
 public:
-    S(
-        bool,
-        ForceConsole,
-        false,
-        "Create a console window.\nNote: If the console window is exited, then the game will exit as well.");
+    S(bool,
+      ForceConsole,
+      false,
+      "Create a console window.\nNote: If the console window is exited, then the game will exit as well.");
 
-    S(
-        bool,
-        LoadScreenBoost,
-        true,
-        "Speed up loading screens by temporarily limiting number of characters to 0 when one is triggered.\nNote: This will cause characters to start loading after the loading screen is finished,\nmeaning there will be invisible characters for a bit after loading.");
+    S(bool,
+      LoadScreenBoost,
+      true,
+      "Speed up loading screens by temporarily limiting number of characters to 0 when one is triggered.\nNote: This "
+      "will cause characters to start loading after the loading screen is finished,\nmeaning there will be invisible "
+      "characters for a bit after loading.");
 
     S(bool, CloseOnEscape, true, "Close the overlay when Escape is pressed");
 
-    S(float, OverlayFontSize, 14.0f, "The font size used for the overlay").validator(
-        [](auto& value)
-        {
-            if (value < 10)
+    S(float, OverlayFontSize, 14.0f, "The font size used for the overlay")
+        .validator(
+            [](auto& value)
             {
-                value = 10;
-            } else if (value > 20)
-            {
-                value = 20;
-            }
-        });
+                if (value < 10)
+                {
+                    value = 10;
+                }
+                else if (value > 20)
+                {
+                    value = 20;
+                }
+            });
 
     S(bool, OverlayOpen, true, "Overlay opened/closed");
 
-    S(int32_t, ActiveProfile, 0, "The currently active profile index").validator(
-        [&](auto& value)
-        {
-            if (value < 0 || value >= _children.size())
+    S(int32_t, ActiveProfile, 0, "The currently active profile index")
+        .validator(
+            [&](auto& value)
             {
-                value = 0;
-            }
-        });
+                if (value < 0 || value >= _children.size())
+                {
+                    value = 0;
+                }
+            });
 
     [[nodiscard]] SettingsProfile& profile() const;
 
@@ -252,8 +256,7 @@ inline SettingsProfile& Settings::profile() const
     return *dynamic_cast<SettingsProfile*>(_children[idx].get());
 }
 
-inline Settings::Settings(const std::filesystem::path& filePath)
-    : fw::Settings(nullptr, "", filePath)
+inline Settings::Settings(const std::filesystem::path& filePath) : fw::Settings(nullptr, "", filePath)
 {
     addChild<SettingsProfile>(this, "Default");
 
@@ -283,7 +286,9 @@ inline bool Settings::profileExists(const std::string& name) const
 inline void Settings::addProfile(const std::string& name)
 {
     if (name.empty() || profileExists(name))
+    {
         return;
+    }
 
     addChild<SettingsProfile>(this, name);
     needSave();
@@ -292,13 +297,15 @@ inline void Settings::addProfile(const std::string& name)
 inline void Settings::removeProfile(const std::string& name)
 {
     if (name.empty())
+    {
         return;
+    }
 
     for (const auto& child : _children)
     {
         if (child->name() == name)
         {
-            _children.erase(std::remove(std::begin(_children), std::end(_children), child), std::end(_children));
+            std::erase(_children, child);
             needSave();
             break;
         }
@@ -308,10 +315,14 @@ inline void Settings::removeProfile(const std::string& name)
 inline void Settings::renameProfile(const std::string& oldName, const std::string& newName) const
 {
     if (oldName.empty() || newName.empty())
+    {
         return;
+    }
 
     if (profileExists(newName))
+    {
         return;
+    }
 
     for (const auto& child : _children)
     {
@@ -321,6 +332,7 @@ inline void Settings::renameProfile(const std::string& oldName, const std::strin
         }
     }
 }
+
 #undef S
 
-#endif //UNHIDENPCS_SETTINGS_HPP
+#endif // UNHIDENPCS_SETTINGS_HPP

@@ -162,15 +162,15 @@ function(add_unhidenpcs_dll TARGET_NAME IMGUI_TARGET OUTPUT_NAME)
 
     if (BUILDING_ON_GITHUB)
         target_include_directories(${TARGET_NAME} PRIVATE
-                ${UnhideNPCs_RE_SOURCE_DIR}
+                ${UnhideNPCs_RE_SOURCE_DIR}/src
                 ${fw_SOURCE_DIR}/include
         )
-        file(GLOB SRC_RE "${UnhideNPCs_RE_SOURCE_DIR}/*.cpp")
+        file(GLOB SRC_RE "${UnhideNPCs_RE_SOURCE_DIR}/src/*.cpp")
     else ()
         target_include_directories(${TARGET_NAME} PRIVATE
-                ${CMAKE_CURRENT_SOURCE_DIR}/../UnhideNPCs-RE
+                ${CMAKE_CURRENT_SOURCE_DIR}/../UnhideNPCs-RE/src
         )
-        file(GLOB SRC_RE "${CMAKE_CURRENT_SOURCE_DIR}/../UnhideNPCs-RE/*.cpp")
+        file(GLOB SRC_RE "${CMAKE_CURRENT_SOURCE_DIR}/../UnhideNPCs-RE/src/*.cpp")
     endif ()
 
     target_sources(${TARGET_NAME} PRIVATE ${SRC_RE})

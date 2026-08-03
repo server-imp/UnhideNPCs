@@ -2,6 +2,7 @@
 #define UNHIDENPCS_DXGI_HPP
 #pragma once
 
+// clang-format off
 #pragma comment(linker, "/export:ApplyCompatResolutionQuirking=C:\\Windows\\System32\\dxgi.ApplyCompatResolutionQuirking")
 #pragma comment(linker, "/export:CompatString=C:\\Windows\\System32\\dxgi.CompatString")
 #pragma comment(linker, "/export:CompatValue=C:\\Windows\\System32\\dxgi.CompatValue")
@@ -22,5 +23,6 @@
 #pragma comment(linker, "/export:PIXGetCaptureState=C:\\Windows\\System32\\dxgi.PIXGetCaptureState")
 #pragma comment(linker, "/export:SetAppCompatStringPointer=C:\\Windows\\System32\\dxgi.SetAppCompatStringPointer")
 #pragma comment(linker, "/export:UpdateHMDEmulationStatus=C:\\Windows\\System32\\dxgi.UpdateHMDEmulationStatus")
+// clang-format on
 
-#endif //UNHIDENPCS_DXGI_HPP
+#endif // UNHIDENPCS_DXGI_HPP

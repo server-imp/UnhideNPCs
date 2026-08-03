@@ -1,7 +1,8 @@
 #include "nexus.hpp"
-#include "../unpc.hpp"
 #include "../ui.hpp"
+#include "../unpc.hpp"
 #include "imgui.h"
+#include "version.hpp"
 
 namespace nexus
 {
@@ -43,21 +44,21 @@ namespace nexus
         ELogLevel level;
         switch (entry.level)
         {
-            case logging::LogLevel::Debug:
-                level = ELogLevel_DEBUG;
-                break;
-            case logging::LogLevel::Info:
-                level = ELogLevel_INFO;
-                break;
-            case logging::LogLevel::Warning:
-                level = ELogLevel_WARNING;
-                break;
-            case logging::LogLevel::Error:
-                level = ELogLevel_CRITICAL;
-                break;
-            default:
-                level = ELogLevel_OFF;
-                break;
+        case logging::LogLevel::Debug:
+            level = ELogLevel_DEBUG;
+            break;
+        case logging::LogLevel::Info:
+            level = ELogLevel_INFO;
+            break;
+        case logging::LogLevel::Warning:
+            level = ELogLevel_WARNING;
+            break;
+        case logging::LogLevel::Error:
+            level = ELogLevel_CRITICAL;
+            break;
+        default:
+            level = ELogLevel_OFF;
+            break;
         }
 
         APIDefs->Log(level, "UnhideNPCs", entry.message.c_str());
@@ -95,8 +96,8 @@ namespace nexus
         APIDefs = aApi;
 
         ImGui::SetCurrentContext(static_cast<ImGuiContext*>(aApi->ImguiContext));
-        const auto a = reinterpret_cast<void*(*)(size_t, void*)>(reinterpret_cast<std::uintptr_t>(aApi->ImguiMalloc));
-        const auto f = reinterpret_cast<void(*)(void*, void*)>(reinterpret_cast<std::uintptr_t>(aApi->ImguiFree));
+        const auto a = reinterpret_cast<void* (*)(size_t, void*)>(reinterpret_cast<std::uintptr_t>(aApi->ImguiMalloc));
+        const auto f = reinterpret_cast<void (*)(void*, void*)>(reinterpret_cast<std::uintptr_t>(aApi->ImguiFree));
         ImGui::SetAllocatorFunctions(a, f);
 
         APIDefs->Renderer.Register(ERenderType_OptionsRender, options);
@@ -119,7 +120,7 @@ namespace nexus
 
         FreeLibrary(unpc::hModule);
     }
-}
+} // namespace nexus
 
 nexus::AddonDefinition* GetAddonDef()
 {

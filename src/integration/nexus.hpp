@@ -23,11 +23,11 @@ namespace nexus
 
     void options();
 
-    void onLoad(AddonAPI * aApi);
+    void onLoad(AddonAPI* aApi);
 
     void onUnload();
-}
+} // namespace nexus
 
 extern "C" __declspec(dllexport) nexus::AddonDefinition* GetAddonDef();
 
-#endif //UNHIDENPCS_NEXUS_HPP
+#endif // UNHIDENPCS_NEXUS_HPP

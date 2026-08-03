@@ -18,22 +18,10 @@ namespace ui
     bool combo(const char* label, const char* id, int& value, const char* const* items, size_t count, const char* tip);
 
     bool sliderInt(
-        const char* label,
-        const char* id,
-        int32_t&    value,
-        int32_t     min,
-        int32_t     max,
-        const char* fmt,
-        const char* tip);
+        const char* label, const char* id, int32_t& value, int32_t min, int32_t max, const char* fmt, const char* tip);
 
     bool sliderFloat(
-        const char* label,
-        const char* id,
-        float&      value,
-        float       min,
-        float       max,
-        const char* fmt,
-        const char* tip);
+        const char* label, const char* id, float& value, float min, float max, const char* fmt, const char* tip);
 
     bool button(const char* label);
 
@@ -64,6 +52,6 @@ namespace ui
     bool onD3DStarted(const memory::hooks::D3D11* hk);
 
     void onD3DShutdown(const memory::hooks::D3D11* hk);
-}
+} // namespace ui
 
-#endif //UNHIDENPCS_UI_HPP
+#endif // UNHIDENPCS_UI_HPP

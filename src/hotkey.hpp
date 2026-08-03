@@ -65,4 +65,4 @@ public:
     void load();
 };
 
-#endif //UNHIDENPCS_HOTKEY_HPP
+#endif // UNHIDENPCS_HOTKEY_HPP
