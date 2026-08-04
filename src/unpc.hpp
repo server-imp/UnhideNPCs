@@ -52,10 +52,30 @@ namespace unpc
     extern uint32_t numNPCVisible;
     extern uint32_t numNPCCulled;
 
-    extern std::shared_mutex                  renderCirclesMutex;
-    extern std::vector<std::pair<vec2, vec4>> renderCircles;
+    struct DebugRenderEntry
+    {
+        vec2        screenPos;
+        u32         color;
+        const char* text;
+
+        DebugRenderEntry(vec2 screenPos, u32 color, const char* text) : screenPos(screenPos), color(color), text(text)
+        {
+        }
+
+        DebugRenderEntry(vec2 screenPos, u32 color) : screenPos(screenPos), color(color), text(nullptr) {}
+
+        DebugRenderEntry(vec2 screenPos, const char* text) : screenPos(screenPos), color(0xFF0000FF), text(text) {}
+
+        DebugRenderEntry(vec2 screenPos) : screenPos(screenPos), color(0xFF0000FF), text(nullptr) {}
+    };
+
+    extern std::shared_mutex             debugRenderMutex;
+    extern std::vector<DebugRenderEntry> debugRenderEntries;
 
     void onHookTick();
+
+    // used for the debug renderer to display reason why a character is displayed/hidden
+    extern const char* reason;
 
     // This function may be called second, returning true means the character will be forced invisible
     bool shouldHide(const re::CharacterEntry& c, bool instanced);
