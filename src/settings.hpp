@@ -17,7 +17,7 @@ protected:
     std::unique_ptr<Settings> createChild(const std::string& name) override;
 
 public:
-    fw::Setting<bool>& UnhideNPCs = add<bool>(true, "UnhideNPCs", "Unhide NPCs").onChanged(forceInvisibility);
+    S(bool, UnhideNPCs, true, "Unhide NPCs").onChanged(forceInvisibility);
 
     S(bool, UnhidePlayers, true, "Unhide players").onChanged(forceInvisibility);
     S(bool, PlayerOwned, true, "Characters that players own (pets, clones, minis etc) will also be unhidden.")
