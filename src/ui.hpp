@@ -15,6 +15,18 @@ namespace ui
 
     bool checkbox(const char* label, const char* id, bool& value, const char* tip);
 
+    struct CheckboxGroupEntry
+    {
+        const char* label {};
+        const char* tooltip {};
+        bool*       value {};
+        bool*       changed {};
+
+        CheckboxGroupEntry(const char* label, const char* tooltip, bool* value, bool* changed);
+    };
+
+    bool checkboxGroup(const char* label, const char* tooltip, const std::vector<CheckboxGroupEntry>& items);
+
     bool combo(const char* label, const char* id, int& value, const char* const* items, size_t count, const char* tip);
 
     bool sliderInt(
@@ -32,6 +44,8 @@ namespace ui
     void separatorText(const char* text);
 
     bool textLink(const char* label, bool centered = false);
+
+    void errorText(const char* text, bool& trigger, size_t displayTime);
 
     void renderOptions();
 

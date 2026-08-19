@@ -178,7 +178,8 @@ public:
             });
 
 #ifndef BUILDING_ON_GITHUB
-    S(bool, RenderDebugCircles, false, "Render debug circles");
+    S(bool, DebugRenderVisible, false, "Render debug info for visible characters");
+    S(bool, DebugRenderHidden, false, "Render debug info for hidden characters");
 #endif
 
     explicit SettingsProfile(Settings* owner, const std::string& name) : Settings(owner, name, "") {}

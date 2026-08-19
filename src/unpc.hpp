@@ -55,18 +55,10 @@ namespace unpc
     struct DebugRenderEntry
     {
         vec2        screenPos;
-        u32         color;
+        bool        isHidden;
         const char* text;
 
-        DebugRenderEntry(vec2 screenPos, u32 color, const char* text) : screenPos(screenPos), color(color), text(text)
-        {
-        }
-
-        DebugRenderEntry(vec2 screenPos, u32 color) : screenPos(screenPos), color(color), text(nullptr) {}
-
-        DebugRenderEntry(vec2 screenPos, const char* text) : screenPos(screenPos), color(0xFF0000FF), text(text) {}
-
-        DebugRenderEntry(vec2 screenPos) : screenPos(screenPos), color(0xFF0000FF), text(nullptr) {}
+        DebugRenderEntry(vec2 screenPos, bool isHidden, const char* text);
     };
 
     extern std::shared_mutex             debugRenderMutex;

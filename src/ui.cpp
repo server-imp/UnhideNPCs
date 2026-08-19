@@ -40,6 +40,89 @@ bool ui::checkbox(const char* label, const char* id, bool& value, const char* ti
     return ImGui::Checkbox(id, &value);
 }
 
+ui::CheckboxGroupEntry::CheckboxGroupEntry(const char* label, const char* tooltip, bool* value, bool* changed)
+    : label(label), tooltip(tooltip), value(value), changed(changed)
+{
+}
+
+bool ui::checkboxGroup(const char* label, const char* tooltip, const std::vector<CheckboxGroupEntry>& items)
+{
+    const size_t count = items.size();
+
+    if (count == 0)
+    {
+        return false;
+    }
+
+    if (count == 1)
+    {
+        char id[32];
+        snprintf(id, sizeof(id), "##%p", static_cast<void*>(items[0].value));
+        const auto result = ui::checkbox(items[0].label, id, *items[0].value, items[0].tooltip);
+        if (result)
+        {
+            *items[0].changed = true;
+        }
+        return result;
+    }
+
+    const ImVec2 initialCursorPos = ImGui::GetCursorPos();
+    const ImVec2 spacing          = ImGui::GetStyle().ItemSpacing;
+    const float  checkBoxSize     = ImGui::GetFrameHeight();
+    const float  rowHeight        = spacing.y + checkBoxSize;
+
+    if (label)
+    {
+        ImGui::TextUnformatted(label);
+        if (tooltip)
+        {
+            ui::tooltip(tooltip);
+        }
+    }
+
+    auto result = false;
+
+    for (size_t i = 0; i < count; ++i)
+    {
+        const bool   isOdd = (i & 1) != 0;
+        const size_t row   = i >> 1;
+
+        const auto& item = items[i];
+
+        const float y = initialCursorPos.y + static_cast<float>(row) * rowHeight;
+        const float x = initialCursorPos.x + (isOdd ? 2.0f : 1.0f) * ui::labelOffset;
+
+        if (item.label)
+        {
+            const ImVec2 labelSize = ImGui::CalcTextSize(item.label);
+            const float  labelX    = x - spacing.x - labelSize.x;
+
+            ImGui::SetCursorPos(ImVec2(labelX, y + ImGui::GetStyle().FramePadding.y));
+            ImGui::TextUnformatted(item.label);
+            if (item.tooltip)
+            {
+                ui::tooltip(item.tooltip);
+            }
+        }
+
+        ImGui::SetCursorPos(ImVec2(x, y));
+        char id[32];
+        snprintf(id, sizeof(id), "##%p", static_cast<void*>(item.value));
+
+        if (ImGui::Checkbox(id, item.value))
+        {
+            *item.changed = true;
+            result        = true;
+        }
+    }
+
+    // Move cursor below entire group
+    const size_t totalRows = (count + 1) >> 1;
+    ImGui::SetCursorPos(ImVec2(initialCursorPos.x, initialCursorPos.y + static_cast<float>(totalRows) * rowHeight));
+
+    return result;
+}
+
 bool
 ui::combo(const char* label, const char* id, int& value, const char* const* items, const size_t count, const char* tip)
 {
@@ -181,98 +264,30 @@ bool ui::textLink(const char* label, const bool centered)
     return clicked;
 }
 
-namespace
+void ui::errorText(const char* text, bool& trigger, const size_t displayTime = 5000)
 {
-    struct CheckboxGroupEntry
-    {
-        const char* label {};
-        const char* tooltip {};
-        bool*       value {};
-        bool*       changed {};
+    static std::unordered_map<const char*, uint64_t> _errors {};
 
-        CheckboxGroupEntry(const char* label, const char* tooltip, bool* value, bool* changed)
-            : label(label), tooltip(tooltip), value(value), changed(changed)
+    const auto currentTick = GetTickCount64();
+
+    if (!trigger)
+    {
+        if (const auto it = _errors.find(text); it != _errors.end())
         {
-        }
-    };
-} // namespace
-
-static bool checkboxGroup(const char* label, const char* tooltip, const std::vector<CheckboxGroupEntry>& items)
-{
-    const size_t count = items.size();
-
-    if (count == 0)
-    {
-        return false;
-    }
-
-    if (count == 1)
-    {
-        char id[32];
-        snprintf(id, sizeof(id), "##%p", static_cast<void*>(items[0].value));
-        const auto result = ui::checkbox(items[0].label, id, *items[0].value, items[0].tooltip);
-        if (result)
-        {
-            *items[0].changed = true;
-        }
-        return result;
-    }
-
-    const ImVec2 initialCursorPos = ImGui::GetCursorPos();
-    const ImVec2 spacing          = ImGui::GetStyle().ItemSpacing;
-    const float  checkBoxSize     = ImGui::GetFrameHeight();
-    const float  rowHeight        = spacing.y + checkBoxSize;
-
-    if (label)
-    {
-        ImGui::TextUnformatted(label);
-        if (tooltip)
-        {
-            ui::tooltip(tooltip);
-        }
-    }
-
-    auto result = false;
-
-    for (size_t i = 0; i < count; ++i)
-    {
-        const bool   isOdd = (i & 1) != 0;
-        const size_t row   = i >> 1;
-
-        const auto& item = items[i];
-
-        const float y = initialCursorPos.y + static_cast<float>(row) * rowHeight;
-        const float x = initialCursorPos.x + (isOdd ? 2.0f : 1.0f) * ui::labelOffset;
-
-        if (item.label)
-        {
-            const ImVec2 labelSize = ImGui::CalcTextSize(item.label);
-            const float  labelX    = x - spacing.x - labelSize.x;
-
-            ImGui::SetCursorPos(ImVec2(labelX, y + ImGui::GetStyle().FramePadding.y));
-            ImGui::TextUnformatted(item.label);
-            if (item.tooltip)
+            if (currentTick - it->second < displayTime)
             {
-                ui::tooltip(item.tooltip);
+                goto render;
             }
         }
 
-        ImGui::SetCursorPos(ImVec2(x, y));
-        char id[32];
-        snprintf(id, sizeof(id), "##%p", static_cast<void*>(item.value));
-
-        if (ImGui::Checkbox(id, item.value))
-        {
-            *item.changed = true;
-            result        = true;
-        }
+        return;
     }
 
-    // Move cursor below entire group
-    const size_t totalRows = (count + 1) >> 1;
-    ImGui::SetCursorPos(ImVec2(initialCursorPos.x, initialCursorPos.y + static_cast<float>(totalRows) * rowHeight));
+    _errors[text] = currentTick;
+    trigger       = false;
 
-    return result;
+render:
+    ImGui::TextColored({1.0f, 0.f, 0.f, 255}, "%s", text);
 }
 
 static const char* ranks[] = {"Normal", "Veteran", "Elite", "Champion", "Legendary"};
@@ -384,6 +399,7 @@ void ui::renderOptions()
     bool alwaysShowTarget = profile.AlwaysShowTarget.get();
 
     bool hideOffScreen = profile.HideOffScreen.get();
+    bool error1 = false, error2 = false, error3 = false;
 
     if (checkboxGroup(
             "Unhide",
@@ -403,33 +419,48 @@ void ui::renderOptions()
             if (hideOffScreen)
             {
                 unhideNPCs = true;
+                error1     = true;
             }
-
-            profile.UnhideNPCs.set(unhideNPCs);
+            else
+            {
+                profile.UnhideNPCs.set(unhideNPCs);
+            }
         }
         if (unhidePlayersChanged)
         {
             if (hideOffScreen)
             {
                 unhidePlayers = true;
+                error2        = true;
             }
-
-            profile.UnhidePlayers.set(unhidePlayers);
+            else
+            {
+                profile.UnhidePlayers.set(unhidePlayers);
+            }
         }
         if (playerOwnedChanged)
         {
             if (hideOffScreen)
             {
                 playerOwned = true;
+                error3      = true;
             }
-
-            profile.PlayerOwned.set(playerOwned);
+            else
+            {
+                profile.PlayerOwned.set(playerOwned);
+            }
         }
         if (alwaysShowTargetChanged)
         {
             profile.AlwaysShowTarget.set(alwaysShowTarget);
         }
     }
+    ui::errorText("NPCs is required by \"Hide Off-Screen\"\nTry using \"Max NPCs\" before disabling this", error1);
+    ui::errorText("Players is required by \"Hide Off-Screen\"\nTry using \"Max Players\" before disabling this",
+                  error2);
+    ui::errorText(
+        "Player-Owned is required by \"Hide Off-Screen\"\nTry using \"Max Player-Owned\" before disabling\nthis",
+        error3);
     ImGui::NewLine();
 
     bool unhideLowQuality      = profile.UnhideLowQuality.get();
@@ -821,10 +852,7 @@ footer:
         ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
     }
 
-#ifndef BUILDING_ON_GITHUB
-    separatorText("Debug");
     re::debugMenu();
-#endif
 
     ImGui::NewLine();
     ImGui::TextUnformatted("Report issues on");
